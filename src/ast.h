@@ -1,0 +1,267 @@
+#pragma once
+#include <string>
+#include <vector>
+#include <memory>
+#include <variant>
+#include <cstdint>
+
+namespace chokanbun {
+
+// Forward declarations
+struct Expr;
+struct Stmt;
+struct Type;
+
+using ExprPtr = std::shared_ptr<Expr>;
+using StmtPtr = std::shared_ptr<Stmt>;
+using TypePtr = std::shared_ptr<Type>;
+
+// ========== Types ==========
+
+struct Type {
+    enum class Kind {
+        Bool,
+        I8, I16, I32, I64,
+        U8, U16, U32, U64,
+        Void,
+        Pointer,
+        Array,
+        Struct,
+        String,   // 『...』 literals: immutable byte array
+    };
+
+    Kind kind;
+    // For Pointer
+    TypePtr pointee;
+    // For Array
+    TypePtr element;
+    uint64_t length = 0;
+    // For Struct
+    std::string name;
+
+    static TypePtr Bool() { auto t = std::make_shared<Type>(); t->kind = Kind::Bool; return t; }
+    static TypePtr I8() { auto t = std::make_shared<Type>(); t->kind = Kind::I8; return t; }
+    static TypePtr I16() { auto t = std::make_shared<Type>(); t->kind = Kind::I16; return t; }
+    static TypePtr I32() { auto t = std::make_shared<Type>(); t->kind = Kind::I32; return t; }
+    static TypePtr I64() { auto t = std::make_shared<Type>(); t->kind = Kind::I64; return t; }
+    static TypePtr U8() { auto t = std::make_shared<Type>(); t->kind = Kind::U8; return t; }
+    static TypePtr U16() { auto t = std::make_shared<Type>(); t->kind = Kind::U16; return t; }
+    static TypePtr U32() { auto t = std::make_shared<Type>(); t->kind = Kind::U32; return t; }
+    static TypePtr U64() { auto t = std::make_shared<Type>(); t->kind = Kind::U64; return t; }
+    static TypePtr Void() { auto t = std::make_shared<Type>(); t->kind = Kind::Void; return t; }
+    static TypePtr Pointer(TypePtr inner) {
+        auto t = std::make_shared<Type>();
+        t->kind = Kind::Pointer;
+        t->pointee = std::move(inner);
+        return t;
+    }
+    static TypePtr Array(TypePtr elem, uint64_t len) {
+        auto t = std::make_shared<Type>();
+        t->kind = Kind::Array;
+        t->element = std::move(elem);
+        t->length = len;
+        return t;
+    }
+    static TypePtr Struct(std::string name) {
+        auto t = std::make_shared<Type>();
+        t->kind = Kind::Struct;
+        t->name = std::move(name);
+        return t;
+    }
+    static TypePtr String(uint64_t len) {
+        auto t = std::make_shared<Type>();
+        t->kind = Kind::String;
+        t->element = U8();
+        t->length = len;
+        return t;
+    }
+
+    std::string toString() const;
+    bool isInteger() const;
+    bool isSigned() const;
+    bool isSameAs(const Type& other) const;
+    uint64_t sizeBytes() const;  // 0 if unknown (e.g., unresolved struct)
+};
+
+// ========== Expressions ==========
+
+struct Expr {
+    enum class Kind {
+        IntegerLit,
+        BoolLit,
+        StringLit,
+        NullLit,      // 空
+        Ident,
+        BinOp,
+        UnaryOp,
+        Call,         // 呼「名」以(...)
+        AddrOf,       // 取址(lvalue)
+        Deref,        // 取值(expr)
+        Cast,         // 轉〈type〉(expr)
+        VolatileRead, // 讀揮發〈T〉(ptr)
+        VolatileWrite,// 寫揮發〈T〉(ptr, val)
+        Fence,        // 障壁〈種〉()
+        StrLen,       // 長度(expr)
+        FieldAccess,  // 欄(lvalue, 「field」)
+        ElemAccess,   // 項(lvalue, expr)
+    };
+
+    Kind kind;
+
+    // IntegerLit
+    uint64_t intValue = 0;
+    bool isNegative = false;
+    // BoolLit
+    bool boolValue = false;
+    // StringLit
+    std::string strValue;
+    // Ident
+    std::string identName;
+    // BinOp
+    std::string opText;  // 加, 減, etc.
+    ExprPtr left, right;
+    // UnaryOp
+    std::string unaryOp;  // 負, 非, 位非
+    ExprPtr operand;
+    // Call
+    std::string callee;
+    std::vector<ExprPtr> args;
+    // AddrOf
+    ExprPtr addend;  // the lvalue
+    // Deref
+    ExprPtr pointee;
+    // Cast
+    TypePtr castTo;
+    ExprPtr castFrom;
+    // VolatileRead
+    TypePtr volType;
+    ExprPtr volPtr;
+    // VolatileWrite
+    ExprPtr volVal;
+    // Fence
+    std::string fenceKind;
+    // FieldAccess
+    ExprPtr base;
+    std::string fieldName;
+    // ElemAccess
+    ExprPtr index;
+
+    uint32_t line, col;
+};
+
+// ========== Statements ==========
+
+struct Stmt {
+    enum class Kind {
+        LocalDecl,    // 設「名」之type 為 expr
+        Assign,       // 置 lvalue 為 expr
+        CallStmt,     // 行「名」以(...)
+        IfStmt,       // 若 expr 則 block [否則 block] 終若
+        WhileStmt,    // 當 expr 則 block 終當
+        ReturnStmt,   // 歸 [expr]
+        UnsafeBlock,  // 險 block 終險
+        ExprStmt,     // a bare expression statement (for volatile writes etc.)
+    };
+
+    Kind kind;
+
+    // LocalDecl
+    std::string varName;
+    TypePtr varType;
+    ExprPtr init;
+
+    // Assign
+    ExprPtr target;
+    ExprPtr value;
+
+    // CallStmt
+    std::string callee;
+    std::vector<ExprPtr> args;
+
+    // IfStmt
+    ExprPtr cond;
+    std::vector<StmtPtr> thenBlock;
+    std::vector<StmtPtr> elseBlock;
+    bool hasElse = false;
+
+    // WhileStmt
+    std::vector<StmtPtr> body;
+
+    // ReturnStmt
+    ExprPtr retVal;
+    bool hasRetVal = false;
+
+    // UnsafeBlock
+    std::vector<StmtPtr> unsafeBody;
+
+    // ExprStmt
+    ExprPtr expr;
+
+    uint32_t line, col;
+};
+
+// ========== Declarations ==========
+
+struct Param {
+    std::string name;
+    TypePtr type;
+};
+
+struct StructField {
+    std::string name;
+    TypePtr type;
+};
+
+struct FunctionDecl {
+    std::string name;
+    std::vector<Param> params;
+    TypePtr returnType = Type::Void();
+    std::vector<StmtPtr> body;
+    bool isExternal = false;
+    std::string symbolName;  // for external: ASCII symbol
+    bool isPublic = false;   // 公開
+    bool isNoreturn = false; // 不返
+    std::string section;     // 節「.text.boot」
+
+    uint32_t line, col;
+};
+
+struct AliasDecl {
+    std::string name;
+    TypePtr type;
+    uint32_t line, col;
+};
+
+struct ConstantDecl {
+    std::string name;
+    TypePtr type;
+    ExprPtr value;
+    uint32_t line, col;
+};
+
+struct StructDecl {
+    std::string name;
+    std::vector<StructField> fields;
+    uint32_t line, col;
+};
+
+using DeclPtr = std::shared_ptr<void>;
+
+// We use a variant-based approach for declarations
+struct Decl {
+    enum class Kind { Function, External, Alias, Constant, Struct };
+    Kind kind;
+    std::shared_ptr<FunctionDecl> function;
+    std::shared_ptr<AliasDecl> alias;
+    std::shared_ptr<ConstantDecl> constant;
+    std::shared_ptr<StructDecl> structDecl;
+};
+
+// ========== Module ==========
+
+struct Module {
+    std::string name;
+    std::vector<Decl> decls;
+};
+
+} // namespace chokanbun
