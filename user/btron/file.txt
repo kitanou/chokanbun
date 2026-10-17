@@ -1,4 +1,4 @@
-註 BTRON3 互換層 1.6 ファイル管理 (段階 B1: 接続とリンク)。設計は docs/compat/btron3-file-design.md。
+註 BTRON3 互換層 1.6 ファイル管理 (段階 B1: 接続とリンク、B2: 作成・削除・開閉・状態)。設計は docs/compat/btron3-file-design.md。
 註 要: lib.txt、btron/types.txt、btron/er.txt を先に取込む。文字列は TC (16 ビット)、LINK は 52 B
 註 (fs_name TC[20], f_id UH, atr1〜atr5 UH)。
 
@@ -11,6 +11,17 @@
 常「TC_FDLM」之無符六四 為 0xFF21
 常「TC_FSEP」之無符六四 為 0xFF22
 常「TC_FOWN」之無符六四 為 0xFF23
+常「F_FLOAT」之無符六四 為 0x0000
+常「F_FIX」之無符六四 為 0x0001
+常「F_FILEID」之無符六四 為 0x0002
+常「F_READ」之無符六四 為 0x0004
+常「F_WRITE」之無符六四 為 0x0002
+常「F_UPDATE」之無符六四 為 0x0006
+常「F_EXCL」之無符六四 為 0x0100
+常「F_WEXCL」之無符六四 為 0x0200
+常「F_FILE」之無符六四 為 0x1000
+常「F_RONLY」之無符六四 為 0x0010
+常「F_PERM」之無符六四 為 0x0020
 常「L_FSNM」之無符六四 為 20
 常「L_FNM」之無符六四 為 20
 常「L_CONNM」之無符六四 為 8
@@ -44,4 +55,40 @@
 註 chg_wrk(LINK* lnk)
 公開 記號「chg_wrk」 術曰「BTRON作業変」 受「鎖」之無符六四 返 無符六四
     歸 呼「錯換」以(呼「奏令」以(137, 鎖, 0, 0, 0, 0, 0))
+終術
+
+註 cre_fil(LINK* lnk, TC* name, A_MODE* mode, UH atype, W opt): lnk は親、成功すると新しいファイルの LINK に置き換わる。
+註   戻り値は F_UPDATE で開いた記述子。mode は NULL のみ、opt は F_FLOAT・F_FIX のみ (暫定。設計書 §12)。
+公開 記號「cre_fil」 術曰「BTRON作成」 受「鎖」之無符六四 受「名」之無符六四 受「様」之無符六四 受「応型」之無符六四 受「指定」之無符六四 返 無符六四
+    歸 呼「錯換」以(呼「奏令」以(144, 鎖, 名, 様, 応型 位與 0xFFFF, 指定 位與 0xFFFFFFFF, 0))
+終術
+
+註 cre_lnk(LINK* lnk, F_LINK* ref, W opt): lnk の下にリンクを作る。ref は 132 B。成功は 0。
+公開 記號「cre_lnk」 術曰「BTRONリンク作」 受「鎖」之無符六四 受「参」之無符六四 受「指定」之無符六四 返 無符六四
+    歸 呼「錯換」以(呼「奏令」以(145, 鎖, 参, 指定 位與 0xFFFFFFFF, 0, 0, 0))
+終術
+
+註 del_fil(LINK* org, LINK* lnk, W force): 成功は、含んでいたリンクの先で参照数が 0 になったファイルの数。
+公開 記號「del_fil」 術曰「BTRON削除」 受「親」之無符六四 受「鎖」之無符六四 受「強」之無符六四 返 無符六四
+    歸 呼「錯換」以(呼「奏令」以(146, 親, 鎖, 強 位與 0xFFFFFFFF, 0, 0, 0))
+終術
+
+註 opn_fil(LINK* lnk, W o_mode, TC* pwd): 成功は記述子。
+公開 記號「opn_fil」 術曰「BTRON開」 受「鎖」之無符六四 受「様」之無符六四 受「鍵」之無符六四 返 無符六四
+    歸 呼「錯換」以(呼「奏令」以(147, 鎖, 様 位與 0xFFFFFFFF, 鍵, 0, 0, 0))
+終術
+
+註 cls_fil(W fd)
+公開 記號「cls_fil」 術曰「BTRON閉」 受「記述」之無符六四 返 無符六四
+    歸 呼「錯換」以(呼「奏令」以(148, 記述 位與 0xFFFFFFFF, 0, 0, 0, 0, 0))
+終術
+
+註 fil_sts(LINK* lnk, TC* name, F_STATE* stat, F_LOCATE* locat): 成功は参照数。stat は 68 B、name は 40 B。
+公開 記號「fil_sts」 術曰「BTRON状」 受「鎖」之無符六四 受「名」之無符六四 受「状」之無符六四 受「場」之無符六四 返 無符六四
+    歸 呼「錯換」以(呼「奏令」以(149, 鎖, 名, 状, 場, 0, 0))
+終術
+
+註 ofl_sts(W fd, TC* name, F_STATE* stat, F_LOCATE* locat)
+公開 記號「ofl_sts」 術曰「BTRON開状」 受「記述」之無符六四 受「名」之無符六四 受「状」之無符六四 受「場」之無符六四 返 無符六四
+    歸 呼「錯換」以(呼「奏令」以(150, 記述 位與 0xFFFFFFFF, 名, 状, 場, 0, 0))
 終術
