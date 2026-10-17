@@ -34,19 +34,19 @@
 
 | 項目 | 既存実装 | 状態 |
 |---|---|---|
-| 整数型 `B`〜`UW` の幅 | `user/btron/types.txt` に対応表（`有符八`〜`無符三二`） | 実装済・未検証 |
+| 整数型 `B`〜`UW` の幅 | `user/btron/types.mkn` に対応表（`有符八`〜`無符三二`） | 実装済・未検証 |
 | `W` の戻り値規約 | 64 ビットレジスタへ符号拡張（`W拡張`）。`W置`・`W読` | 実装済・未検証 |
 | `TC`=UH、`TNULL` | 対応表のみ。文字列関数なし | 部分適合 |
-| `CLR`/`NOCLR`/`DELEXIT` | `types.txt` に定数 | 実装済・未検証 |
-| `ERR`/`ErrCode` | `user/btron/er.txt`（`(eclass<<16)|detail`、eclass=-1） | 実装済・未検証（数値は実装依存の選択。OS 編 G0） |
-| `SIZE`/`PNT`/`RECT` | `types.txt` に欄の配置定数（`SIZE_*`/`PNT_*`/`RECT_*`）と `SIZE置`/`PNT置`/`RECT置`、`H置`/`H読`。QEMU 試験 `識試` の 5 項目（H の符号・範囲・隣欄保持、SIZE/PNT/RECT の配置、RECT の共用体）で確認 | 実装済・未検証（欄名は慣用を仮採用、要確認） |
+| `CLR`/`NOCLR`/`DELEXIT` | `types.mkn` に定数 | 実装済・未検証 |
+| `ERR`/`ErrCode` | `user/btron/er.mkn`（`(eclass<<16)|detail`、eclass=-1） | 実装済・未検証（数値は実装依存の選択。OS 編 G0） |
+| `SIZE`/`PNT`/`RECT` | `types.mkn` に欄の配置定数（`SIZE_*`/`PNT_*`/`RECT_*`）と `SIZE置`/`PNT置`/`RECT置`、`H置`/`H読`。QEMU 試験 `識試` の 5 項目（H の符号・範囲・隣欄保持、SIZE/PNT/RECT の配置、RECT の共用体）で確認 | 実装済・未検証（欄名は慣用を仮採用、要確認） |
 | `LINK` | `get_lnk` が扱う（OS 編 1.6） | 部分適合 |
 | `FLOAT`/`DOUBLE` | 言語に浮動小数点なし | 未実装 |
-| `Bool`/`BOOL` | `types.txt` に `False`=0・`True`=1 と正規化の `BOOL化`。試験 `識試` の `Bool=False0True1` | 実装済・未検証 |
+| `Bool`/`BOOL` | `types.mkn` に `False`=0・`True`=1 と正規化の `BOOL化`。試験 `識試` の `Bool=False0True1` | 実装済・未検証 |
 | `MSEC`/`STIME`/`VP`/`FP` | 対応表のみ | 部分適合 |
 
 **要確認**: バイト順・構造体のパディング、`ErrCode` の二つの定義の使い分け、`FLOAT`/`DOUBLE` を持つか（持たなければ非適合として理由を記録）、`_B` 等の volatile 版の扱い（機械漢文の `揮發` 読み書きで足りるか）。
-**試験**: `識試`（`user/btron_gtid.txt`）に H・Bool・SIZE・PNT・RECT の 9 項目を追加済み。残り: `ErrCode` の二定義、`FLOAT`/`DOUBLE`、`VP`/`FP`、`MSEC`/`STIME` の幅。
+**試験**: `識試`（`user/btron_gtid.mkn`）に H・Bool・SIZE・PNT・RECT の 9 項目を追加済み。残り: `ErrCode` の二定義、`FLOAT`/`DOUBLE`、`VP`/`FP`、`MSEC`/`STIME` の幅。
 **実装上の注意**: 機械漢文では識別子を `「」` で囲む（ASCII を含む名は必須）。`0 減 1` のような符号付き 64 ビットのリテラル演算は `無符六四` に入らないため、負値は `負値` 術で作る。
 
 ## 2. TRON コード（tron_code.html）
@@ -121,7 +121,7 @@
 | 項目 | 既存実装 | 状態 |
 |---|---|---|
 | セグメント列の読み書き（ID・長さ・大型長・詰め物） | なし | 未実装 |
-| 基本型（点・矩形・色・単位・拡大率）の定義 | なし（`types.txt` に `SIZE`/`PNT`/`RECT` も無し） | 未実装 |
+| 基本型（点・矩形・色・単位・拡大率）の定義 | なし（`types.mkn` に `SIZE`/`PNT`/`RECT` も無し） | 未実装 |
 | 文章セグメント 0xA0〜0xAF | なし | 未実装 |
 | 図形セグメント 0xB0〜0xBF | なし | 未実装 |
 | 画像・仮身・機能付加・設定付加・管理情報 | なし | 未実装 |

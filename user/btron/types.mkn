@@ -1,4 +1,4 @@
-註 BTRON3 互換層 (docs/compat/btron3-compat-layer.md) の基本データタイプと定数。要 lib.txt の先取込は不要。
+註 BTRON3 互換層 (docs/compat/btron3-compat-layer.md) の基本データタイプと定数。要 lib.mkn の先取込は不要。
 註 出典: BTRON3仕様書 Ver.3.20.00 共有データ編 第1章 (data_type.html)、OS仕様編 1.1.8 (proc.html)。
 註
 註 基本データタイプの幅 (機械漢文の型との対応。型名は別名を持てないのでここに記録する):

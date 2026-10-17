@@ -1,6 +1,6 @@
 // System-register helpers for the Chokanbun kernel (provisional, spec §7).
 //
-// The machine-kanbun page-table builder (kernel/kernel.txt, 設頁表) writes the
+// The machine-kanbun page-table builder (kernel/kernel.mkn, 設頁表) writes the
 // translation tables into memory; these thin helpers program the system
 // registers that turn translation on.
 //

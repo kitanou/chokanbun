@@ -3,11 +3,11 @@
 註 引数付き (argc>1) で起動されたときは子として働く。先頭の 1 文字で役を決める:
 註   S=眠って待つ  L=level を 2 にして親を終了しようとし ER_LEVEL なら 1 で終わる  X=7 で終わる
 註   G=孫 S を作って pid を親へ知らせ眠る  H=孫 K を作って眠る  K=親を TERM_ALL で終了する (自分も終わる)
-註 @取込 lib.txt
-註 @取込 btron/types.txt
-註 @取込 btron/er.txt
-註 @取込 btron/proc.txt
-註 @取込 btron/msg.txt
+註 @取込 lib.mkn
+註 @取込 btron/types.mkn
+註 @取込 btron/er.mkn
+註 @取込 btron/proc.mkn
+註 @取込 btron/msg.mkn
 
 常「緩送」之無符六四 為 0x40700000
 常「緩受」之無符六四 為 0x40700100

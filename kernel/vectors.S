@@ -91,7 +91,7 @@ exception_handler:
 // synchronous entry, but asynchronous: it also preserves NZCV because the
 // interrupted computation may depend on the flags.  The acknowledge/
 // end-of-interrupt and timer logic live in machine-kanbun
-// (kernel/kernel.txt, 割込處理).  Timer interrupts taken while an EL0 行程 runs
+// (kernel/kernel.mkn, 割込處理).  Timer interrupts taken while an EL0 行程 runs
 // use the Lower-EL IRQ vector instead (kernel/el0.S, lower_irq_handler).
 irq_handler:
     sub sp, sp, #256

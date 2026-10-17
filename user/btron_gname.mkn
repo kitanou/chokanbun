@@ -1,11 +1,11 @@
 註 外部命令「名試」。BTRON3 互換層 G1 の試験: グローバル名 cre_nam / del_nam / get_nam。
 註 各行は「名試 <項目> 」の後に 1 (成功) か 0 (失敗) を 16 進で出す。終了コードは失敗数。
 註 引数付き (argc>1) で起動されたときは子として DELEXIT の検証用の名前を作って終わる。
-註 @取込 lib.txt
-註 @取込 btron/types.txt
-註 @取込 btron/er.txt
-註 @取込 btron/proc.txt
-註 @取込 btron/gname.txt
+註 @取込 lib.mkn
+註 @取込 btron/types.mkn
+註 @取込 btron/er.mkn
+註 @取込 btron/proc.mkn
+註 @取込 btron/gname.mkn
 
 常「緩甲」之無符六四 為 0x40700000    註 名前の作業領域 (民の窓内)
 常「緩乙」之無符六四 為 0x40700040

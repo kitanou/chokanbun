@@ -1,10 +1,10 @@
 註 外部命令「信試」。BTRON3 互換層 G3a の試験: メッセージ snd_msg / rcv_msg / clr_msg。
 註 各行は「信試 <項目> 」の後に 1 (成功) か 0 (失敗) を 16 進で出す。終了コードは失敗数。
 註 引数「応」で起動されたときは応答役の子、「満」なら受信役の子として働く。
-註 @取込 lib.txt
-註 @取込 btron/types.txt
-註 @取込 btron/er.txt
-註 @取込 btron/msg.txt
+註 @取込 lib.mkn
+註 @取込 btron/types.mkn
+註 @取込 btron/er.mkn
+註 @取込 btron/msg.mkn
 
 常「緩送」之無符六四 為 0x40700000    註 送る MESSAGE (40 B)
 常「緩受」之無符六四 為 0x40700100    註 受ける MESSAGE (40 B)

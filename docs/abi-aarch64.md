@@ -9,14 +9,14 @@
 ## ブート
 1. QEMU virtの起動契約とデバイスツリーを確認する。
 2. スタックとBSSを初期化する。（実装: `kernel/boot.S`）
-3. UARTを初期化し、最初のログを出す。（実装: `kernel/kernel.txt` の PL011 ドライバ）
+3. UARTを初期化し、最初のログを出す。（実装: `kernel/kernel.mkn` の PL011 ドライバ）
 4. 例外ベクタを設定する。（実装: `kernel/boot.S` が `VBAR_EL1` に `_vectors` を設定）
 5. メモリ管理とタイマーを順次有効化する。（MMU: 実装済み。タイマー+GIC割込: 実装済み）
 
 ## 例外
 - `-kernel` 起動は EL1（SP_EL1）で始まる。`VBAR_EL1` に 2 KiB 整列した
   ベクタ表を設定し、同期例外は `kernel/vectors.S` の共通入口でレジスタを
-  保存してから機械漢文ハンドラ `exception_dispatch`（`kernel/kernel.txt`）を
+  保存してから機械漢文ハンドラ `exception_dispatch`（`kernel/kernel.mkn`）を
   呼ぶ。ハンドラは ESR_EL1 を復号して診断を出力し、復帰先 ELR_EL1 を返す。
 
 ## 割込（GICv2 + 汎用タイマー）
@@ -26,7 +26,7 @@
   `CNTFRQ_EL0`（QEMU virt では 62.5 MHz）から周期を求める。
 - IRQ はベクタ表の Current EL with SPx（+0x280）から `irq_handler`
   （`kernel/vectors.S`）に届く。`irq_handler` は x0–x30 と NZCV を保存して
-  機械漢文ハンドラ `irq_dispatch`（`kernel/kernel.txt`）を呼び、復帰時に
+  機械漢文ハンドラ `irq_dispatch`（`kernel/kernel.mkn`）を呼び、復帰時に
   すべて復元して `eret` する。
 - 例外入口は `PSTATE.DAIF` の I ビットを立てるため、ハンドラ実行中は割込が
   入れ子にならない。`開割込`（`local_irq_enable`）で明示的に I を落とし、
@@ -105,7 +105,7 @@
 - `svc #0` で EL0 から EL1 へ遷移する。下位EL同期ベクタ（オフセット `0x400`）
   の `lower_sync_handler`（`kernel/el0.S`）が 288 バイトの保存フレームを作る
   （`x0`–`x30`、NZCV、`ELR_EL1`、`SPSR_EL1`、`SP_EL0`）。`ESR_EL1` とフレームへの
-  ポインタを `svc_dispatch`（`kernel/kernel.txt`）に渡す。
+  ポインタを `svc_dispatch`（`kernel/kernel.mkn`）に渡す。
 - `svc_dispatch` は復歸先フレームへのポインタを返す。フレームは**行程ごとの核棧**
   （64 KiB、`核棧基` 0x40320000 から）上にあり、`el0.S` は返されたアドレスへ
   `SP_EL1`（EL1h の `sp`）を切り替えてから復歸する。これによりハンドラは別の行程の
@@ -238,6 +238,14 @@
   | 159 | レコード切詰 | `x0`=記述子, `x1`=size | 0／`-EBADF`・`-ENODATA`・`-ETXTBSY`・`-ENOEXEC`（リンク）・`-EINVAL`。`trc_rec` |
   | 160 | レコードロック | `x0`=記述子, `x1`=mode（0=解除, 1=F_LOCK, 2=F_TSLOCK, 3=F_CKLOCK） | 0／`-EBADF`・`-ENODATA`・`-ETXTBSY`・`-EMFILE`（別のレコードを既にロック）・`-EINVAL`。`loc_rec`。F_LOCK は待たない |
   | 161 | ファイル交換 | `x0`=記述子 1, `x1`=記述子 2 | 0／`-EBADF`・`-EINVAL`（同じファイル）・`-EXDEV`（ER_XFS）・`-ETXTBSY`。`xch_fil` |
+  | 163 | ファイル検査 | `x0`=LINK, `x1`=mode（0=F_EXIST, 1=E, 2=W, 4=R, 8=F_PASWD）, `x2`=パスワード（NULL 可） | mode=0 は情報の欄（ビット 0〜2=呼出側の E・W・R, 3=パスワード有り, 4〜7=O・P・A・B）、それ以外は 0／`-EACCES`・`-ENOKEY`（ER_PWD）・`-EROFS`・`-ENOENT`・`-EINVAL`・`-EFAULT`。`chk_fil` |
+  | 164 | アクセス変更 | `x0`=LINK, `x1`=A_MODE（8 B: 所有者, グループ番号, グループ, 公開。各欄 0x8000 は変更なし） | 0／`-EACCES`・`-EROFS`・`-EINVAL`・`-EFAULT`。`chg_fmd` |
+  | 165 | 属性変更 | `x0`=LINK, `x1`=1〜8（SETRONLY, RSTRONLY, SETPERM, RSTPERM, SETA1, RSTA1, SETA2, RSTA2） | 0／`-EACCES`・`-EROFS`・`-EINVAL`。`chg_fat` |
+  | 166 | パスワード変更 | `x0`=記述子, `x1`=パスワード（TC, 20 文字まで。NULL で解除） | 0／`-EBADF`・`-EACCES`・`-EROFS`・`-EINVAL`・`-EFAULT`。`chg_fpw` |
+  | 167 | 名前変更 | `x0`=LINK, `x1`=名前（TC） | 0／`-EACCES`（空・不正な名前も）・`-EPERM`（削除禁止）・`-EROFS`・`-ENOENT`。`chg_fnm` |
+  | 168 | 時刻変更 | `x0`=LINK, `x1`=F_TIME（12 B: 保存期限, 参照, 更新。NULL は全て現在, 0 は変更なし） | 0／`-EACCES`・`-EROFS`・`-EFAULT`。`chg_ftm` |
+  | 169 | 既定モード取得 | `x0`=DA_MODE の書き先（12 B） | 0／`-EFAULT`。`get_dfm` |
+  | 170 | 既定モード設定 | `x0`=DA_MODE（12 B: 所有者, グループ×4, 公開） | 0／`-EINVAL`・`-EFAULT`。`set_dfm` |
   | 176 | 時刻取 | `x0`=STIME の書き先（窓内の書込可能な 4 B）, `x1`=TIMEZONE の書き先（12 B） | 0／`-EFAULT`。QEMU virt の PL031 RTC を 1985-01-01 起点の秒数に換算。`get_tim` |
   | 177 | 複写出 | `x0`=宛（書込可能な窓内）, `x1`=元（窓内）, `x2`=長（`令長限` 以下） | 0／`-EFAULT`（何も書かない）。構造体を民へ返すときの複製検査の共通部品（互換層が作業域で組み立てて呼ぶ） |
   | 178 | 時刻設 | `x0`=STIME（0 なら変えない）, `x1`=TIMEZONE（0 なら変えない。12 B） | 0／`-EACCES`（利用者レベルが 0 でない）・`-EINVAL`（adjust が ±43200、dst_adj が ±720 の外）・`-EFAULT`。検査を終えてから書く。`set_tim` |

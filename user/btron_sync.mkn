@@ -5,13 +5,13 @@
 註   C=セマフォ待ちの 1 番手 (11)           D=セマフォ待ちの 2 番手 (12)
 註   T=75 ms だけセマフォを待ち ER_NONE なら 1   X=削除を待ち ER_DLT なら 1
 註   E=DELEXIT のセマフォを作って ID を SY へ置き終わる   F=排他セマフォを取ったまま終わる
-註 @取込 lib.txt
-註 @取込 btron/types.txt
-註 @取込 btron/er.txt
-註 @取込 btron/proc.txt
-註 @取込 btron/msg.txt
-註 @取込 btron/gname.txt
-註 @取込 btron/sync.txt
+註 @取込 lib.mkn
+註 @取込 btron/types.mkn
+註 @取込 btron/er.mkn
+註 @取込 btron/proc.mkn
+註 @取込 btron/msg.mkn
+註 @取込 btron/gname.mkn
+註 @取込 btron/sync.mkn
 
 常「緩名」之無符六四 為 0x40700000    註 名前 "SY" (TC)
 常「緩値」之無符六四 為 0x40700100    註 get_nam の書き先

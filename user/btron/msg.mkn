@@ -1,4 +1,4 @@
-註 BTRON3 互換層 1.2 メッセージ管理の基本部 (docs/compat/btron3-os.md §1.2)。要: lib.txt、btron/types.txt、btron/er.txt を先に取込む。
+註 BTRON3 互換層 1.2 メッセージ管理の基本部 (docs/compat/btron3-os.md §1.2)。要: lib.mkn、btron/types.mkn、btron/er.mkn を先に取込む。
 註 MESSAGE = {W msg_type; W msg_size; UB msg_body[32]} (40 B)。ハンドラ・タイムアウト・CONFM・WAIEVT・CHECK は未実装。
 
 常「MS_ABORT」之無符六四 為 1

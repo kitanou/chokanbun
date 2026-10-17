@@ -1,4 +1,4 @@
-註 BTRON3 互換層 1.4 グローバル名管理 (docs/compat/btron3-os.md §1.4)。要: lib.txt、btron/types.txt、btron/er.txt を先に取込む。
+註 BTRON3 互換層 1.4 グローバル名管理 (docs/compat/btron3-os.md §1.4)。要: lib.mkn、btron/types.mkn、btron/er.mkn を先に取込む。
 註 名前は TC (16 ビット) 配列で TNULL 終端、先頭 8 文字だけが使われる (8 文字を超える部分は無視される)。
 註 W の引数は上位 32 ビットが不定なので、値と指定は下位 32 ビットだけを核へ渡す。
 

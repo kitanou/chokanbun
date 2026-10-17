@@ -7,7 +7,7 @@
  *   0x000: UARTDR (data register)
  *   0x018: UARTFR (flag register) - bit 5 = TX FIFO full
  *
- * The symbol name matches the 外術曰 declaration in tests/uart.txt so that
+ * The symbol name matches the 外術曰 declaration in tests/uart.mkn so that
  * the machine-kanbun caller 核外輸出 resolves at link time.
  */
 

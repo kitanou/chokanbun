@@ -1,9 +1,9 @@
 註 外部命令「識試」。BTRON3 互換層 G0 の試験: get_tid が漢令 識別 と一致すること、ER_* の値と錯換の対応、共有データ編 第1章の H・Bool・SIZE・PNT・RECT を確かめる。
 註 各行は「識試 <題> 」の後に 1 (成功) か 0 (失敗) を 16 進で出す。終了コードは失敗数。
-註 @取込 lib.txt
-註 @取込 btron/types.txt
-註 @取込 btron/er.txt
-註 @取込 btron/proc.txt
+註 @取込 lib.mkn
+註 @取込 btron/types.mkn
+註 @取込 btron/er.mkn
+註 @取込 btron/proc.mkn
 
 術曰「負値」 受「数」之無符六四 返 無符六四
     歸 0 減 数

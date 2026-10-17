@@ -8,7 +8,7 @@
 
 - 要求は原文を独自に要約したもの。原文取得時に日本語が文字化けした箇所があり、**パラメータの細部・エラーコードの割当・一部の節は未確認**。各節の末尾に「要確認」を残した。適合判定の前に原文との突き合わせが必要。
 - 本書は適合を主張しない。状態は「未実装」＝**BTRON3 の API として呼べるものが無い**ことを指す。機能の一部が別形式で既にある場合は「部分適合（機能のみ）」と書くが、API・ABI が違うので適合確認済みへ進む根拠にはならない。
-- 既存実装の根拠: `docs/abi-aarch64.md`、`docs/design-process-exec.md`、`kernel/proc/`、`kernel/vfs/`、`kernel/kernel.txt`。
+- 既存実装の根拠: `docs/abi-aarch64.md`、`docs/design-process-exec.md`、`kernel/proc/`、`kernel/vfs/`、`kernel/kernel.mkn`。
 
 ## 0. 全体の差分（ABI と呼び出し規約）
 
@@ -35,18 +35,18 @@
 
 | API | 要点 | 既存実装との対応 | 状態 |
 |---|---|---|---|
-| `cre_prc` | 子行程の生成（ファイル・優先度・メッセージ） | `user/btron/msg.txt` の `BTRON生行程`（暫定）→ 漢令 64。`LINK` の代わりに典籍名と引数文字列。優先度・初期メッセージは未対応 | 部分適合（`LINK`・優先度・初期メッセージ未対応） |
+| `cre_prc` | 子行程の生成（ファイル・優先度・メッセージ） | `user/btron/msg.mkn` の `BTRON生行程`（暫定）→ 漢令 64。`LINK` の代わりに典籍名と引数文字列。優先度・初期メッセージは未対応 | 部分適合（`LINK`・優先度・初期メッセージ未対応） |
 | `ext_prc` | 通常終了＋終了コード通知 | `ext_prc` → 漢令 終行程。BTRON3 流の子は親へ `MS_EXIT {pid, code}` が届き、枠が即解放される（試験 `信試`） | 部分適合（終了時の資源解放は柄・名前・キューのみ。`DELEXIT` 無しの共有メモリ等は未対応） |
-| `ter_prc` | 他行程の強制終了（`TERM_NRM`/`TERM_ALL`） | `user/btron/proc.txt` → 漢令 強終 68（`kernel/proc/term.txt`）。`ER_SELF`/`ER_NOPRC`/`ER_LEVEL`/`ER_PAR`、MS_TERM は対象の分だけ、TERM_ALL は子孫を深い順に終える | 実装済・未検証 |
+| `ter_prc` | 他行程の強制終了（`TERM_NRM`/`TERM_ALL`） | `user/btron/proc.mkn` → 漢令 強終 68（`kernel/proc/term.mkn`）。`ER_SELF`/`ER_NOPRC`/`ER_LEVEL`/`ER_PAR`、MS_TERM は対象の分だけ、TERM_ALL は子孫を深い順に終える | 実装済・未検証 |
 | `chg_pri` | 優先度変更（`P_ABS`/`P_REL`/`P_TASK`） | 優先度の概念なし（ラウンドロビン） | 未実装 |
 | `prc_sts` | 行程状態の取得 | 漢令 行程状 69。state は P_RUN/P_READY/P_WAIT、優先度は 128 固定、名前は空 | 部分適合（優先度・名前が実質無い） |
-| `get_usr` | 利用者情報の取得（pid 0 / -1 / 正） | `user/btron/proc.txt` → 漢令 利用者取 66（`kernel/proc/user.txt`）。起動時の値は root・level 0・net_level 1 | 実装済・未検証 |
+| `get_usr` | 利用者情報の取得（pid 0 / -1 / 正） | `user/btron/proc.mkn` → 漢令 利用者取 66（`kernel/proc/user.mkn`）。起動時の値は root・level 0・net_level 1 | 実装済・未検証 |
 | `chg_usr` | 自分の利用者情報の変更 | 漢令 利用者変 67。範囲検査、level を小さくできるのは level 0 の行程だけ | 実装済・未検証 |
 | `get_inf` | 行程統計 | なし（`頁残` 番31 が診断用の空き頁数のみ） | 未実装 |
 | `cre_tsk` / `ext_tsk` / `ter_tsk` | 副タスク | なし（行程のみ） | 未実装 |
 | `slp_tsk` / `wup_tsk` / `can_wup` | 眠り・起床・起床要求の取消 | `待機`（番8）は刻数まで眠るのみ。他者からの起床なし | 部分適合（機能のみ） |
 | `dly_tsk` | 遅延（0 は譲渡） | `待機`、`譲渡`（番5） | 部分適合（機能のみ） |
-| `get_tid` | 自タスク ID | `user/btron/proc.txt` の `get_tid`（`識別` 番21 に写す）。試験 `識試` で識別との一致と正値を確認 | 実装済・未検証（試験は QEMU 上の 2 項目のみ。副タスク・エラー規定なし） |
+| `get_tid` | 自タスク ID | `user/btron/proc.mkn` の `get_tid`（`識別` 番21 に写す）。試験 `識試` で識別との一致と正値を確認 | 実装済・未検証（試験は QEMU 上の 2 項目のみ。副タスク・エラー規定なし） |
 
 **その他の差分**: 状態の名称・遷移は概ね対応（空・実行可能・待機・子待ち・終了済み未回収）するが、BTRON3 に「ゾンビ」はなく、終了通知はメッセージ。親の付け替えは設計済み（`design-process-exec.md` §4: init へ付け替え）で方向は一致するが「祖父へ」か「init へ」かの差は**要確認**。優先度群 A/B/C のスケジューラは未設計。
 **G5 の選択（実装依存・解釈）と要確認**（`ter_prc`/`prc_sts`）:
@@ -74,7 +74,7 @@
 
 | API | 要点 | 既存実装 | 状態 |
 |---|---|---|---|
-| `snd_msg` | 送信（`WAIT`/`NOWAIT`、宛先 pid / 0 / -1） | `user/btron/msg.txt` → 漢令 信送 80（`kernel/proc/msg.txt`）。8 件のキュー、満杯で WAIT は眠る。`CONFM` は `ER_PAR`（未対応） | 部分適合（`CONFM` 未実装） |
+| `snd_msg` | 送信（`WAIT`/`NOWAIT`、宛先 pid / 0 / -1） | `user/btron/msg.mkn` → 漢令 信送 80（`kernel/proc/msg.mkn`）。8 件のキュー、満杯で WAIT は眠る。`CONFM` は `ER_PAR`（未対応） | 部分適合（`CONFM` 未実装） |
 | `rcv_msg` | 受信（型マスク、`NOWAIT`/`NOCLR`） | 漢令 信受 81。最古の該当を返す。`WAIEVT`/`CHECK` は `ER_PAR`（未対応） | 部分適合（`WAIEVT`/`CHECK` 未実装） |
 | `clr_msg` | 消去 | 漢令 信消 82 | 実装済・未検証 |
 | `req_tmg` / `can_tmg` | タイムアウトメッセージ | なし | 未実装 |
@@ -99,9 +99,9 @@
 
 | API 群 | 既存実装 | 状態 |
 |---|---|---|
-| `cre_sem` `del_sem` `sig_sem` `wai_sem` | セマフォ（同期型・排他型、FIFO、時間切れ、DELEXIT） | `user/btron/sync.txt` → 漢令 96〜99（`kernel/proc/sync.txt`）。ID は 種・世代・枠を含む正の値。排他セマフォは持主の終了で自動的に次へ渡る。試験 `同試` | 実装済・未検証 |
+| `cre_sem` `del_sem` `sig_sem` `wai_sem` | セマフォ（同期型・排他型、FIFO、時間切れ、DELEXIT） | `user/btron/sync.mkn` → 漢令 96〜99（`kernel/proc/sync.mkn`）。ID は 種・世代・枠を含む正の値。排他セマフォは持主の終了で自動的に次へ渡る。試験 `同試` | 実装済・未検証 |
 | `cre_flg` `del_flg` `set_flg` `clr_flg` `wai_flg` | イベントフラグ（AND/OR 待ち、NOCLR） | 漢令 100〜104 | 実装済・未検証 |
-| `cre_mbf` `del_mbf` `snd_mbf` `rcv_mbf` | メッセージバッファ（総量・最大・環状・待ち） | `user/btron/sync.txt` → 漢令 105〜108（`kernel/proc/sync2.txt`）。`bufsz`=0（直接渡し）は `ER_PAR`（未対応） | 部分適合（`bufsz`=0 未対応） |
+| `cre_mbf` `del_mbf` `snd_mbf` `rcv_mbf` | メッセージバッファ（総量・最大・環状・待ち） | `user/btron/sync.mkn` → 漢令 105〜108（`kernel/proc/sync2.mkn`）。`bufsz`=0（直接渡し）は `ER_PAR`（未対応） | 部分適合（`bufsz`=0 未対応） |
 | `cre_por` `del_por` `cal_por` `acp_por` `fwd_por` `rpl_rdv` | ランデブポート（呼出・受付・返答・転送） | 漢令 109〜111・115〜117。記録 8 件、呼出と返答は 128 B まで。試験 `緩試` | 実装済・未検証 |
 
 **方針メモ**: 核は非プリエンプティブで、ブロックは「状態を変えて `排程` へ」「起床時に再試行」（`design-process-exec.md` §3）。この方式で待ち行列を載せられる。
@@ -128,9 +128,9 @@
 
 | API | 要点 | 既存実装 | 状態 |
 |---|---|---|---|
-| `cre_nam` | `N_CREATE`/`N_MODIFY`/`N_FORCE`（＋`DELEXIT`）。`ER_EXS`/`ER_NOEXS`/`ER_NOSPC`/`ER_PAR`/`ER_ADR` | `user/btron/gname.txt` → 漢令 名作 112（`kernel/proc/gname.txt`）。試験 `名試` 21 項目 | 実装済・未検証 |
-| `del_nam` | 削除 | `user/btron/gname.txt` → 漢令 名削 113（`kernel/proc/gname.txt`）。試験 `名試` 21 項目 | 実装済・未検証 |
-| `get_nam` | 値の取得 | `user/btron/gname.txt` → 漢令 名取 114（`kernel/proc/gname.txt`）。試験 `名試` 21 項目 | 実装済・未検証 |
+| `cre_nam` | `N_CREATE`/`N_MODIFY`/`N_FORCE`（＋`DELEXIT`）。`ER_EXS`/`ER_NOEXS`/`ER_NOSPC`/`ER_PAR`/`ER_ADR` | `user/btron/gname.mkn` → 漢令 名作 112（`kernel/proc/gname.mkn`）。試験 `名試` 21 項目 | 実装済・未検証 |
+| `del_nam` | 削除 | `user/btron/gname.mkn` → 漢令 名削 113（`kernel/proc/gname.mkn`）。試験 `名試` 21 項目 | 実装済・未検証 |
+| `get_nam` | 値の取得 | `user/btron/gname.mkn` → 漢令 名取 114（`kernel/proc/gname.mkn`）。試験 `名試` 21 項目 | 実装済・未検証 |
 
 **G1 の選択（実装依存・解釈）**: 名前は先頭 8 文字だけを使う（9 文字目以降は無視、原文に誤りの規定なし）。値は下位 32 ビットを保持。表は 16 件。`DELEXIT` は指定した行程を持ち主にし（指定が無い変更では持ち主を変えない）、持ち主の終了で削る — 「作成または最後に変更した行程」の読み方に幅があるため**要確認**。
 
@@ -162,12 +162,12 @@
 
 | API 群 | 含まれる API | 既存実装 | 状態 |
 |---|---|---|---|
-| 参照 | `get_lnk` `chg_wrk` | `user/btron/file.txt` → 漢令 136・137（`kernel/file/btron.txt`）。接続名・相対・TC_FOWN・出現番号・F_BASED・F_DIRECT。試験 `録試` | 実装済・未検証 |
+| 参照 | `get_lnk` `chg_wrk` | `user/btron/file.mkn` → 漢令 136・137（`kernel/file/btron.mkn`）。接続名・相対・TC_FOWN・出現番号・F_BASED・F_DIRECT。試験 `録試` | 実装済・未検証 |
 | 作成・削除 | `cre_fil` `cre_lnk` `del_fil`（実装）、`gen_fil`（未実装） | 漢令 144・145・146。`lnk` は親、`cre_fil` は新しい LINK を返し F_UPDATE で開いた記述子を返す。`opt` は F_FLOAT・F_FIX のみ、`A_MODE` は NULL のみ。`del_fil` は開いている・作業ファイル・削除禁止・ルートを拒み、リンクを含む／他のリンクが残るファイルは force=0 で `ER_REC`。試験 `録試` | 部分適合（`gen_fil`・F_FILEID・A_MODE が未対応。解釈は設計書 §12） |
 | 開閉 | `opn_fil` `cls_fil` | 漢令 147・148。録層専用の開表（16 件）。F_READ/F_WRITE/F_UPDATE、F_EXCL・F_WEXCL は別の行程との衝突で `ER_BUSY`、読取専用の FS・属性は書込で `ER_RONLY`。行程の終了で自動的に閉じる。パスワードは検査しない（B4）。試験 `録試` | 実装済・未検証（既存の `開`/`閉` は典籍用で別） |
 | レコード操作 | `see_rec` `fnd_rec` `rea_rec` `wri_rec` `ins_rec` `apd_rec` `del_rec` `trc_rec`（実装）、`fnd_lnk`（未実装） | 漢令 152〜159。ファイル本文は頁 1 枚（4 KiB）にレコードを詰めたもの。現在レコードは記述子ごと、終端レコード（番号 = 数）あり。リンクレコードは LINK 全体を読み、属性（LINK の +42〜）だけ書ける。他の記述子の挿入・削除で番号がずれても現在レコード・ロックを直す。`F_FWD`・`F_NFWD` だけ。`units` は無視。試験 `録試` | 部分適合（`fnd_lnk`・`F_BWD` 系・`wri_rec` の `units` が未対応。現在レコードの扱いは設計書 §12） |
 | ロック・交換 | `loc_rec` `xch_fil` | 漢令 160・161。ロックは記述子ごとに 1 件、`F_LOCK` は待たない（`F_TSLOCK` と同じ）。`xch_fil` は本文とレコード数を入れ替え、時刻は入れ替えない。試験 `録試`（行程をまたぐロックを含む） | 部分適合（待ち・複数ロック・別 FS 間の `ER_XFS` の試験が無い） |
-| 検査・属性 | `chk_fil` `chg_fmd` `chg_fat` `chg_fpw` `chg_fnm` `chg_ftm` `get_dfm` `set_dfm` | なし | 未実装 |
+| 検査・属性 | `chk_fil` `chg_fmd` `chg_fat` `chg_fpw` `chg_fnm` `chg_ftm` `get_dfm` `set_dfm` | 漢令 163〜170。所有者・グループ・公開のアクセス判定（利用者レベル 0 は常に可、グループ・公開は「許す最大レベル」）を `opn_fil`・`cre_fil`・`cre_lnk`・`del_fil` に適用。パスワードはハッシュで保存し `opn_fil`・`chk_fil(F_PASWD)` で照合。属性（書込禁止・削除禁止・アプリ属性 1/2）、名前・時刻の変更、行程ごとの既定アクセスモード。試験 `録試` | 部分適合（`A_MODE`/`DA_MODE` の並びと `chg_fnm`・`get_dfm`/`set_dfm` の細部が要確認。アクセス管理レベル 1 は 2 と同じ扱い） |
 | 状態・リンク | `fil_sts` `ofl_sts`（実装）、`lnk_sts` `syn_lnk` `get_nlk`（未実装） | 漢令 149・150。F_STATE（68 B）と名前（40 B）を書き参照数を返す。F_LOCATE は NULL のみ。試験 `録試` | 部分適合（F_STATE の整列と F_LOCATE が要確認） |
 | ファイルシステム | `att_fls` `det_fls` `lst_fls` `fls_sts`（実装）、`syn_fls` `chg_fls` `chg_fsm`（未実装） | 漢令 128〜131。装置は RAM（起動時に接続）と SYS（読取専用、未接続） | 部分適合 |
 | 写像 | `map_rec` `ump_rec` | なし | 未実装 |
@@ -208,10 +208,10 @@
 
 | API | 要点 | 既存実装 | 状態 |
 |---|---|---|---|
-| `get_tim` | 時刻と時刻帯の取得 | `user/btron/clk.txt` → 漢令 時刻取 176（PL031 RTC）。時刻帯は設定手段が無く常に 0 | 実装済・未検証 |
-| `get_tod` | 日時構造体への変換 | `user/btron/clk.txt`（暦の計算は民側、構造体は漢令 複写出 177 で検査付きに返す）。試験 `時試` 11 項目 | 実装済・未検証 |
-| `set_tim` | 時刻・時刻帯の設定（利用者レベル 0 のみ） | `user/btron/clk.txt` → 漢令 時刻設 178（PL031 の RTCLR）。`ER_ACCES`・`ER_ADR`・`ER_PAR`、検査後に書く | 実装済・未検証 |
-| `set_tod` | 日時構造体からの設定・変換 | `user/btron/clk.txt`（暦の逆変換は民側）。`time` を渡すと変換だけ（権限不要）、NULL なら設定（レベル 0 のみ） | 実装済・未検証 |
+| `get_tim` | 時刻と時刻帯の取得 | `user/btron/clk.mkn` → 漢令 時刻取 176（PL031 RTC）。時刻帯は設定手段が無く常に 0 | 実装済・未検証 |
+| `get_tod` | 日時構造体への変換 | `user/btron/clk.mkn`（暦の計算は民側、構造体は漢令 複写出 177 で検査付きに返す）。試験 `時試` 11 項目 | 実装済・未検証 |
+| `set_tim` | 時刻・時刻帯の設定（利用者レベル 0 のみ） | `user/btron/clk.mkn` → 漢令 時刻設 178（PL031 の RTCLR）。`ER_ACCES`・`ER_ADR`・`ER_PAR`、検査後に書く | 実装済・未検証 |
+| `set_tod` | 日時構造体からの設定・変換 | `user/btron/clk.mkn`（暦の逆変換は民側）。`time` を渡すと変換だけ（権限不要）、NULL なら設定（レベル 0 のみ） | 実装済・未検証 |
 
 **G2 の選択（実装依存・解釈）**: `get_tod` は `time`=0 を現在時刻、`local` が 0 以外を時刻帯適用と読む（原文に明記なし、**要確認**）。週番号は日曜始まりで 1 月 1 日を含む週を第 1 週とする。1985 年より前の時刻も 400 年ずらした暦計算で扱う。
 **要確認**: ずれの符号の向き（原文要約では「減算」）、`DATE_TIM` の各項目の範囲検査。
@@ -250,6 +250,6 @@
 ## 未解決の確認事項
 
 - 原文の文字化け箇所（`P_INFO`、`rcv_mbf` 末尾、`get_nam` の戻り動作、タイムアウト単位）を原文ページで直接確認する。
-- `ER_*` の数値は **規範ページに規定が無いことを確認した**（G0）。実装依存として `(eclass<<16)|detail`、eclass=-1 を選び、`user/btron/er.txt` に理由を記録した。`T_FOREVER` など他の定数値は各節の定数定義で引き続き確認する。
-- 基本データタイプ（B/H/W/UB/UH/UW/ID/MSEC/STIME/TC/ERR/WERR）の幅は共有データ編 第1章で確認済み（`user/btron/types.txt`）。
+- `ER_*` の数値は **規範ページに規定が無いことを確認した**（G0）。実装依存として `(eclass<<16)|detail`、eclass=-1 を選び、`user/btron/er.mkn` に理由を記録した。`T_FOREVER` など他の定数値は各節の定数定義で引き続き確認する。
+- 基本データタイプ（B/H/W/UB/UH/UW/ID/MSEC/STIME/TC/ERR/WERR）の幅は共有データ編 第1章で確認済み（`user/btron/types.mkn`）。
 - 副タスクを持つか（`cre_tsk` 系）。持たない場合は「非適合／未対応」として理由を記録する必要がある。

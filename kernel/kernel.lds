@@ -1,7 +1,7 @@
 /* Linker script for the Chokanbun kernel (QEMU virt / AArch64, EL1).
  *
  * RAM starts at 0x40000000 on QEMU virt.  The kernel is laid out across the
- * 2 MiB translation blocks described in kernel/kernel.txt (設頁表):
+ * 2 MiB translation blocks described in kernel/kernel.mkn (設頁表):
  *
  *   0x40000000  .text/.vectors/.rodata  EL1 RO+exec, EL0 RO+exec (user code)
  *   0x40200000  .data/.bss/kernel stack EL1 RW, EL0 no access

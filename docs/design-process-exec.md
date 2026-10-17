@@ -71,7 +71,7 @@
 | 16 | bss の開始の仮想アドレス（u64） |
 | 24 | bss の終端の仮想アドレス（u64） |
 
-- 生成（**実装済み**）: `tools/mkimage.sh` が、機械漢文のコマンド（`user/*.txt`。`註 @取込 lib.txt` で `user/lib.txt` を取り込む）を
+- 生成（**実装済み**）: `tools/mkimage.sh` が、機械漢文のコマンド（`user/*.mkn`。`註 @取込 lib.mkn` で `user/lib.mkn` を取り込む）を
   `chokanbun` → LLVM IR → `llc` → `ld.lld`（`user/user.lds`、基底 `0x40610000`）→ `llvm-objcopy -O binary` の順に漢像にする。
   入口と `svc_call` は `user/crt0.S`（`_start` が `user_main(x0=引数, x1=長さ)` を呼び、戻り値で `終行程` を発行する）。
 - 配置（**実装での変更**）: `tools/gen-images.sh` が漢像を `.incbin` でカーネルイメージの `.rodata.images`（EL0 から読める

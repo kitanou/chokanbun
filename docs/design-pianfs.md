@@ -1,6 +1,6 @@
 # 設計: 篇藏（PianCang）v0.1
 
-状態: **F0〜F3 実装済み**（F4 索・標、F5 永続化は未着手）。Issue #6「漢文シェル・VFS・POSIXサブセットを段階実装」の「設計：篇藏 v0.1」にあたる。実装は `kernel/vfs/pian.txt`・`kernel/vfs/handle.txt`、試験は外部命令 `篇試`（`user/pian_test.txt`）。実装で決めたことは §13。
+状態: **F0〜F3 実装済み**（F4 索・標、F5 永続化は未着手）。Issue #6「漢文シェル・VFS・POSIXサブセットを段階実装」の「設計：篇藏 v0.1」にあたる。実装は `kernel/vfs/pian.mkn`・`kernel/vfs/handle.mkn`、試験は外部命令 `篇試`（`user/pian_test.mkn`）。実装で決めたことは §13。
 関連: [shell-commands.md](shell-commands.md)（現在の典籍）、[design-process-exec.md](design-process-exec.md)（柄表・開表）、
 [abi-aarch64.md](abi-aarch64.md)、[posix-compat.md](posix-compat.md)
 

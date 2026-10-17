@@ -38,7 +38,7 @@
 
 | § | 項目 | 参照 | 関連する既存実装 | 差分 | 試験方法 | 状態 |
 |---|---|---|---|---|---|---|
-| 1 | 基本データタイプ | data_type.html | 言語仕様の整数型、`user/btron/types.txt` | 一部のみ照合（[詳細](btron3-shared-data.md)） | 型幅・符号・順序の単体試験 | 部分適合（浮動小数点・`ErrCode` 二定義が未対応。`SIZE`/`PNT`/`RECT`/`Bool` は実装済・未検証） |
+| 1 | 基本データタイプ | data_type.html | 言語仕様の整数型、`user/btron/types.mkn` | 一部のみ照合（[詳細](btron3-shared-data.md)） | 型幅・符号・順序の単体試験 | 部分適合（浮動小数点・`ErrCode` 二定義が未対応。`SIZE`/`PNT`/`RECT`/`Bool` は実装済・未検証） |
 | 2.1 | TRON 標準コードの概要（多国語、文字セット、書体セット） | tron_code.html#aat | 内部は漢字文字列（UTF-8 想定） | 未照合（[詳細](btron3-shared-data.md)） | — | 未実装 |
 | 2.2 | 既存コード体系との関連（JIS X 0201 / 0208） | tron_code.html#aax | なし | 未照合（[詳細](btron3-shared-data.md)） | 変換表の往復試験 | 未実装 |
 | 2.3 | TRON 標準文字コード | tron_code.html#aba | なし | 未照合（[詳細](btron3-shared-data.md)） | テストベクトル | 未実装 |
@@ -66,9 +66,9 @@
 | 1.1 | プロセス／タスク管理（状態、優先度、スケジューリング、ユーザー情報、生成、定数、システムコール） | kernel/proc.html | `kernel/proc/`、協調+タイマープリエンプション | 部分適合（機能のみ・API不一致、[詳細](btron3-os.md)） |
 | 1.2 | メッセージ管理（メッセージ、ハンドラ、システムコール） | kernel/message.html | なし | 部分適合（基本部のみ、[詳細](btron3-os.md)） |
 | 1.3 | プロセス／タスク同期通信管理 | kernel/taskcomm.html | なし | 部分適合（`bufsz`=0 のみ未対応、[詳細](btron3-os.md)） |
-| 1.4 | グローバル名管理 | kernel/gname.html | `kernel/proc/gname.txt`、`user/btron/gname.txt` | 実装済・未検証（[詳細](btron3-os.md)） |
+| 1.4 | グローバル名管理 | kernel/gname.html | `kernel/proc/gname.mkn`、`user/btron/gname.mkn` | 実装済・未検証（[詳細](btron3-os.md)） |
 | 1.5 | メモリ管理（概要、定数、システムコール、ライブラリ） | kernel/memory.html | 頁池・MMU | 部分適合（機能のみ・API不一致、[詳細](btron3-os.md)） |
-| 1.6 | ファイル管理（構成、構造、アクセス制御、操作、詳細情報、システムコール） | kernel/file.html | `kernel/vfs/`、篇藏設計 | 部分適合（B1〜B3 実装済・未検証。属性・アクセス制御・写像・`gen_fil`・`fnd_lnk` が未実装、[詳細](btron3-os.md)） |
+| 1.6 | ファイル管理（構成、構造、アクセス制御、操作、詳細情報、システムコール） | kernel/file.html | `kernel/vfs/`、篇藏設計 | 部分適合（B1〜B4 実装済・未検証。写像・`gen_fil`・`fnd_lnk`・`lnk_sts`/`syn_lnk`/`get_nlk` が未実装、[詳細](btron3-os.md)） |
 | 1.7 | イベント管理（イベント、キーボード、ポインティングデバイス） | kernel/event.html | UART RX のみ | 未実装（[詳細](btron3-os.md)） |
 | 1.8 | デバイス管理 | kernel/device.html | UART/タイマー/GIC の個別実装 | 未実装（[詳細](btron3-os.md)） |
 | 1.9 | 時計管理 | kernel/clk.html | 汎用タイマー | 部分適合（取得系のみ、[詳細](btron3-os.md)） |
@@ -117,8 +117,8 @@ API 一覧: [btron3-api-inventory.md](btron3-api-inventory.md)（約 247 関数�
 | 第2編 第3章 シェル | 11 節・約 247 関数 | 0 | 0 | 0 | 11 節 | 0 |
 
 - 節単位の状態は最も低い API に引きずられるため、実質の進捗は第1章の API 単位表（[btron3-os.md](btron3-os.md)）で見る。
-- **適合確認済は 0**。合否基準と既存試験の対応は [btron3-test-plan.md](btron3-test-plan.md)（互換層の QEMU 試験 9 種・220 項目を規範項目に紐付け済み）。
-- 1.6 は篇藏 F0〜F3 と録層 B3（作成・削除・開閉・状態・レコード操作・ロック。`gen_fil`・`fnd_lnk` を除く）まで実装済み。B4（属性・アクセス制御）が次。
+- **適合確認済は 0**。合否基準と既存試験の対応は [btron3-test-plan.md](btron3-test-plan.md)（互換層の QEMU 試験 9 種・230 項目を規範項目に紐付け済み）。
+- 1.6 は篇藏 F0〜F3 と録層 B4（作成・削除・開閉・状態・レコード操作・ロック・属性・アクセス制御・パスワード。`gen_fil`・`fnd_lnk` を除く）まで実装済み。B5（`SYS` FS と `cre_prc` の `LINK` 版）が次。
 
 ## 次の作業（Phase 0 の残り）
 
