@@ -48,7 +48,7 @@ test: $(BIN)
 
 run: test
 	@echo "=== Running QEMU (漢極 kernel) ==="
-	qemu-system-aarch64 -M virt -cpu cortex-a57 -nographic -serial stdio \
+	qemu-system-aarch64 -M virt,gic-version=2 -cpu cortex-a57 -nographic -serial stdio \
 		-kernel tests/output/kernel.elf
 
 clean:

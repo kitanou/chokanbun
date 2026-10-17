@@ -41,10 +41,10 @@ LLVM ツールは既定で `/opt/homebrew/opt/llvm/bin` と `/opt/homebrew/opt/l
 1. `hello` — 機械漢文 → LLVM IR → AArch64オブジェクト（逆アセンブル確認）
 2. `uart` — `取址`/`長度` と `外術曰` 呼び出し → ELF リンク（C 版 UART スタブと結合）
 3. `uart_mmio` — **機械漢文のみで記述した PL011 ドライバ**（`險`/`項`/`讀揮發`/`寫揮發`）→ ELF リンク
-4. `kernel` — `kernel/` の漢極（例外ベクタ・例外ハンドラ・MMU・物理ページ割当）→ ELF リンク（`_vectors` の 2KiB 整列も検証）
+4. `kernel` — `kernel/` の漢極（例外ベクタ・例外ハンドラ・MMU・物理ページ割当・GIC/タイマー）→ ELF リンク（`_vectors` の 2KiB 整列も検証）
 5. `type_error` — 型不一致の診断（`E00xx`）が出ること
 6. `qemu` — QEMU `virt` 上で機械漢文ドライバが PL011 に **世界安寧** を出力すること
-7. `kernel qemu` — QEMU `virt` 上で漢極が **超漢文起動**・**異常捕獲（BRK 診断）**・**記憶管理有効（MMU）**・**物理ページ割当** を出力すること
+7. `kernel qemu` — QEMU `virt,gic-version=2` 上で漢極が **超漢文起動**・**異常捕獲（BRK 診断）**・**記憶管理有効（MMU）**・**物理ページ割当**・**タイマー割込（GICv2）** を出力すること
 
 ## 開発状況
 Phase 0 完了。機械漢文コンパイラがビルド・テスト可能で、
@@ -54,9 +54,11 @@ volatile MMIO・生ポインタ添字で記述できる（`tests/uart_mmio.txt`�
 
 M2 のカーネル基盤として `kernel/` を新設した。漢極本体（`kernel/kernel.txt`）は
 機械漢文で記述し、PL011 出力、例外ハンドラ（`brk #0` を捕捉して ESR を復号し
-`eret` で継続）、物理ページ割当、レベル1 変換表の構築による恒等写像 MMU 有効化を
-行う。暫定 AArch64 アセンブリはスタック設定（`kernel/boot.S`）、例外ベクタ表と
-レジスタ保存（`kernel/vectors.S`）、システムレジスタ操作（`kernel/sysreg.S`）に
-限定する。`boot/uart.c` の C 版ドライバは `外術曰` 連携の後方互換・参照用として
-残している。旧起動スタブ `boot/boot.S` は Phase 0 の参照用。
+`eret` で継続）、物理ページ割当、レベル1 変換表の構築による恒等写像 MMU 有効化、
+GICv2 の設定と EL1 物理タイマー割込の処理（`GICC_IAR` で要因番号を取得し、
+`GICC_EOIR` で完了して `eret` で復帰）を行う。暫定 AArch64 アセンブリはスタック
+設定（`kernel/boot.S`）、例外ベクタ表とレジスタ保存（`kernel/vectors.S`）、
+システムレジスタ操作（`kernel/sysreg.S`）に限定する。`boot/uart.c` の C 版
+ドライバは `外術曰` 連携の後方互換・参照用として残している。旧起動スタブ
+`boot/boot.S` は Phase 0 の参照用。
 

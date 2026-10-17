@@ -169,13 +169,14 @@ if [ -f "$OUT/kernel.elf" ]; then
     if command -v qemu-system-aarch64 >/dev/null 2>&1; then
         KLOG="$OUT/kernel_qemu.log"
         rm -f "$KLOG"
-        qemu-system-aarch64 -M virt -cpu cortex-a57 -nographic \
+        qemu-system-aarch64 -M virt,gic-version=2 -cpu cortex-a57 -nographic \
             -serial "file:$KLOG" -kernel "$OUT/kernel.elf" \
             >"$OUT/kernel_qemu.console.log" 2>&1 &
         QPID=$!
-        # Wait up to ~10s for the final marker, then stop QEMU.
-        for _ in $(seq 1 20); do
-            grep -q "頁割当" "$KLOG" 2>/dev/null && break
+        # Wait up to ~15s for the final marker, then stop QEMU.  The generic
+        # timer fires five times (5 × CNTFRQ/40 ≈ 125 ms), so this is ample.
+        for _ in $(seq 1 30); do
+            grep -q "割込完了" "$KLOG" 2>/dev/null && break
             sleep 0.5
         done
         kill "$QPID" 2>/dev/null
@@ -207,6 +208,19 @@ if [ -f "$OUT/kernel.elf" ]; then
             pass "kernel qemu: physical page allocator"
         else
             fail "kernel qemu: physical page allocator"
+        fi
+        # --- M2 hardware: generic timer + GICv2 timer interrupt ---------------
+        if grep -q "刻止" "$KLOG" 2>/dev/null; then
+            pass "kernel qemu: GICv2 timer IRQ delivered (刻止)"
+        else
+            fail "kernel qemu: GICv2 timer IRQ delivered (刻止)"
+            sed 's/^/      /' "$KLOG" 2>/dev/null | head -20
+        fi
+        if grep -q "割込完了 周波数=0x" "$KLOG" 2>/dev/null; then
+            pass "kernel qemu: IRQ handler returned via eret (割込完了)"
+        else
+            fail "kernel qemu: IRQ handler returned via eret (割込完了)"
+            sed 's/^/      /' "$KLOG" 2>/dev/null | head -20
         fi
     else
         echo "SKIP: kernel qemu (qemu-system-aarch64 not found)"

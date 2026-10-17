@@ -314,12 +314,12 @@ void LLVMIRGen::genIf(const StmtPtr& s) {
     genBody(s->thenBlock);
     emit("br label %" + mergeLabel);
 
+    emit(elseLabel + ":");
+    currentBlock_ = elseLabel;
     if (s->hasElse) {
-        emit(elseLabel + ":");
-        currentBlock_ = elseLabel;
         genBody(s->elseBlock);
-        emit("br label %" + mergeLabel);
     }
+    emit("br label %" + mergeLabel);
 
     emit(mergeLabel + ":");
     currentBlock_ = mergeLabel;
