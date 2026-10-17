@@ -1,0 +1,27 @@
+註 BTRON3 互換層 (docs/compat/btron3-compat-layer.md) の基本データタイプと定数。要 lib.txt の先取込は不要。
+註 出典: BTRON3仕様書 Ver.3.20.00 共有データ編 第1章 (data_type.html)、OS仕様編 1.1.8 (proc.html)。
+註
+註 基本データタイプの幅 (機械漢文の型との対応。型名は別名を持てないのでここに記録する):
+註   B=有符八  H=有符十六  W=有符三二  UB=無符八  UH=無符十六  UW=無符三二
+註   ID=W  MSEC=W  STIME=W  TC=UH  ERR=W  WERR=W  VP/FP=ポインタ (64 ビット)
+註 W を返す関数は x0 に符号拡張した 64 ビット値を返す (下位 32 ビットが W)。
+
+註 共通の指定 (data_type.html)
+常「CLR」之無符六四 為 0x0000
+常「NOCLR」之無符六四 為 0x0008
+常「DELEXIT」之無符六四 為 0x8000
+
+註 行程・タスク (proc.html 1.1.8)
+常「TERM_NRM」之無符六四 為 0x0000
+常「TERM_ALL」之無符六四 為 0x0001
+常「P_ABS」之無符六四 為 0x0000
+常「P_REL」之無符六四 為 0x0001
+常「P_TASK」之無符六四 為 0x0002
+常「P_WAIT」之無符六四 為 0x2000
+常「P_READY」之無符六四 為 0x4000
+常「P_RUN」之無符六四 為 0x8000
+
+註 メモリ (memory.html 1.5.2)
+常「M_COMMON」之無符六四 為 0x00000001
+常「M_SYSTEM」之無符六四 為 0x00000003
+常「M_RESIDENT」之無符六四 為 0x00004000

@@ -1,0 +1,96 @@
+註 BTRON3 互換層のエラーコード ER_* と、漢令の誤り番号 (負の errno) からの変換。
+註
+註 【選択の記録】BTRON3仕様書 Ver.3.20.00 は ER_* の名称と意味を規定するが、数値を規定していない
+註 (共有データ編 data_type.html は ErrCode = 符号付き 16 ビットの eclass と 16 ビットの detail の共用体、
+註  OS仕様編の各節は名称のみ)。そのため数値は実装依存として次のとおり選ぶ。
+註   ER_x = (eclass << 16) | detail、eclass = -1 (0xFFFF)、detail = 下の通し番号 (1 始まり)。
+註   リトルエンディアンの ErrCode 共用体 (detail が下位 16 ビット) と一致し、全て負の W になる。
+註   x0 には符号拡張した 64 ビット値で返す。
+註 理由: 負値であること (呼出し側の WERR 判定) だけが規範から言え、数値の細部は他に根拠がない。
+註 名称が増えるときは末尾に足す (通し番号を変えない)。
+
+常「ER_ACCES」之無符六四 為 0xFFFFFFFFFFFF0001
+常「ER_ADR」之無符六四 為 0xFFFFFFFFFFFF0002
+常「ER_BUSY」之無符六四 為 0xFFFFFFFFFFFF0003
+常「ER_CTX」之無符六四 為 0xFFFFFFFFFFFF0004
+常「ER_DD」之無符六四 為 0xFFFFFFFFFFFF0005
+常「ER_DEV」之無符六四 為 0xFFFFFFFFFFFF0006
+常「ER_DLT」之無符六四 為 0xFFFFFFFFFFFF0007
+常「ER_ENDR」之無符六四 為 0xFFFFFFFFFFFF0008
+常「ER_ERDEV」之無符六四 為 0xFFFFFFFFFFFF0009
+常「ER_EXS」之無符六四 為 0xFFFFFFFFFFFF000A
+常「ER_FD」之無符六四 為 0xFFFFFFFFFFFF000B
+常「ER_FNAME」之無符六四 為 0xFFFFFFFFFFFF000C
+常「ER_ID」之無符六四 為 0xFFFFFFFFFFFF000D
+常「ER_IO」之無符六四 為 0xFFFFFFFFFFFF000E
+常「ER_LEVEL」之無符六四 為 0xFFFFFFFFFFFF000F
+常「ER_LIMIT」之無符六四 為 0xFFFFFFFFFFFF0010
+常「ER_LOCK」之無符六四 為 0xFFFFFFFFFFFF0011
+常「ER_MINTR」之無符六四 為 0xFFFFFFFFFFFF0012
+常「ER_MPTR」之無符六四 為 0xFFFFFFFFFFFF0013
+常「ER_NODEV」之無符六四 為 0xFFFFFFFFFFFF0014
+常「ER_NODSK」之無符六四 為 0xFFFFFFFFFFFF0015
+常「ER_NOEXS」之無符六四 為 0xFFFFFFFFFFFF0016
+常「ER_NOFS」之無符六四 為 0xFFFFFFFFFFFF0017
+常「ER_NOLNK」之無符六四 為 0xFFFFFFFFFFFF0018
+常「ER_NOMDA」之無符六四 為 0xFFFFFFFFFFFF0019
+常「ER_NOME」之無符六四 為 0xFFFFFFFFFFFF001A
+常「ER_NOMEM」之無符六四 為 0xFFFFFFFFFFFF001B
+常「ER_NONE」之無符六四 為 0xFFFFFFFFFFFF001C
+常「ER_NOPRC」之無符六四 為 0xFFFFFFFFFFFF001D
+常「ER_NOSPC」之無符六四 為 0xFFFFFFFFFFFF001E
+常「ER_NOSPT」之無符六四 為 0xFFFFFFFFFFFF001F
+常「ER_OBJ」之無符六四 為 0xFFFFFFFFFFFF0020
+常「ER_PAR」之無符六四 為 0xFFFFFFFFFFFF0021
+常「ER_PERM」之無符六四 為 0xFFFFFFFFFFFF0022
+常「ER_PPRI」之無符六四 為 0xFFFFFFFFFFFF0023
+常「ER_PWD」之無符六四 為 0xFFFFFFFFFFFF0024
+常「ER_REC」之無符六四 為 0xFFFFFFFFFFFF0025
+常「ER_RONLY」之無符六四 為 0xFFFFFFFFFFFF0026
+常「ER_SELF」之無符六四 為 0xFFFFFFFFFFFF0027
+常「ER_SZOVR」之無符六四 為 0xFFFFFFFFFFFF0028
+常「ER_TRON」之無符六四 為 0xFFFFFFFFFFFF0029
+常「ER_XFS」之無符六四 為 0xFFFFFFFFFFFF002A
+
+註 漢令の誤り番号 (x0 の負の errno、abi-aarch64.md) を ER_* に変える。0 以上はそのまま返す。
+註 対応が定まらないものは ER_PAR にする (ER_PAR = 引数が不正)。対応表は次の表のとおり。
+註   -ENOENT(2) → ER_NOEXS   -EBADF(9) → ER_FD    -ENOMEM(12) → ER_NOMEM  -EBUSY(16) → ER_BUSY
+註   -EFAULT(14) → ER_ADR    -ENOSPC(28) → ER_NOSPC  -EMFILE(24) → ER_LIMIT  -ECHILD(10) → ER_NOPRC
+註   -EAGAIN(11) → ER_LIMIT  -ENOEXEC(8) → ER_REC  その他 (-ENOSYS を含む) → ER_PAR
+術曰「錯換」 受「値」之無符六四 返 無符六四
+    若 値 小於 18446744073709551488 則
+        歸 値
+    終若
+    設「逆」之無符六四 為 0 減 値
+    若 逆 等於 2 則
+        歸 「ER_NOEXS」
+    終若
+    若 逆 等於 9 則
+        歸 「ER_FD」
+    終若
+    若 逆 等於 12 則
+        歸 「ER_NOMEM」
+    終若
+    若 逆 等於 16 則
+        歸 「ER_BUSY」
+    終若
+    若 逆 等於 14 則
+        歸 「ER_ADR」
+    終若
+    若 逆 等於 28 則
+        歸 「ER_NOSPC」
+    終若
+    若 逆 等於 24 則
+        歸 「ER_LIMIT」
+    終若
+    若 逆 等於 10 則
+        歸 「ER_NOPRC」
+    終若
+    若 逆 等於 11 則
+        歸 「ER_LIMIT」
+    終若
+    若 逆 等於 8 則
+        歸 「ER_REC」
+    終若
+    歸 「ER_PAR」
+終術
