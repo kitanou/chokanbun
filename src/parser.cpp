@@ -725,13 +725,14 @@ ExprPtr Parser::parsePrimary() {
         e->kind = Expr::Kind::AddrOf;
         expect(TokKind::LeftParen, "(");
         // The lvalue can be a string literal, ident, deref, field, or element
-        if (match(TokKind::StringLit)) {
+        if (check(TokKind::StringLit)) {
             // 取址(『string』)
+            Token str = advance();
             e->addend = std::make_shared<Expr>();
             e->addend->kind = Expr::Kind::StringLit;
-            e->addend->strValue = current().value;
-            e->addend->line = current().line;
-            e->addend->col = current().col;
+            e->addend->strValue = str.value;
+            e->addend->line = str.line;
+            e->addend->col = str.col;
             expect(TokKind::RightParen, ")");
             return e;
         }
@@ -834,7 +835,7 @@ ExprPtr Parser::parsePrimary() {
     if (match(TokKind::ChangDu)) {
         e->kind = Expr::Kind::StrLen;
         expect(TokKind::LeftParen, "(");
-        e->pointee = parseExpr();
+        e->index = parseExpr();
         expect(TokKind::RightParen, ")");
         return e;
     }
