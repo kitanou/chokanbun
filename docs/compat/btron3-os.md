@@ -170,7 +170,7 @@
 | レコード操作 | `see_rec` `fnd_rec` `rea_rec` `wri_rec` `ins_rec` `apd_rec` `del_rec` `trc_rec`（実装）、`fnd_lnk`（未実装） | 漢令 152〜159。ファイル本文は頁 1 枚（4 KiB）にレコードを詰めたもの。現在レコードは記述子ごと、終端レコード（番号 = 数）あり。リンクレコードは LINK 全体を読み、属性（LINK の +42〜）だけ書ける。他の記述子の挿入・削除で番号がずれても現在レコード・ロックを直す。`F_FWD`・`F_NFWD` だけ。`units` は無視。試験 `録試` | 部分適合（`fnd_lnk`・`F_BWD` 系・`wri_rec` の `units` が未対応。現在レコードの扱いは設計書 §12） |
 | ロック・交換 | `loc_rec` `xch_fil` | 漢令 160・161。ロックは記述子ごとに 1 件、`F_LOCK` は待たない（`F_TSLOCK` と同じ）。`xch_fil` は本文とレコード数を入れ替え、時刻は入れ替えない。試験 `録試`（行程をまたぐロックを含む） | 部分適合（待ち・複数ロック・別 FS 間の `ER_XFS` の試験が無い） |
 | 検査・属性 | `chk_fil` `chg_fmd` `chg_fat` `chg_fpw` `chg_fnm` `chg_ftm` `get_dfm` `set_dfm` | 漢令 163〜170。所有者・グループ・公開のアクセス判定（利用者レベル 0 は常に可、グループ・公開は「許す最大レベル」）を `opn_fil`・`cre_fil`・`cre_lnk`・`del_fil` に適用。パスワードはハッシュで保存し `opn_fil`・`chk_fil(F_PASWD)` で照合。属性（書込禁止・削除禁止・アプリ属性 1/2）、名前・時刻の変更、行程ごとの既定アクセスモード。試験 `録試` | 部分適合（`A_MODE`/`DA_MODE` の並びと `chg_fnm`・`get_dfm`/`set_dfm` の細部が要確認。アクセス管理レベル 1 は 2 と同じ扱い） |
-| 状態・リンク | `fil_sts` `ofl_sts`（実装）、`lnk_sts` `syn_lnk` `get_nlk`（未実装） | 漢令 149・150。F_STATE（96 B）・F_LOCATE（100 B）と名前（42 B）を書き参照数を返す。F_LOCATE は NULL のみ。試験 `録試` | 部分適合（F_STATE の整列と F_LOCATE が要確認） |
+| 状態・リンク | `fil_sts` `ofl_sts` `lnk_sts` `syn_lnk` `get_nlk`（実装） | 漢令 149・150。F_STATE（96 B）・F_LOCATE（100 B）と名前（42 B）を書き参照数を返す。F_LOCATE も書く（100 B）。試験 `録試` | 部分適合（F_STATE の整列と F_LOCATE が要確認） |
 | ファイルシステム | `att_fls` `det_fls` `lst_fls` `fls_sts`（実装）、`syn_fls` `chg_fls` `chg_fsm`（未実装） | 漢令 128〜131。装置は RAM（起動時に接続）と SYS（読取専用、未接続） | 部分適合 |
 | 写像 | `map_rec` `ump_rec` | なし | 未実装 |
 
