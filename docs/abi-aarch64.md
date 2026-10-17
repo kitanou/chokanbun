@@ -125,6 +125,7 @@
   | `-EFAULT` | 14 | 引数のポインタ/範囲が不正 |
   | `-EEXIST` | 17 | 名前が既にある（グローバル名） |
   | `-EACCES` | 13 | 利用者レベルが足りない |
+  | `-ENOTCAPABLE` | 93 | 呼出側より上位の利用者レベルの行程は終了できない（ER_LEVEL） |
   | `-EINVAL` | 22 | 引数が不正（空の名前・不正な指定） |
   | `-ESRCH` | 3 | 宛先の行程が無い |
   | `-E2BIG` | 7 | メッセージ本体の大きさが不正 |
@@ -171,6 +172,8 @@
   | 64 | 生BTRON | `x0`=名前, `x1`=名前長, `x2`=引数, `x3`=引数長（17 と同じ） | 子の識／17 と同じ誤り。子は BTRON3 流: 終了時（`終行程` など）に親のキューへ MS_EXIT `{pid, code}` を積み、僵にならず枠を即解放する（`待行程` では回収できず `-ECHILD`）。互換層の `cre_prc`（暫定形）が使う |
   | 66 | 利用者取 | `x0`=pid（0 自分、-1 親、正 その行程）, `x1`=P_USER の書き先（窓内の書込可能な 148 B） | 0／`-ESRCH`・`-EFAULT`。`get_usr` |
   | 67 | 利用者変 | `x0`=P_USER（窓内の 148 B） | 0／`-EINVAL`（level が 0〜15 外、net_level が 1〜15 外、level 0 以外の行程が level を小さくしようとした）・`-EFAULT`。`chg_usr` |
+  | 68 | 強終 | `x0`=pid（0 自分、-1 親、正）, `x1`=終了コード, `x2`=選（0=TERM_NRM、1=TERM_ALL） | 0／`-EDEADLK`（自分）・`-ESRCH`・`-EINVAL`（選が不正）・`-ENOTCAPABLE`（呼出側より上位の利用者レベルの行程）。TERM_ALL は子孫を深い順に終える。呼出側自身が終わるとき（親・祖先を対象にしたとき）は戻らない。BTRON3 流の対象の親へ MS_TERM `{pid, code}`（対象の分だけ）。`ter_prc` |
+  | 69 | 行程状 | `x0`=pid, `x1`=P_STATE の書き先（12 B、0 可）, `x2`=名前の書き先（0 可） | 0／`-ESRCH`・`-EFAULT`。state は実行中 0x8000・実行可能 0x4000・待ち 0x2000、優先度は 128 固定。`prc_sts` |
   | 80 | 信送 | `x0`=宛先 pid（>0 その行程、0 自分、-1 親）, `x1`=MESSAGE（窓内）, `x2`=指定（WAIT=0 / NOWAIT=1。CONFM=2 は未対応） | 0／`-EINVAL`（型が 1〜31 外・不正な指定）・`-E2BIG`（本体が 1〜32 バイト外）・`-ESRCH`（宛先が無い・終了済み）・`-ENOSPC`（満杯で NOWAIT）・`-EFAULT`。満杯で WAIT なら眠り、空きができたら svc を再実行する。`snd_msg` |
   | 81 | 信受 | `x0`=型マスク, `x1`=MESSAGE の書き先, `x2`=msgsz（8〜40）, `x3`=指定（NOWAIT=1、NOCLR=8。WAIEVT・CHECK は未対応） | 0／`-ENOMSG`（無くて NOWAIT）・`-EINVAL`・`-EFAULT`。無ければ眠り、届いたら svc を再実行する。`rcv_msg` |
   | 82 | 信消 | `x0`=型マスク, `x1`=最後マスク | 0／`-EINVAL`。`clr_msg` |
