@@ -190,6 +190,16 @@
   | 102 | 立フラグ | `x0`=ID, `x1`=パターン | 0／`-EBADR`・`-ENOENT`。`set_flg`（OR して、条件を満たす待ちを FIFO で起こす） |
   | 103 | 消フラグ | `x0`=ID, `x1`=残すビット | 0／`-EBADR`・`-ENOENT`。`clr_flg`（AND） |
   | 104 | 待フラグ | `x0`=ID, `x1`=パターン（>0）, `x2`=様式（WF_AND=0 / WF_OR=2、+NOCLR=8）, `x3`=時限 | 条件を満たした時のパターン／`-EINVAL`（ptn=0・不明な様式）・`-ETIMEDOUT`・`-EIDRM`・`-EBADR`・`-ENOENT`。`wai_flg` |
+  | 105 | 作緩 | `x0`=bufsz（1〜512）, `x1`=max（1〜min(256, bufsz-4)）, `x2`=指定（DELEXIT のみ） | ID／`-EINVAL`（bufsz=0 は未対応）・`-EMFILE`（4 個満杯）。`cre_mbf` |
+  | 106 | 削緩 | `x0`=ID | 0／`-EBADR`・`-ENOENT`。待ちは `-EIDRM`。`del_mbf` |
+  | 107 | 送緩 | `x0`=ID, `x1`=メッセージ, `x2`=大きさ（1〜max）, `x3`=時限 | 0／`-EINVAL`・`-EFAULT`・`-ETIMEDOUT`・`-EIDRM`。総量に空きが無ければ眠り、受信で空くと起きて再実行する。`snd_mbf` |
+  | 108 | 受緩 | `x0`=ID, `x1`=書き先（max バイト以上の書込可能な窓内）, `x2`=時限 | 受け取った大きさ／`-ETIMEDOUT`・`-EFAULT`・`-EIDRM`。`rcv_mbf` |
+  | 109 | 作口 | `x0`=最大の呼出の大きさ, `x1`=最大の返答の大きさ（各 128 以下）, `x2`=指定（DELEXIT のみ） | ID／`-EINVAL`・`-EMFILE`（4 個満杯）。`cre_por` |
+  | 110 | 削口 | `x0`=ID | 0／`-EBADR`・`-ENOENT`。待っている呼出側・受付側は `-EIDRM`。`del_por` |
+  | 111 | 呼口 | `x0`=ID, `x1`=呼出パターン（≠0）, `x2`=メッセージ（入出力）, `x3`=呼出の大きさ, `x4`=時限 | 返答の大きさ／`-EINVAL`・`-EFAULT`・`-ETIMEDOUT`・`-EIDRM`・`-ENOSPC`（記録 8 件満杯）。呼出を記録に写して眠り、返答で起きて再実行し返答を受け取る。`cal_por` |
+  | 115 | 受付口 | `x0`=ID, `x1`=受付パターン, `x2`=ランデブ番号の書き先（4 B）, `x3`=メッセージの書き先, `x4`=時限 | 呼出の大きさ／`-ETIMEDOUT`・`-EFAULT`・`-EIDRM`。`acp_por` |
+  | 116 | 転送口 | `x0`=ID（転送先）, `x1`=呼出パターン, `x2`=ランデブ番号, `x3`=メッセージ, `x4`=呼出の大きさ | 0／`-EPROTO`（受け付けていないランデブ）・`-EINVAL`・`-EFAULT`・`-EBADR`。`fwd_por` |
+  | 117 | 返答 | `x0`=ランデブ番号, `x1`=メッセージ, `x2`=返答の大きさ | 0／`-EPROTO`・`-EINVAL`・`-EFAULT`。`rpl_rdv` |
   | 112 | 名作 | `x0`=名前（TC 配列、TNULL 終端、先頭 8 文字）, `x1`=値（下位 32 ビット）, `x2`=指定（0=N_CREATE / 1=N_MODIFY / 2=N_FORCE、+0x8000=DELEXIT） | 0／`-EEXIST`（N_CREATE で既存）・`-ENOENT`（N_MODIFY で無い）・`-ENOSPC`（16 件満杯）・`-EINVAL`（空の名前・不正な指定）・`-EFAULT`。BTRON3 互換層 `cre_nam`（[btron3-compat-layer.md](compat/btron3-compat-layer.md)） |
   | 113 | 名削 | `x0`=名前 | 0／`-ENOENT`・`-EINVAL`・`-EFAULT`。`del_nam` |
   | 114 | 名取 | `x0`=名前, `x1`=値の書き先（窓内の書込可能な 4 バイト） | 0／`-ENOENT`・`-EINVAL`・`-EFAULT`。`get_nam` |

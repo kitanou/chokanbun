@@ -63,7 +63,7 @@
 |---|---|---|---|---|
 | 1.1 | プロセス／タスク管理（状態、優先度、スケジューリング、ユーザー情報、生成、定数、システムコール） | kernel/proc.html | `kernel/proc/`、協調+タイマープリエンプション | 部分適合（機能のみ・API不一致、[詳細](btron3-os.md)） |
 | 1.2 | メッセージ管理（メッセージ、ハンドラ、システムコール） | kernel/message.html | なし | 部分適合（基本部のみ、[詳細](btron3-os.md)） |
-| 1.3 | プロセス／タスク同期通信管理 | kernel/taskcomm.html | なし | 未実装（[詳細](btron3-os.md)） |
+| 1.3 | プロセス／タスク同期通信管理 | kernel/taskcomm.html | なし | 部分適合（`bufsz`=0 のみ未対応、[詳細](btron3-os.md)） |
 | 1.4 | グローバル名管理 | kernel/gname.html | `kernel/proc/gname.txt`、`user/btron/gname.txt` | 実装済・未検証（[詳細](btron3-os.md)） |
 | 1.5 | メモリ管理（概要、定数、システムコール、ライブラリ） | kernel/memory.html | 頁池・MMU | 部分適合（機能のみ・API不一致、[詳細](btron3-os.md)） |
 | 1.6 | ファイル管理（構成、構造、アクセス制御、操作、詳細情報、システムコール） | kernel/file.html | `kernel/vfs/`、篇藏設計 | 部分適合（機能のみ・API不一致、[詳細](btron3-os.md)） |
