@@ -1,0 +1,35 @@
+註 BTRON3 互換層 1.2 メッセージ管理の基本部 (docs/compat/btron3-os.md §1.2)。要: lib.txt、btron/types.txt、btron/er.txt を先に取込む。
+註 MESSAGE = {W msg_type; W msg_size; UB msg_body[32]} (40 B)。ハンドラ・タイムアウト・CONFM・WAIEVT・CHECK は未実装。
+
+常「MS_ABORT」之無符六四 為 1
+常「MS_EXIT」之無符六四 為 2
+常「MS_TERM」之無符六四 為 3
+常「MS_TMOUT」之無符六四 為 4
+常「MS_SYSEVT」之無符六四 為 5
+常「MS_TYPE0」之無符六四 為 24
+常「MS_TYPE7」之無符六四 為 31
+常「MM_ALL」之無符六四 為 0x7FFFFFFF
+常「MM_NULL」之無符六四 為 0
+常「WAIT」之無符六四 為 0x0000
+常「NOWAIT」之無符六四 為 0x0001
+常「CONFM」之無符六四 為 0x0002
+
+註 MSGMASK(type) = 1 << (type - 1)
+公開 記號「msgmask」 術曰「BTRON型掩」 受「型」之無符六四 返 無符六四
+    歸 1 左移 (型 減 1)
+終術
+
+註 snd_msg(W pid, MESSAGE* msg, W opt)。pid: 正=その行程、0=自分、-1=親。
+公開 記號「snd_msg」 術曰「BTRON信送」 受「宛先」之無符六四 受「信」之無符六四 受「指定」之無符六四 返 無符六四
+    歸 呼「錯換」以(呼「奏令」以(80, 宛先, 信, 指定 位與 0xFFFFFFFF, 0, 0, 0))
+終術
+
+註 rcv_msg(W t_mask, MESSAGE* msg, W msgsz, W opt): 成功は 0。
+公開 記號「rcv_msg」 術曰「BTRON信受」 受「型掩」之無符六四 受「信」之無符六四 受「大」之無符六四 受「指定」之無符六四 返 無符六四
+    歸 呼「錯換」以(呼「奏令」以(81, 型掩, 信, 大, 指定 位與 0xFFFFFFFF, 0, 0))
+終術
+
+註 clr_msg(W t_mask, W last_mask)
+公開 記號「clr_msg」 術曰「BTRON信消」 受「型掩」之無符六四 受「最後」之無符六四 返 無符六四
+    歸 呼「錯換」以(呼「奏令」以(82, 型掩, 最後, 0, 0, 0, 0))
+終術

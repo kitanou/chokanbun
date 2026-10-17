@@ -125,6 +125,10 @@
   | `-EFAULT` | 14 | 引数のポインタ/範囲が不正 |
   | `-EEXIST` | 17 | 名前が既にある（グローバル名） |
   | `-EINVAL` | 22 | 引数が不正（空の名前・不正な指定） |
+  | `-ESRCH` | 3 | 宛先の行程が無い |
+  | `-E2BIG` | 7 | メッセージ本体の大きさが不正 |
+  | `-EDEADLK` | 35 | 自分自身への確認付き送信（予約。CONFM は未対応） |
+  | `-ENOMSG` | 42 | 該当するメッセージが無い（NOWAIT） |
   | `-EBUSY` | 16 | 開かれている典籍は削れない |
   | `-ENOEXEC` | 8 | 漢像として不正（魔・大きさ・入口） |
   | `-ECHILD` | 10 | 待てる子が無い |
@@ -163,6 +167,9 @@
   | 21 | 識別 | なし | 呼出側の識 |
   | 24 | 削 | `x0`=名前, `x1`=名前長 | 0／`-ENOENT`（無い名前）・`-EBUSY`（開かれている）・`-EFAULT`。削った枠は `創` が再利用する（番号 19〜20・22〜23 は [行程の設計](design-process-exec.md) で予約） |
   | 31 | 頁残 | なし | 頁池の空きページ数（診断） |
+  | 80 | 信送 | `x0`=宛先 pid（>0 その行程、0 自分、-1 親）, `x1`=MESSAGE（窓内）, `x2`=指定（WAIT=0 / NOWAIT=1。CONFM=2 は未対応） | 0／`-EINVAL`（型が 1〜31 外・不正な指定）・`-E2BIG`（本体が 1〜32 バイト外）・`-ESRCH`（宛先が無い・終了済み）・`-ENOSPC`（満杯で NOWAIT）・`-EFAULT`。満杯で WAIT なら眠り、空きができたら svc を再実行する。`snd_msg` |
+  | 81 | 信受 | `x0`=型マスク, `x1`=MESSAGE の書き先, `x2`=msgsz（8〜40）, `x3`=指定（NOWAIT=1、NOCLR=8。WAIEVT・CHECK は未対応） | 0／`-ENOMSG`（無くて NOWAIT）・`-EINVAL`・`-EFAULT`。無ければ眠り、届いたら svc を再実行する。`rcv_msg` |
+  | 82 | 信消 | `x0`=型マスク, `x1`=最後マスク | 0／`-EINVAL`。`clr_msg` |
   | 112 | 名作 | `x0`=名前（TC 配列、TNULL 終端、先頭 8 文字）, `x1`=値（下位 32 ビット）, `x2`=指定（0=N_CREATE / 1=N_MODIFY / 2=N_FORCE、+0x8000=DELEXIT） | 0／`-EEXIST`（N_CREATE で既存）・`-ENOENT`（N_MODIFY で無い）・`-ENOSPC`（16 件満杯）・`-EINVAL`（空の名前・不正な指定）・`-EFAULT`。BTRON3 互換層 `cre_nam`（[btron3-compat-layer.md](compat/btron3-compat-layer.md)） |
   | 113 | 名削 | `x0`=名前 | 0／`-ENOENT`・`-EINVAL`・`-EFAULT`。`del_nam` |
   | 114 | 名取 | `x0`=名前, `x1`=値の書き先（窓内の書込可能な 4 バイト） | 0／`-ENOENT`・`-EINVAL`・`-EFAULT`。`get_nam` |
