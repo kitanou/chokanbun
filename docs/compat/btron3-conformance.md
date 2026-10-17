@@ -117,7 +117,7 @@ API 一覧: [btron3-api-inventory.md](btron3-api-inventory.md)（約 247 関数�
 | 第2編 第3章 シェル | 11 節・約 247 関数 | 0 | 0 | 0 | 11 節 | 0 |
 
 - 節単位の状態は最も低い API に引きずられるため、実質の進捗は第1章の API 単位表（[btron3-os.md](btron3-os.md)）で見る。
-- **適合確認済は 0**。完全準拠の判定には試験計画（`btron3-test-plan.md`、未作成）が先に要る。
+- **適合確認済は 0**。合否基準と既存試験の対応は [btron3-test-plan.md](btron3-test-plan.md)（互換層の QEMU 試験 9 種・176 項目を規範項目に紐付け済み）。
 - 1.6 は篇藏 F0〜F3 と録層 B1（`get_lnk` 等）まで実装済み。B2（作成・削除）以降が次。
 
 ## 次の作業（Phase 0 の残り）
@@ -127,4 +127,4 @@ API 一覧: [btron3-api-inventory.md](btron3-api-inventory.md)（約 247 関数�
 3. 第2章・第3章の要求を抽出し、`btron3-os.md` に要約と参照箇所を記録する（API 名は [btron3-api-inventory.md](btron3-api-inventory.md) に済み）。
 4. 共有データ編を `btron3-shared-data.md` に要約し、既存実装との差分と試験方法を埋める。
 5. 重複を確認のうえ、機能別の子Issueを作成する。
-6. `btron3-test-plan.md`、`btron3-bright-v.md` を作成する。
+6. `btron3-bright-v.md` を作成する。`btron3-test-plan.md` は作成済み。
