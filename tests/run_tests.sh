@@ -136,13 +136,18 @@ sh tools/mkimage.sh user/hello.txt "$OUT/hello.zo" "$OUT" 2>"$OUT/user_hello.bui
         fail "user: 外部命令 問安 を漢像にビルド"
         sed 's/^/      /' "$OUT/user_hello.build.log" | head -10
     }
+sh tools/mkimage.sh user/count.txt "$OUT/count.zo" "$OUT" 2>"$OUT/user_count.build.log" \
+    && pass "user: 外部命令 數 を漢像にビルド" || {
+        fail "user: 外部命令 數 を漢像にビルド"
+        sed 's/^/      /' "$OUT/user_count.build.log" | head -10
+    }
 # 漢像のヘッダ: 魔 KBN1、入口が 0x40610000 台、終端が像の範囲
 if [ -f "$OUT/hello.zo" ] && [ "$(head -c 4 "$OUT/hello.zo")" = "KBN1" ]; then
     pass "user: 漢像のヘッダ (魔 KBN1、$(wc -c <"$OUT/hello.zo" | tr -d ' ') バイト)"
 else
     fail "user: 漢像のヘッダ"
 fi
-sh tools/gen-images.sh "$OUT/kernel_images.S" 問安="$OUT/hello.zo" \
+sh tools/gen-images.sh "$OUT/kernel_images.S" 問安="$OUT/hello.zo" 數="$OUT/count.zo" \
     && "$CLANG" --target=aarch64-none-elf -c "$OUT/kernel_images.S" -o "$OUT/kernel_images.o" \
         >"$OUT/kernel_images.log" 2>&1 \
     && pass "kernel: 漢像の埋め込み (像表)" || fail "kernel: 漢像の埋め込み (像表)"
@@ -224,7 +229,7 @@ if [ -f "$OUT/kernel.elf" ]; then
         # Then feed 殻 (shell) commands once 甲 has read that line (M4).
         ( printf 'KANBUN\n' > "$PIPE.in"
           for _ in $(seq 1 60); do grep -q "甲得" "$KLOG" 2>/dev/null && break; sleep 0.25; done
-          printf '響 天下太平\n讀 史記\n怪\n讀 無題\n目\n書 筆記 天地玄黄\n讀 筆記\n書 一二三四五六 x\n書 筆記\n目\n削 筆記\n讀 筆記\n目\n削 筆記\n書 新稿 草\n目\n助\n終\n' > "$PIPE.in" ) &
+          printf '響 天下太平\n讀 史記\n怪\n讀 無題\n目\n書 筆記 天地玄黄\n讀 筆記\n書 一二三四五六 x\n書 筆記\n目\n削 筆記\n讀 筆記\n目\n削 筆記\n書 新稿 草\n目\n問安 日月\n數 一 二 三\n存在せず 子\n助\n終\n' > "$PIPE.in" ) &
         FEEDPID=$!
         # Wait up to ~15s for the final marker, then stop QEMU.  The generic
         # timer fires five times (5 × CNTFRQ/40 ≈ 125 ms), so this is ample.
@@ -516,10 +521,33 @@ if [ -f "$OUT/kernel.elf" ]; then
             grep -a '子行程\|異常' "$KLOG" 2>/dev/null | sed 's/^/      /' | head
         fi
         K_CH="$(grep -ac '子行程起動' "$KLOG" 2>/dev/null)"
-        if [ "${K_CH:-0}" -eq 21 ]; then
-            pass "kernel qemu: 起動・回収を 20 回繰り返しても頁が漏れず、毎回子が走る (子の出力 21 回)"
+        if [ "${K_CH:-0}" -eq 22 ]; then
+            pass "kernel qemu: 起動・回収を 20 回繰り返しても頁が漏れず、毎回子が走る (子の出力 22 回 = 検証 21 + 殻 1)"
         else
-            fail "kernel qemu: 起動・回収の繰り返し (子の出力=${K_CH:-0} 回、期待 21)"
+            fail "kernel qemu: 起動・回収の繰り返し (子の出力=${K_CH:-0} 回、期待 22)"
+        fi
+        # --- M5/P2: 殻が外部命令を起動する (引数 argc/argv と柄の継承) ----------------
+        if grep -aq '^子行程起動 日月' "$KLOG" 2>/dev/null; then
+            pass "kernel qemu: 殻から外部命令 問安 を起動し、引数 (日月) が子に渡る"
+        else
+            fail "kernel qemu: 殻から外部命令 問安 を起動し、引数が子に渡る"
+            grep -a '殻\|子行程' "$KLOG" 2>/dev/null | sed 's/^/      /' | tail -20
+        fi
+        K_ARGC="$(grep -a '^數 個数 ' "$KLOG" 2>/dev/null | head -1 | grep -oE '0x[0-9a-f]{16}')"
+        K_ARGL="$(grep -a '^數 長合 ' "$KLOG" 2>/dev/null | head -1 | grep -oE '0x[0-9a-f]{16}')"
+        K_RC="$(grep -a '^殻碼 ' "$KLOG" 2>/dev/null | grep -oE '0x[0-9a-f]{16}' | paste -sd' ' -)"
+        if [ "$K_ARGC" = "0x0000000000000004" ] && [ "$K_ARGL" = "0x0000000000000009" ] \
+           && [ "$K_RC" = "0x0000000000000007 0x0000000000000004" ]; then
+            pass "kernel qemu: argv の受け渡し (數 一 二 三 → argc=4、長さの合計=9)、終了コードを 殻碼 で表示 (7, 4)"
+        else
+            fail "kernel qemu: argv の受け渡し (argc=${K_ARGC:-none} 長合=${K_ARGL:-none} 殻碼='${K_RC:-none}')"
+            grep -a '殻\|數\|子行程' "$KLOG" 2>/dev/null | sed 's/^/      /' | tail -20
+        fi
+        K_UNK="$(grep -ac '殻不明' "$KLOG" 2>/dev/null)"
+        if [ "${K_UNK:-0}" -ge 2 ]; then
+            pass "kernel qemu: 像の無い命令は 殻不明 (組み込みでも外部命令でもない)"
+        else
+            fail "kernel qemu: 像の無い命令は 殻不明 (件数=${K_UNK:-0})"
         fi
         # --- M5/P0: 行程表の統合・行程数 8・頁池の拡大 ---------------------------
         tbl_val() { grep -a "$1 " "$KLOG" 2>/dev/null | head -1 | grep -oE '0x[0-9a-f]{16}'; }
