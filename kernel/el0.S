@@ -49,16 +49,24 @@ enter_el0:
 
 // Lower-EL synchronous entry (vector offset 0x400).
 //
-// The exception is taken to EL1 with SP_EL1 (EL1h).  Save the EL0 registers and
-// NZCV, hand ESR_EL1 and a pointer to the saved frame to 漢令處理
-// (svc_dispatch), then either restore and eret back to EL0 or, when the handler
-// returns 1 (行程終了), park the CPU at EL1.
+// The exception is taken to EL1 with SP_EL1 (EL1h).  Save the EL0 registers,
+// NZCV, ELR_EL1, SPSR_EL1 and SP_EL0 to a 288-byte frame on the kernel stack,
+// hand ESR_EL1 and the frame pointer to 漢令處理 (svc_dispatch), then resume from
+// the frame the handler points at (allowing a context switch) and eret.
 //
-// Frame layout (256 bytes) matches the other handlers: x0..x29 at 0..232,
-// x30 at 240, NZCV at 248.
+// svc_dispatch returns a frame pointer to resume from, or 0 when no 行程 is
+// runnable (park at EL1).
+//
+// Frame layout (288 bytes):
+//   x0..x29  at   0..232   (30 registers)
+//   x30      at 240
+//   NZCV     at 248
+//   ELR_EL1  at 256
+//   SPSR_EL1 at 264
+//   SP_EL0   at 272
     .globl lower_sync_handler
 lower_sync_handler:
-    sub sp, sp, #256
+    sub sp, sp, #288
     stp x0,  x1,  [sp, #0]
     stp x2,  x3,  [sp, #16]
     stp x4,  x5,  [sp, #32]
@@ -77,15 +85,29 @@ lower_sync_handler:
     str x30, [sp, #240]
     mrs x2, nzcv
     str x2, [sp, #248]
+    mrs x2, elr_el1
+    str x2, [sp, #256]
+    mrs x2, spsr_el1
+    str x2, [sp, #264]
+    mrs x2, sp_el0
+    str x2, [sp, #272]
 
     mrs x0, esr_el1
     mov x1, sp
     bl svc_dispatch
-    cmp x0, #1
-    b.eq el0_park
+    cbz x0, el0_park
 
+    // The frame now holds the state of the 行程 to resume (possibly a
+    // different one than entered this handler).
     ldr x2, [sp, #248]
     msr nzcv, x2
+    ldr x2, [sp, #256]
+    msr elr_el1, x2
+    ldr x2, [sp, #264]
+    msr spsr_el1, x2
+    ldr x2, [sp, #272]
+    msr sp_el0, x2
+
     ldr x30, [sp, #240]
     ldp x28, x29, [sp, #224]
     ldp x26, x27, [sp, #208]
@@ -102,11 +124,11 @@ lower_sync_handler:
     ldp x4,  x5,  [sp, #32]
     ldp x2,  x3,  [sp, #16]
     ldp x0,  x1,  [sp, #0]
-    add sp, sp, #256
+    add sp, sp, #288
 
     eret
 
-// 行程終了: the user task is done; stay at EL1 and idle.
+// 行程終了: no runnable 行程 is left; stay at EL1 and idle.
 el0_park:
 1:  wfi
     b 1b

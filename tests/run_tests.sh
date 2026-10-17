@@ -226,29 +226,37 @@ if [ -f "$OUT/kernel.elf" ]; then
             fail "kernel qemu: IRQ handler returned via eret (割込完了)"
             sed 's/^/      /' "$KLOG" 2>/dev/null | head -20
         fi
-        # --- M3 software: EL0 task + SVC + 漢令 ABI ---------------------------
+        # --- M3 software: EL0 行程 + SVC + 漢令 ABI + スケジューラ -------------
         if grep -q "民籍投入" "$KLOG" 2>/dev/null; then
-            pass "kernel qemu: EL0 task entered (民籍投入)"
+            pass "kernel qemu: EL0 行程を投入 (民籍投入)"
         else
-            fail "kernel qemu: EL0 task entered (民籍投入)"
+            fail "kernel qemu: EL0 行程を投入 (民籍投入)"
             sed 's/^/      /' "$KLOG" 2>/dev/null | head -20
         fi
-        if grep -q "民在野" "$KLOG" 2>/dev/null; then
-            pass "kernel qemu: EL0 task ran 漢令 書出 (民在野)"
+        if grep -q "甲在野" "$KLOG" 2>/dev/null && grep -q "乙在野" "$KLOG" 2>/dev/null; then
+            pass "kernel qemu: 2 行程が EL0 で 漢令 書出 を実行 (甲在野/乙在野)"
         else
-            fail "kernel qemu: EL0 task ran 漢令 書出 (民在野)"
+            fail "kernel qemu: 2 行程が EL0 で 漢令 書出 を実行 (甲在野/乙在野)"
             sed 's/^/      /' "$KLOG" 2>/dev/null | head -20
         fi
         if grep -q "0x0000000000000009" "$KLOG" 2>/dev/null; then
-            pass "kernel qemu: SVC returned 書出 length in x0"
+            pass "kernel qemu: SVC が 書出 の戻り値を x0 で返す"
         else
-            fail "kernel qemu: SVC returned 書出 length in x0"
+            fail "kernel qemu: SVC が 書出 の戻り値を x0 で返す"
             sed 's/^/      /' "$KLOG" 2>/dev/null | head -20
         fi
-        if grep -q "民務終了" "$KLOG" 2>/dev/null; then
-            pass "kernel qemu: EL0 task exited via 漢令 終行程 (民務終了)"
+        KSEQ="$(grep -oE '甲在野|乙在野|甲巡|乙巡' "$KLOG" 2>/dev/null | paste -sd' ' -)"
+        if [ "$KSEQ" = "甲在野 甲巡 乙在野 乙巡 甲巡 乙巡" ]; then
+            pass "kernel qemu: ラウンドロビン切替 (譲渡で甲/乙が交互)"
         else
-            fail "kernel qemu: EL0 task exited via 漢令 終行程 (民務終了)"
+            fail "kernel qemu: ラウンドロビン切替 (got '${KSEQ:-none}')"
+            sed 's/^/      /' "$KLOG" 2>/dev/null | head -20
+        fi
+        if grep -q "民務終了 行程=0x0000000000000000" "$KLOG" 2>/dev/null && \
+           grep -q "民務終了 行程=0x0000000000000001" "$KLOG" 2>/dev/null; then
+            pass "kernel qemu: 両行程が 終行程 で終了し EL1 へ復歸"
+        else
+            fail "kernel qemu: 両行程が 終行程 で終了し EL1 へ復歸"
             sed 's/^/      /' "$KLOG" 2>/dev/null | head -20
         fi
     else
