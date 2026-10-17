@@ -351,13 +351,13 @@ if [ -f "$OUT/kernel.elf" ]; then
         # --- M4: 典籍 (RAMFS/VFS) ---
         K_FO="$(grep -oE '籍開 0x[0-9a-f]{16}' "$KLOG" 2>/dev/null | grep -oE '0x[0-9a-f]{16}')"
         K_FR="$(grep -oE '籍読 0x[0-9a-f]{16}' "$KLOG" 2>/dev/null | grep -oE '0x[0-9a-f]{16}')"
-        K_FC="$(grep -c '鴻門之会、沛公危うし' "$KLOG" 2>/dev/null)"
+        K_FC="$(grep -c '黄帝者、少典之子、姓公孫' "$KLOG" 2>/dev/null)"
         K_FW="$(grep -oE '籍書 0x[0-9a-f]{16}' "$KLOG" 2>/dev/null | grep -oE '0x[0-9a-f]{16}')"
         K_FX="$(grep -oE '籍閉 0x[0-9a-f]{16}' "$KLOG" 2>/dev/null | grep -oE '0x[0-9a-f]{16}')"
         K_FB="$(grep -oE '籍再 0x[0-9a-f]{16}' "$KLOG" 2>/dev/null | grep -oE '0x[0-9a-f]{16}')"
         K_FN="$(grep -oE '籍無 0x[0-9a-f]{16}' "$KLOG" 2>/dev/null | grep -oE '0x[0-9a-f]{16}')"
-        if [ "$K_FO" = "0x0000000000000003" ] && [ "$K_FR" = "0x000000000000001e" ] && [ "${K_FC:-0}" -ge 1 ]; then
-            pass "kernel qemu: 典籍 開→讀入 (史記 を 30 バイト読む)"
+        if [ "$K_FO" = "0x0000000000000003" ] && [ "$K_FR" = "0x0000000000000024" ] && [ "${K_FC:-0}" -ge 1 ]; then
+            pass "kernel qemu: 典籍 開→讀入 (史記 を 36 バイト読む)"
         else
             fail "kernel qemu: 典籍 開→讀入 (開='${K_FO:-none}' 読='${K_FR:-none}' 内容=${K_FC:-0})"
             sed 's/^/      /' "$KLOG" 2>/dev/null | head -30
@@ -381,7 +381,7 @@ if [ -f "$OUT/kernel.elf" ]; then
             fail "kernel qemu: 殻 起動と 響"
             sed 's/^/      /' "$KLOG" 2>/dev/null | head -40
         fi
-        if grep -q "殻讀:鴻門之会、沛公危うし" "$KLOG" 2>/dev/null && grep -q "殻無" "$KLOG" 2>/dev/null; then
+        if grep -q "殻讀:黄帝者、少典之子、姓公孫" "$KLOG" 2>/dev/null && grep -q "殻無" "$KLOG" 2>/dev/null; then
             pass "kernel qemu: 殻 讀 (典籍を開いて表示、無い名前は 殻無)"
         else
             fail "kernel qemu: 殻 讀"
