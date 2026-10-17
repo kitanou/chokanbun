@@ -271,6 +271,22 @@ if [ -f "$OUT/kernel.elf" ]; then
             fail "kernel qemu: 譲渡によるラウンドロビン切替 (got '${KSEQ:-none}')"
             sed 's/^/      /' "$KLOG" 2>/dev/null | head -20
         fi
+        # --- M3 software: タイマーによるプリエンプション (非協調切替) ----------
+        K_PRE="$(grep -oE '甲忙始|乙忙|甲忙終' "$KLOG" 2>/dev/null | paste -sd' ' -)"
+        if [ "$K_PRE" = "甲忙始 乙忙 甲忙終" ]; then
+            pass "kernel qemu: タイマー横取り (甲が回転中に 乙 が割込実行、甲が復歸)"
+        else
+            fail "kernel qemu: タイマー横取り (got '${K_PRE:-none}')"
+            sed 's/^/      /' "$KLOG" 2>/dev/null | head -20
+        fi
+        K_PT1="$(grep -oE '乙忙 0x[0-9a-f]{16}' "$KLOG" 2>/dev/null | grep -oE '0x[0-9a-f]{16}')"
+        K_PT2="$(grep -oE '甲忙終0x[0-9a-f]{16}' "$KLOG" 2>/dev/null | grep -oE '0x[0-9a-f]{16}')"
+        if [ -n "$K_PT1" ] && [ -n "$K_PT2" ] && [ $((K_PT1)) -lt $((K_PT2)) ]; then
+            pass "kernel qemu: 割込れた刻数が横取り前 (乙='${K_PT1}' < 甲='${K_PT2}')"
+        else
+            fail "kernel qemu: 割込れた刻数が横取り前 (乙='${K_PT1:-none}' 甲='${K_PT2:-none}')"
+            sed 's/^/      /' "$KLOG" 2>/dev/null | head -20
+        fi
         if grep -q "民務終了 行程=0x0000000000000000" "$KLOG" 2>/dev/null && \
            grep -q "民務終了 行程=0x0000000000000001" "$KLOG" 2>/dev/null; then
             pass "kernel qemu: 両行程が 終行程 で終了し EL1 へ復歸"

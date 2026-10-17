@@ -95,10 +95,54 @@ lower_sync_handler:
     mrs x0, esr_el1
     mov x1, sp
     bl svc_dispatch
+    b el0_resume
+
+// Lower-EL IRQ entry (vector offset 0x480): the timer interrupt taken while an
+// EL0 行程 runs.  It saves the same 288-byte frame as the SVC path and hands the
+// frame pointer to 割込切替 (irq_switch), which acknowledges the GIC, advances
+// the tick counter, rearms the timer and asks 排程 to pick the next 行程.  The
+// machine-kanbun handler returns a frame pointer to resume from (possibly a
+// different 行程), or 0 when no 行程 is runnable.
+    .globl lower_irq_handler
+lower_irq_handler:
+    sub sp, sp, #288
+    stp x0,  x1,  [sp, #0]
+    stp x2,  x3,  [sp, #16]
+    stp x4,  x5,  [sp, #32]
+    stp x6,  x7,  [sp, #48]
+    stp x8,  x9,  [sp, #64]
+    stp x10, x11, [sp, #80]
+    stp x12, x13, [sp, #96]
+    stp x14, x15, [sp, #112]
+    stp x16, x17, [sp, #128]
+    stp x18, x19, [sp, #144]
+    stp x20, x21, [sp, #160]
+    stp x22, x23, [sp, #176]
+    stp x24, x25, [sp, #192]
+    stp x26, x27, [sp, #208]
+    stp x28, x29, [sp, #224]
+    str x30, [sp, #240]
+    mrs x2, nzcv
+    str x2, [sp, #248]
+    mrs x2, elr_el1
+    str x2, [sp, #256]
+    mrs x2, spsr_el1
+    str x2, [sp, #264]
+    mrs x2, sp_el0
+    str x2, [sp, #272]
+
+    mov x0, sp
+    bl irq_switch
+    // fall through to the shared EL0 resume path
+
+// Resume an EL0 行程 from the 288-byte frame at SP.  x0 holds the frame pointer
+// returned by the machine-kanbun handler (SP itself), or 0 when there is no
+// runnable 行程.
+el0_resume:
     cbz x0, el0_park
 
-    // The frame now holds the state of the 行程 to resume (possibly a
-    // different one than entered this handler).
+    // The frame now holds the state of the 行程 to resume (possibly a different
+    // one than entered this handler).
     ldr x2, [sp, #248]
     msr nzcv, x2
     ldr x2, [sp, #256]

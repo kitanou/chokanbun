@@ -29,7 +29,7 @@ _vectors:
 
     // ---- Lower EL using AArch64 (EL0) ----
     .p2align 7; b lower_sync_handler      // Synchronous (SVC)
-    .p2align 7; b irq_handler             // IRQ
+    .p2align 7; b lower_irq_handler       // IRQ (timer preemption of EL0 行程)
     .p2align 7; b exception_handler       // FIQ
     .p2align 7; b exception_handler       // SError
 
@@ -87,10 +87,12 @@ exception_handler:
 
     eret
 
-// Common IRQ entry.  Like the synchronous entry, but asynchronous: it also
-// preserves NZCV because the interrupted computation may depend on the flags.
-// The acknowledge/end-of-interrupt and timer logic live in machine-kanbun
-// (kernel/kernel.txt, 割込處理).
+// Common IRQ entry for exceptions taken at EL1h (kernel).  Like the
+// synchronous entry, but asynchronous: it also preserves NZCV because the
+// interrupted computation may depend on the flags.  The acknowledge/
+// end-of-interrupt and timer logic live in machine-kanbun
+// (kernel/kernel.txt, 割込處理).  Timer interrupts taken while an EL0 行程 runs
+// use the Lower-EL IRQ vector instead (kernel/el0.S, lower_irq_handler).
 irq_handler:
     sub sp, sp, #256
     stp x0,  x1,  [sp, #0]
