@@ -1,52 +1,62 @@
 # 超漢文 OS — ChoKanbun OS
 
-**機械漢文でカーネル内部まで記述する ARM64 ネイティブ OS。**
+**BTRON3仕様への完全準拠と、機械漢文による自己完結を目指す AArch64 ネイティブ OS。**
 
 > 世界安寧
 
-![起動から殻でファイルを読むまでのデモ](docs/demo/chokanbun-demo.gif)
+![起動から漢殻でファイルを読むまでのデモ](docs/demo/chokanbun-demo.gif)
 
-QEMU `virt` / AArch64 で動く研究用 OS。カーネルも、その上で動く漢文シェルも機械漢文で書いている。
-機械漢文は独立したシステムプログラミング言語で、LLVM IR 経由で ARM64 機械語へコンパイルする。
+超漢文は、機械漢文でカーネル内部まで記述する独立 OS の研究開発プロジェクトです。初期実行基盤は QEMU `virt` / AArch64。機械漢文は LLVM IR を経由して ARM64 機械語へコンパイルされ、カーネルとユーザー空間のプログラムに使われます。
 
-## 現状
+長期目標は、BTRON3 仕様書 Ver. 3.20.00 への完全準拠を検証可能な形で進めること、そしてブートローダー・カーネル・ドライバ・ユーザー空間・コンパイラを段階的に機械漢文で記述することです。現時点で BTRON3 完全準拠やセルフホスティングを達成したという意味ではありません。
 
-| マイルストーン | 内容 | 状態 |
-|---|---|---|
-| M0 | コンパイラ（字句・構文・型検査・LLVM IR 出力） | 達成 |
-| M1 | QEMU で機械漢文から「世界安寧」を UART に出力 | 達成（GDB 手順は未整備） |
-| M2 | カーネル基盤: 例外・MMU・物理ページ・タイマー・割込 | 達成 |
-| M3 | 行程: EL0・漢令（SVC）・スケジューラ・アドレス空間・プリエンプション | 達成 |
-| M4 | 典籍（RAMFS/VFS）と漢文シェル（殻） | 達成（最小版） |
-| M5 | POSIX 互換サブセット（exec/wait/pipe/fork） | 未着手 |
-| M6 | 機械漢文製ブートローダー | 未着手 |
-| M7 | セルフホスティング | 未着手 |
+## プロジェクトの柱
 
-`make test` は 134 ケースすべて PASS（IR 生成 → AArch64 オブジェクト → ELF リンク → QEMU 実行まで）。
-詳しい進捗と次の一手は [ロードマップ](docs/roadmap.md)、実装の中身は [実装メモ](docs/implementation-notes.md)。
+- **BTRON3 互換性：** 規範仕様を棚卸しし、実装・テスト・適合状況を対応づけて検証する。
+- **必須 UI「漢殻」：** GUI を導入した後も、基本操作・診断・保守・復旧に使えるシェルとして維持する。
+- **実身・仮身と篇藏：** BTRON3 のデータモデルを基準に、超漢文独自のファイル体系を段階的に統合する。篇藏は LLM に依存しない決定的な仕組みとする。
+- **機械漢文による自己完結：** 暫定アセンブリ等を記録しながら、ブートローダーからユーザー空間まで機械漢文化する。
+- **独自 CPU 研究：** 機械漢文 CPU とエミュレータは、AArch64 版 OS の完成を妨げない独立トラックで進める。
+
+## 現在の実装状況
+
+現時点の基礎実装には、機械漢文コンパイラ、AArch64 コード生成、QEMU 起動、カーネルの例外・MMU・タイマー・割込の基礎、EL0 行程、行程切替、アドレス空間、漢令、VFS/RAMFS、最小版の漢殻があります。詳細な完了状況はテストと仕様照合に基づき更新します。
+
+| 領域 | 現状 |
+|---|---|
+| コンパイラ | 字句解析・構文解析・型検査・LLVM IR 生成の基礎を実装 |
+| カーネル | QEMU/AArch64 起動、例外処理、MMU、ページ管理、タイマー・割込の基礎を実装 |
+| 行程・漢令 | EL0 実行、SVC ABI、スケジューラ、アドレス空間、プリエンプション等の基礎を実装 |
+| 典籍・漢殻 | VFS/RAMFS と機械漢文製の最小シェルを実装。ファイルは RAM 上にあり、再起動すると消える |
+| BTRON3 適合 | 複数領域で作業中。仕様全体の適合性マトリクスと検証が必要 |
+| 実身・仮身／篇藏 | 設計・統合を進める段階。永続化や GUI 統合は未完了 |
+| GUI・実機対応 | 今後の段階 |
+| 機械漢文ブートローダー・セルフホスティング | 未完了 |
+| 独自機械漢文 CPU | AArch64 版とは別の研究トラック |
+
+最新の優先順位・フェーズ・完了条件は [開発ロードマップ](docs/roadmap.md) を参照してください。
 
 ## クイックスタート
 
 ### 必要なもの
 
-macOS（Homebrew）を想定している。
+macOS と Homebrew を想定しています。
 
 ```sh
 brew install llvm lld qemu
 ```
 
-LLVM ツールは既定で `/opt/homebrew/opt/llvm/bin` と `/opt/homebrew/opt/lld/bin` を参照する。
-場所が違うときは `LLVM_BIN` / `LLD_BIN` で上書きする。
+LLVM ツールは既定で `/opt/homebrew/opt/llvm/bin` と `/opt/homebrew/opt/lld/bin` を参照します。インストール先が異なる場合は `LLVM_BIN` / `LLD_BIN` で上書きしてください。
 
 ### ビルドとテスト
 
 ```sh
 make          # コンパイラ (chokanbun) をビルド
-make test     # 全テストを実行（カーネル tests/output/kernel.elf も作る）
+make test     # テストを実行し、カーネル tests/output/kernel.elf も生成
 make clean
 ```
 
-### QEMU で動かす
+### QEMU で起動
 
 ```sh
 make test
@@ -54,11 +64,13 @@ qemu-system-aarch64 -M virt,gic-version=2 -cpu cortex-a57 -nographic \
   -serial mon:stdio -kernel tests/output/kernel.elf
 ```
 
-- 起動ログが流れたら、**先に 1 行**（例: `KANBUN`）入力して Enter を押す。起動時の読込テストがこの 1 行を使う。
-- そのあと `殻> ` が出て、殻の命令を入力できる。
-- QEMU の終了は `Ctrl-A` のあと `X`。
+- 起動ログのあと、まず 1 行（例：`KANBUN`）を入力して Enter を押してください。起動時の読込テストで使われます。
+- 続いて `殻>` が表示されたら、漢殻の命令を入力できます。
+- QEMU を終了するには `Ctrl-A` のあと `X` を押します。
 
-```
+例：
+
+```text
 殻> 響 超漢文起動
 殻響:超漢文起動
 殻> 讀 詩経
@@ -71,32 +83,26 @@ qemu-system-aarch64 -M virt,gic-version=2 -cpu cortex-a57 -nographic \
 殻> 助
 ```
 
-殻の命令は `響`・`讀`・`目`・`書`・`削`・`助`・`終` と、外部命令（`問安`・`數`。`user/` の漢像）。書式とエラーの読み方は
-[殻のコマンド一覧](docs/shell-commands.md)。ファイルは RAM 上だけで、再起動すると消える。
+現在の漢殻コマンドには `響`・`讀`・`目`・`書`・`削`・`助`・`終` と、外部命令（`問安`・`數` など）があります。詳細は [漢殻コマンド一覧](docs/shell-commands.md) を参照してください。現在のファイル領域は RAM 上のため、再起動すると内容は消えます。
 
 ## ソース構成
 
 | パス | 内容 |
 |---|---|
-| `src/` | コンパイラ（字句解析・構文解析・型検査・LLVM IR 生成） |
-| `kernel/` | 漢極（カーネル）。本体 `kernel.txt` は機械漢文、入口は暫定アセンブリ（`boot.S`・`vectors.S`・`sysreg.S`・`el0.S`）。典籍（VFS/RAMFS）は `kernel/vfs/` |
-| `user/` | 外部命令（行程として起動される機械漢文のプログラム）。`hello.txt`（問安）、`count.txt`（數）、`lib.txt`（漢令のラッパ）、`crt0.S`・`user.lds`（漢像のヘッダと入口） |
-| `tools/` | ビルド補助。`kernel-expand.sh`（`註 @取込` の展開）、`mkimage.sh`（外部命令を漢像にする）、`gen-images.sh`（漢像をカーネルへ埋め込む） |
-| `boot/` | Phase 0 の起動スタブと C 版 UART ドライバ（参照用） |
-| `tests/` | テスト（`run_tests.sh`）と機械漢文のサンプル |
-| `docs/` | 設計文書 |
+| `src/` | 機械漢文コンパイラ（字句解析・構文解析・型検査・LLVM IR 生成） |
+| `kernel/` | 漢極（カーネル）。本体 `kernel.txt` は機械漢文。起動・例外処理などに暫定アセンブリを含む |
+| `kernel/vfs/` | 典籍（VFS/RAMFS） |
+| `user/` | 行程として起動する機械漢文製の外部命令と起動補助コード |
+| `tools/` | ビルド補助スクリプト |
+| `boot/` | 初期段階の起動スタブや参照用コード |
+| `tests/` | テストスクリプトと機械漢文のサンプル |
+| `docs/` | 言語仕様、ABI、OS設計、漢殻、篇藏、ロードマップ等の文書 |
 
-## テストの内容
+## テスト
 
-`make test` は `tests/run_tests.sh` を呼び、次を検証する。
+`make test` はコンパイラから AArch64 オブジェクト／ELF の生成、QEMU での実行、カーネルの統合テストを検証します。対象には型エラー診断、起動メッセージ、例外処理、MMU・ページ管理、タイマー割込、EL0 行程・漢令・境界検査、プリエンプション、待機と起床、デマンドページング、UART 入力、典籍、漢殻の各命令などが含まれます。
 
-| 区分 | 内容 |
-|---|---|
-| `hello` / `uart` / `uart_mmio` | 機械漢文 → LLVM IR → AArch64 オブジェクト → ELF リンク（`uart_mmio` は機械漢文だけで書いた PL011 ドライバ） |
-| `kernel` | 漢極のオブジェクト・ELF リンク、例外ベクタ表の 2 KiB 整列 |
-| `type_error` | 型不一致の診断（`E00xx`）が出ること |
-| `qemu` | QEMU 上で「世界安寧」が出ること |
-| `kernel qemu` | 超漢文起動、例外捕獲、MMU、物理ページ、タイマー割込、EL0 行程・漢令・境界検査、プリエンプション、待機と起床、デマンドページング、UART 入力、典籍、殻の各命令 |
+テスト数や PASS 数は実行時の結果を正とし、README に固定値を記載しません。失敗時はログと再現手順を確認してください。
 
 ## 設計文書
 
@@ -107,16 +113,22 @@ qemu-system-aarch64 -M virt,gic-version=2 -cpu cortex-a57 -nographic \
 - [POSIX 互換方針](docs/posix-compat.md)
 - [行程・外部命令・パイプ・exec/fork の設計](docs/design-process-exec.md)
 - [篇藏 v0.1（ファイル体系）の設計](docs/design-pianfs.md)
-- [殻のコマンド一覧](docs/shell-commands.md)
+- [漢殻コマンド一覧](docs/shell-commands.md)
 - [実装メモ](docs/implementation-notes.md)
-- [ロードマップ](docs/roadmap.md)
+- [開発ロードマップ](docs/roadmap.md)
 
-## 目的と開発方針
+## 開発上の約束
 
-- AArch64（ARMv8-A）を対象とする独立した研究用 OS を開発する。
-- カーネル、システムコール、メモリ管理、プロセス管理、ドライバ、ユーザーランドを機械漢文で記述する。
-- POSIX 互換性は段階的に実装する（適合は主張しない）。
-- 最初の実行環境は QEMU `virt` / AArch64。
-- ブート初期化などは当面、最小限の AArch64 アセンブリを許容し、後に低水準の機械漢文構文へ移行する。
-- コンパイラのブートストラップ実装には既存言語を許容する。カーネル本体は機械漢文を原則とする。
-- `machine-kanbun` とは独立して仕様・実装・Issue を管理する。
+1. BTRON3 の規範仕様、超漢文の内部実装、独自拡張を区別する。「完全準拠」は対象仕様の照合とテストが完了してから宣言する。
+2. 漢殻は必須 UI とし、GUI の有無にかかわらず診断・保守・基本操作の経路を残す。
+3. OS の基本機能と篇藏は LLM に依存させず、決定的なコードと明示的な仕様で実装する。
+4. 暫定アセンブリや既存言語によるブートストラップは移行対象として記録し、最終目標と現状を混同しない。
+5. `machine-kanbun` とは独立して仕様・実装・Issue を管理する。
+
+## 主な計画
+
+- [Issue #10 — 完全機械漢文 OS 化](https://github.com/kitanou/chokanbun/issues/10)
+- [Issue #42 — BTRON3 仕様書 Ver. 3.20.00 への完全準拠](https://github.com/kitanou/chokanbun/issues/42)
+- [Issue #46 — 漢殻と実身・仮身モデル](https://github.com/kitanou/chokanbun/issues/46)
+- [Issue #47 — 黄帝紀元](https://github.com/kitanou/chokanbun/issues/47)
+- [Issue #26 — 独自機械漢文 CPU](https://github.com/kitanou/chokanbun/issues/26)
