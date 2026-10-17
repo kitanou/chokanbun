@@ -69,27 +69,38 @@ Decl Parser::parseDeclaration() {
     Decl d;
     Token tok = current();
 
-    // Check for attributes (公開, 不返, 節)
-    if (check(TokKind::Gongkai) || check(TokKind::Bufan) || check(TokKind::Jie)) {
-        // Parse attributes, then expect 術曰 or 外術曰
-        d.kind = Decl::Kind::Function;
-        auto fn = std::make_shared<FunctionDecl>();
-        fn->line = tok.line;
-        fn->col = tok.col;
+    // Check for attributes (公開, 不返, 節, 記號)
+    if (check(TokKind::Gongkai) || check(TokKind::Bufan) ||
+        check(TokKind::Jie) || check(TokKind::Jihao)) {
+        bool isPublic = false;
+        bool isNoreturn = false;
+        std::string section;
+        std::string symbol;
 
         // Parse all attributes
-        while (check(TokKind::Gongkai) || check(TokKind::Bufan) || check(TokKind::Jie)) {
+        while (check(TokKind::Gongkai) || check(TokKind::Bufan) ||
+               check(TokKind::Jie) || check(TokKind::Jihao)) {
             if (match(TokKind::Gongkai)) {
-                fn->isPublic = true;
+                isPublic = true;
             } else if (match(TokKind::Bufan)) {
-                fn->isNoreturn = true;
+                isNoreturn = true;
             } else if (match(TokKind::Jie)) {
                 // 節「.text.boot」
                 if (check(TokKind::Ident)) {
-                    fn->section = current().value;
+                    section = current().value;
                     advance();
                 } else {
                     error(current(), "E0002", "expected section name after 節");
+                    hasErrors_ = true;
+                    advance();
+                }
+            } else if (match(TokKind::Jihao)) {
+                // 記號「ascii_symbol」
+                if (check(TokKind::Ident)) {
+                    symbol = current().value;
+                    advance();
+                } else {
+                    error(current(), "E0002", "expected symbol name after 記號");
                     hasErrors_ = true;
                     advance();
                 }
@@ -105,11 +116,19 @@ Decl Parser::parseDeclaration() {
         } else {
             error(current(), "E0002", "expected 術曰 or 外術曰 after attributes");
             hasErrors_ = true;
-            return d;
+            Decl bad;
+            bad.kind = Decl::Kind::Function;
+            return bad;
         }
 
-        *fn = *parseFunctionAfterKeyword(isExt);
+        auto fn = parseFunctionAfterKeyword(isExt);
+        fn->isPublic = isPublic;
+        fn->isNoreturn = isNoreturn;
+        fn->section = section;
+        if (!symbol.empty()) fn->symbolName = symbol;
+
         d.function = fn;
+        d.kind = isExt ? Decl::Kind::External : Decl::Kind::Function;
         return d;
     }
 
