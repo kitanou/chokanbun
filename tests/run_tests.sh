@@ -476,6 +476,32 @@ if [ -f "$OUT/kernel.elf" ]; then
             fail "kernel qemu: 殻 未知の命令と 終"
             sed 's/^/      /' "$KLOG" 2>/dev/null | head -40
         fi
+        # --- M5/P0: 柄表・開表 (行程ごとの柄、開くたびに独立した位置) ---------------
+        K_IND="$(grep -a '籍独立 ' "$KLOG" 2>/dev/null | head -1 | grep -oE '0x[0-9a-f]{16}')"
+        K_SEP="$(grep -a '籍別柄 ' "$KLOG" 2>/dev/null | head -1 | grep -oE '0x[0-9a-f]{16}')"
+        if [ "$K_IND" = "0x0000000000000001" ] && [ "$K_SEP" = "0x0000000000000001" ]; then
+            pass "kernel qemu: 柄表・開表 (同じ典籍を 2 回開くと別の柄で、位置が独立)"
+        else
+            fail "kernel qemu: 柄表・開表 (独立=${K_IND:-none} 別柄=${K_SEP:-none})"
+            sed 's/^/      /' "$KLOG" 2>/dev/null | head -40
+        fi
+        K_BUSY="$(grep -a '籍削忙 ' "$KLOG" 2>/dev/null | grep -oE '0x[0-9a-f]{16}' | paste -sd' ' -)"
+        if [ "$K_BUSY" = "0xfffffffffffffff0 0xfffffffffffffff0" ]; then
+            pass "kernel qemu: 開かれている間は 削 が -EBUSY (開数。2 本のうち 1 本を閉じてもまだ -EBUSY)"
+        else
+            fail "kernel qemu: 開かれている間は 削 が -EBUSY (got '${K_BUSY:-none}')"
+            grep -a '籍削忙' "$KLOG" 2>/dev/null | sed 's/^/      /'
+        fi
+        K_FULL="$(grep -a '籍満 ' "$KLOG" 2>/dev/null | head -1 | grep -oE '0x[0-9a-f]{16}')"
+        K_REOPEN="$(grep -a '籍再開 ' "$KLOG" 2>/dev/null | head -1 | grep -oE '0x[0-9a-f]{16}')"
+        K_DEVCLOSE="$(grep -a '籍盤閉 ' "$KLOG" 2>/dev/null | head -1 | grep -oE '0x[0-9a-f]{16}')"
+        if [ "$K_FULL" = "0xffffffffffffffe8" ] && [ "$K_REOPEN" = "0x0000000000000003" ] \
+           && [ "$K_DEVCLOSE" = "0xfffffffffffffff7" ]; then
+            pass "kernel qemu: 柄表の満杯 (-EMFILE)、閉じて再び開ける、盤の柄は閉じられない (-EBADF)"
+        else
+            fail "kernel qemu: 柄表の満杯 (満杯=${K_FULL:-none} 再開=${K_REOPEN:-none} 盤閉=${K_DEVCLOSE:-none})"
+            sed 's/^/      /' "$KLOG" 2>/dev/null | head -40
+        fi
         KSEQ="$(grep -oE '甲書|乙書|甲讀|乙讀' "$KLOG" 2>/dev/null | paste -sd' ' -)"
         if [ "$KSEQ" = "甲書 乙書 甲讀 乙讀" ]; then
             pass "kernel qemu: 譲渡によるラウンドロビン切替"
