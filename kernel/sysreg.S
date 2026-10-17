@@ -116,3 +116,24 @@ flush_tlb:
     dsb sy
     isb
     ret
+
+// clean_dcache_range(addr, len): データキャッシュを PoU までクリーンする (命令を書いたページの後始末)。
+//   生行程 が漢像のコードを複写した後、命令フェッチから見えるようにするために使う。
+    .globl clean_dcache_range
+clean_dcache_range:
+    add x1, x0, x1
+    bic x0, x0, #63
+1:  dc cvau, x0
+    add x0, x0, #64
+    cmp x0, x1
+    b.lo 1b
+    dsb ish
+    ret
+
+// sync_icache(): 命令キャッシュを無効化する。clean_dcache_range の後に呼ぶ。
+    .globl sync_icache
+sync_icache:
+    ic iallu
+    dsb ish
+    isb
+    ret

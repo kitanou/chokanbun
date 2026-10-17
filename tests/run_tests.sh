@@ -129,11 +129,29 @@ awk '/^define /{e=1} /^[A-Za-z0-9_.]+:$/{ if ($0!="entry:") e=0 } /alloca/{ if(!
     >"$OUT/kernel_el0.log" 2>&1 \
     && pass "kernel: EL0/SVC boundary object" || fail "kernel: EL0/SVC boundary object"
 
+# 外部命令 (漢像 KBN1) をビルドし、カーネルイメージへ埋め込む (行程の設計 P1)。
+export BIN LLVM_BIN LLD_BIN
+sh tools/mkimage.sh user/hello.txt "$OUT/hello.zo" "$OUT" 2>"$OUT/user_hello.build.log" \
+    && pass "user: 外部命令 問安 を漢像にビルド" || {
+        fail "user: 外部命令 問安 を漢像にビルド"
+        sed 's/^/      /' "$OUT/user_hello.build.log" | head -10
+    }
+# 漢像のヘッダ: 魔 KBN1、入口が 0x40610000 台、終端が像の範囲
+if [ -f "$OUT/hello.zo" ] && [ "$(head -c 4 "$OUT/hello.zo")" = "KBN1" ]; then
+    pass "user: 漢像のヘッダ (魔 KBN1、$(wc -c <"$OUT/hello.zo" | tr -d ' ') バイト)"
+else
+    fail "user: 漢像のヘッダ"
+fi
+sh tools/gen-images.sh "$OUT/kernel_images.S" 問安="$OUT/hello.zo" \
+    && "$CLANG" --target=aarch64-none-elf -c "$OUT/kernel_images.S" -o "$OUT/kernel_images.o" \
+        >"$OUT/kernel_images.log" 2>&1 \
+    && pass "kernel: 漢像の埋め込み (像表)" || fail "kernel: 漢像の埋め込み (像表)"
+
 if [ -f "$OUT/kernel.o" ] && [ -f "$OUT/kernel_boot.o" ] && \
    [ -f "$OUT/kernel_vectors.o" ] && [ -f "$OUT/kernel_sysreg.o" ] && \
-   [ -f "$OUT/kernel_el0.o" ]; then
+   [ -f "$OUT/kernel_el0.o" ] && [ -f "$OUT/kernel_images.o" ]; then
     "$LD" -T kernel/kernel.lds "$OUT/kernel_boot.o" "$OUT/kernel_vectors.o" \
-        "$OUT/kernel_sysreg.o" "$OUT/kernel_el0.o" "$OUT/kernel.o" -o "$OUT/kernel.elf" \
+        "$OUT/kernel_sysreg.o" "$OUT/kernel_el0.o" "$OUT/kernel_images.o" "$OUT/kernel.o" -o "$OUT/kernel.elf" \
         >"$OUT/kernel.link.log" 2>&1 \
         && pass "kernel: ELF link" || fail "kernel: ELF link"
     if [ -f "$OUT/kernel.elf" ]; then
@@ -475,6 +493,33 @@ if [ -f "$OUT/kernel.elf" ]; then
         else
             fail "kernel qemu: 殻 未知の命令と 終"
             sed 's/^/      /' "$KLOG" 2>/dev/null | head -40
+        fi
+        # --- M5/P1: 行程の生成・待機・終了 (生行程/待行程/終行程) ---------------------
+        sp_val() { grep -a "^$1 " "$KLOG" 2>/dev/null | head -1 | grep -oE '0x[0-9a-f]{16}'; }
+        SP_BAD=""
+        for kv in '生=3' '待識=3' '待碼=7' '生無=0xfffffffffffffffe' '待無=0xfffffffffffffff6' '生繰返 成功=20' '生繰返 頁残差=0'; do
+            k="${kv%%=*}"; v="${kv#*=}"
+            case "$v" in 0x*) want="$v" ;; *) want="$(printf '0x%016x' "$v")" ;; esac
+            got="$(sp_val "$k")"
+            [ "$got" = "$want" ] || SP_BAD="$SP_BAD [$k want=$want got=${got:-none}]"
+        done
+        if [ -z "$SP_BAD" ]; then
+            pass "kernel qemu: 生行程・待行程 (子の識=3、終了コード 7 を回収、無い名前 -ENOENT、子が無ければ -ECHILD)"
+        else
+            fail "kernel qemu: 生行程・待行程 (不一致:$SP_BAD)"
+            grep -a '^生\|^待\|子行程' "$KLOG" 2>/dev/null | sed 's/^/      /' | head -30
+        fi
+        if grep -aq '子行程起動 天下' "$KLOG" 2>/dev/null; then
+            pass "kernel qemu: 子行程が漢像から起動し、引数 (天下) を受け取って出力 (EL0、別の窓)"
+        else
+            fail "kernel qemu: 子行程が漢像から起動し、引数を受け取る"
+            grep -a '子行程\|異常' "$KLOG" 2>/dev/null | sed 's/^/      /' | head
+        fi
+        K_CH="$(grep -ac '子行程起動' "$KLOG" 2>/dev/null)"
+        if [ "${K_CH:-0}" -eq 21 ]; then
+            pass "kernel qemu: 起動・回収を 20 回繰り返しても頁が漏れず、毎回子が走る (子の出力 21 回)"
+        else
+            fail "kernel qemu: 起動・回収の繰り返し (子の出力=${K_CH:-0} 回、期待 21)"
         fi
         # --- M5/P0: 行程表の統合・行程数 8・頁池の拡大 ---------------------------
         tbl_val() { grep -a "$1 " "$KLOG" 2>/dev/null | head -1 | grep -oE '0x[0-9a-f]{16}'; }
