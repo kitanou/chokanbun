@@ -28,10 +28,10 @@ _vectors:
     .p2align 7; b exception_handler       // SError
 
     // ---- Lower EL using AArch64 (EL0) ----
-    .p2align 7; b exception_handler
-    .p2align 7; b exception_handler
-    .p2align 7; b exception_handler
-    .p2align 7; b exception_handler
+    .p2align 7; b lower_sync_handler      // Synchronous (SVC)
+    .p2align 7; b irq_handler             // IRQ
+    .p2align 7; b exception_handler       // FIQ
+    .p2align 7; b exception_handler       // SError
 
     // ---- Lower EL using AArch32 ----
     .p2align 7; b exception_handler

@@ -106,11 +106,15 @@ fi
 "$CLANG" --target=aarch64-none-elf -c kernel/sysreg.S -o "$OUT/kernel_sysreg.o" \
     >"$OUT/kernel_sysreg.log" 2>&1 \
     && pass "kernel: sysreg helpers object" || fail "kernel: sysreg helpers object"
+"$CLANG" --target=aarch64-none-elf -c kernel/el0.S -o "$OUT/kernel_el0.o" \
+    >"$OUT/kernel_el0.log" 2>&1 \
+    && pass "kernel: EL0/SVC boundary object" || fail "kernel: EL0/SVC boundary object"
 
 if [ -f "$OUT/kernel.o" ] && [ -f "$OUT/kernel_boot.o" ] && \
-   [ -f "$OUT/kernel_vectors.o" ] && [ -f "$OUT/kernel_sysreg.o" ]; then
+   [ -f "$OUT/kernel_vectors.o" ] && [ -f "$OUT/kernel_sysreg.o" ] && \
+   [ -f "$OUT/kernel_el0.o" ]; then
     "$LD" -T kernel/kernel.lds "$OUT/kernel_boot.o" "$OUT/kernel_vectors.o" \
-        "$OUT/kernel_sysreg.o" "$OUT/kernel.o" -o "$OUT/kernel.elf" \
+        "$OUT/kernel_sysreg.o" "$OUT/kernel_el0.o" "$OUT/kernel.o" -o "$OUT/kernel.elf" \
         >"$OUT/kernel.link.log" 2>&1 \
         && pass "kernel: ELF link" || fail "kernel: ELF link"
     if [ -f "$OUT/kernel.elf" ]; then
@@ -176,7 +180,7 @@ if [ -f "$OUT/kernel.elf" ]; then
         # Wait up to ~15s for the final marker, then stop QEMU.  The generic
         # timer fires five times (5 × CNTFRQ/40 ≈ 125 ms), so this is ample.
         for _ in $(seq 1 30); do
-            grep -q "割込完了" "$KLOG" 2>/dev/null && break
+            grep -q "民務終了" "$KLOG" 2>/dev/null && break
             sleep 0.5
         done
         kill "$QPID" 2>/dev/null
@@ -220,6 +224,31 @@ if [ -f "$OUT/kernel.elf" ]; then
             pass "kernel qemu: IRQ handler returned via eret (割込完了)"
         else
             fail "kernel qemu: IRQ handler returned via eret (割込完了)"
+            sed 's/^/      /' "$KLOG" 2>/dev/null | head -20
+        fi
+        # --- M3 software: EL0 task + SVC + 漢令 ABI ---------------------------
+        if grep -q "民籍投入" "$KLOG" 2>/dev/null; then
+            pass "kernel qemu: EL0 task entered (民籍投入)"
+        else
+            fail "kernel qemu: EL0 task entered (民籍投入)"
+            sed 's/^/      /' "$KLOG" 2>/dev/null | head -20
+        fi
+        if grep -q "民在野" "$KLOG" 2>/dev/null; then
+            pass "kernel qemu: EL0 task ran 漢令 書出 (民在野)"
+        else
+            fail "kernel qemu: EL0 task ran 漢令 書出 (民在野)"
+            sed 's/^/      /' "$KLOG" 2>/dev/null | head -20
+        fi
+        if grep -q "0x0000000000000009" "$KLOG" 2>/dev/null; then
+            pass "kernel qemu: SVC returned 書出 length in x0"
+        else
+            fail "kernel qemu: SVC returned 書出 length in x0"
+            sed 's/^/      /' "$KLOG" 2>/dev/null | head -20
+        fi
+        if grep -q "民務終了" "$KLOG" 2>/dev/null; then
+            pass "kernel qemu: EL0 task exited via 漢令 終行程 (民務終了)"
+        else
+            fail "kernel qemu: EL0 task exited via 漢令 終行程 (民務終了)"
             sed 's/^/      /' "$KLOG" 2>/dev/null | head -20
         fi
     else
