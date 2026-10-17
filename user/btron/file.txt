@@ -28,6 +28,18 @@
 常「F_LOCK」之無符六四 為 0x0001
 常「F_TSLOCK」之無符六四 為 0x0002
 常「F_CKLOCK」之無符六四 為 0x0003
+常「F_EXIST」之無符六四 為 0x0000
+常「F_EXCUTE」之無符六四 為 0x0001
+常「F_PASWD」之無符六四 為 0x0008
+常「F_SETRONLY」之無符六四 為 0x0001
+常「F_RSTRONLY」之無符六四 為 0x0002
+常「F_SETPERM」之無符六四 為 0x0003
+常「F_RSTPERM」之無符六四 為 0x0004
+常「F_SETA1」之無符六四 為 0x0005
+常「F_RSTA1」之無符六四 為 0x0006
+常「F_SETA2」之無符六四 為 0x0007
+常「F_RSTA2」之無符六四 為 0x0008
+常「F_NOCHG」之無符六四 為 0x8000
 常「L_FSNM」之無符六四 為 20
 常「L_FNM」之無符六四 為 20
 常「L_CONNM」之無符六四 為 8
@@ -149,4 +161,49 @@
 註 xch_fil(W fd1, W fd2)
 公開 記號「xch_fil」 術曰「BTRON交換」 受「甲」之無符六四 受「乙」之無符六四 返 無符六四
     歸 呼「錯換」以(呼「奏令」以(161, 甲 位與 0xFFFFFFFF, 乙 位與 0xFFFFFFFF, 0, 0, 0, 0))
+終術
+
+註 ---- B4: 属性・アクセス制御・パスワード (漢令 163〜170)。----
+註 A_MODE = {UH f_ownacc; UH f_grpno; UH f_grpacc; UH f_pubacc} (8 B)、DA_MODE = {UH f_ownacc; UH f_gacc[4]; UH f_pubacc} (12 B)。
+註 (どちらも原文の欠落のため暫定。設計書 §12)
+
+註 chk_fil(LINK* lnk, W mode, TC* pwd): mode=F_EXIST (0) は情報の欄を返す (ビット 0〜2 が呼出側の E・W・R、3 がパスワード有り、4〜7 が O・P・A・B)。
+註   それ以外は F_READ・F_WRITE・F_EXCUTE の要求が満たされれば 0、F_PASWD を足すとパスワードも照合する。
+公開 記號「chk_fil」 術曰「BTRON検」 受「鎖」之無符六四 受「態」之無符六四 受「鍵」之無符六四 返 無符六四
+    歸 呼「錯換」以(呼「奏令」以(163, 鎖, 態 位與 0xFFFFFFFF, 鍵, 0, 0, 0))
+終術
+
+註 chg_fmd(LINK* lnk, A_MODE* mode): 各欄の F_NOCHG (0x8000) はその欄を変えない。所有者かレベル 0 だけ。
+公開 記號「chg_fmd」 術曰「BTRON様変」 受「鎖」之無符六四 受「様」之無符六四 返 無符六四
+    歸 呼「錯換」以(呼「奏令」以(164, 鎖, 様, 0, 0, 0, 0))
+終術
+
+註 chg_fat(LINK* lnk, W attr): F_SETRONLY〜F_RSTA2。
+公開 記號「chg_fat」 術曰「BTRON属変」 受「鎖」之無符六四 受「属」之無符六四 返 無符六四
+    歸 呼「錯換」以(呼「奏令」以(165, 鎖, 属 位與 0xFFFFFFFF, 0, 0, 0, 0))
+終術
+
+註 chg_fpw(W fd, TC* pwd): NULL でパスワードを解除。20 文字まで。
+公開 記號「chg_fpw」 術曰「BTRON鍵変」 受「記述」之無符六四 受「鍵」之無符六四 返 無符六四
+    歸 呼「錯換」以(呼「奏令」以(166, 記述 位與 0xFFFFFFFF, 鍵, 0, 0, 0, 0))
+終術
+
+註 chg_fnm(LINK* lnk, TC* name)
+公開 記號「chg_fnm」 術曰「BTRON名変」 受「鎖」之無符六四 受「名」之無符六四 返 無符六四
+    歸 呼「錯換」以(呼「奏令」以(167, 鎖, 名, 0, 0, 0, 0))
+終術
+
+註 chg_ftm(LINK* lnk, F_TIME* times): F_TIME = {W f_ltime; W f_atime; W f_mtime}。NULL は全て現在時刻、0 の欄は変えない。
+公開 記號「chg_ftm」 術曰「BTRON時変」 受「鎖」之無符六四 受「時」之無符六四 返 無符六四
+    歸 呼「錯換」以(呼「奏令」以(168, 鎖, 時, 0, 0, 0, 0))
+終術
+
+註 get_dfm(DA_MODE* mode)
+公開 記號「get_dfm」 術曰「BTRON既定取」 受「様」之無符六四 返 無符六四
+    歸 呼「錯換」以(呼「奏令」以(169, 様, 0, 0, 0, 0, 0))
+終術
+
+註 set_dfm(DA_MODE* mode)
+公開 記號「set_dfm」 術曰「BTRON既定設」 受「様」之無符六四 返 無符六四
+    歸 呼「錯換」以(呼「奏令」以(170, 様, 0, 0, 0, 0, 0))
 終術
