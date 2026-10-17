@@ -26,6 +26,9 @@ enable_mmu:
     isb
 
     mrs x1, sctlr_el1
+    bic x1, x1, #0x400000      // SCTLR_EL1.PAN : allow EL1 data access to
+                               //   memory that is also writable at EL0
+                               //   (the user stack block, AP=0b01)
     orr x1, x1, #1             // SCTLR.M : enable MMU
     orr x1, x1, #4             // SCTLR.C : enable data cache
     orr x1, x1, #4096          // SCTLR.I : enable instruction cache
