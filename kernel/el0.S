@@ -176,7 +176,13 @@ el0_resume:
 
     eret
 
-// 行程終了: no runnable 行程 is left; stay at EL1 and idle.
+// No runnable 行程 is left: idle at EL1.  idle_poll (閑巡, kernel/proc/sync.txt) polls
+// the GIC (IRQs stay masked; WFI still wakes on a pending timer interrupt), runs the
+// timeout wake-ups and returns a frame to resume when a 行程 became runnable, else 0.
 el0_park:
-1:  wfi
-    b 1b
+    bl idle_poll
+    cbz x0, 2f
+    mov sp, x0
+    b el0_resume
+2:  wfi
+    b el0_park

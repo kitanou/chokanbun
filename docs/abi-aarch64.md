@@ -125,6 +125,10 @@
   | `-EFAULT` | 14 | 引数のポインタ/範囲が不正 |
   | `-EEXIST` | 17 | 名前が既にある（グローバル名） |
   | `-EACCES` | 13 | 利用者レベルが足りない |
+  | `-EBADR` | 53 | 同期物の ID が不正（ER_ID） |
+  | `-EIDRM` | 43 | 待っている間に同期物が削除された（ER_DLT） |
+  | `-EPROTO` | 71 | 対象の状態に合わない操作（ER_OBJ） |
+  | `-ETIMEDOUT` | 110 | 待てない・時間切れ（ER_NONE） |
   | `-ENOTCAPABLE` | 93 | 呼出側より上位の利用者レベルの行程は終了できない（ER_LEVEL） |
   | `-EINVAL` | 22 | 引数が不正（空の名前・不正な指定） |
   | `-ESRCH` | 3 | 宛先の行程が無い |
@@ -177,6 +181,15 @@
   | 80 | 信送 | `x0`=宛先 pid（>0 その行程、0 自分、-1 親）, `x1`=MESSAGE（窓内）, `x2`=指定（WAIT=0 / NOWAIT=1。CONFM=2 は未対応） | 0／`-EINVAL`（型が 1〜31 外・不正な指定）・`-E2BIG`（本体が 1〜32 バイト外）・`-ESRCH`（宛先が無い・終了済み）・`-ENOSPC`（満杯で NOWAIT）・`-EFAULT`。満杯で WAIT なら眠り、空きができたら svc を再実行する。`snd_msg` |
   | 81 | 信受 | `x0`=型マスク, `x1`=MESSAGE の書き先, `x2`=msgsz（8〜40）, `x3`=指定（NOWAIT=1、NOCLR=8。WAIEVT・CHECK は未対応） | 0／`-ENOMSG`（無くて NOWAIT）・`-EINVAL`・`-EFAULT`。無ければ眠り、届いたら svc を再実行する。`rcv_msg` |
   | 82 | 信消 | `x0`=型マスク, `x1`=最後マスク | 0／`-EINVAL`。`clr_msg` |
+  | 96 | 作セマ | `x0`=初期カウント, `x1`=指定（SEM_SYNC=0 / SEM_EXCL=0x4000、+DELEXIT=0x8000） | ID（正）／`-EINVAL`（排他で cnt≠1・同期で cnt<0・不明なビット）・`-EMFILE`（16 個満杯）。`cre_sem` |
+  | 97 | 削セマ | `x0`=ID | 0／`-EBADR`（ID が不正）・`-ENOENT`（無い）。待っている行程は `-EIDRM` で起こす。`del_sem` |
+  | 98 | 返セマ | `x0`=ID | 0／`-EBADR`・`-ENOENT`・`-EPROTO`（排他を持っていない）・`-EMFILE`（上限）。待ちがあれば先頭へ手渡す。`sig_sem` |
+  | 99 | 待セマ | `x0`=ID, `x1`=時限（ms。0=待たない、-1=無期限） | 0／`-ETIMEDOUT`（待てない・時間切れ）・`-EPROTO`（排他を自分で既に持っている）・`-EBADR`・`-ENOENT`・`-EIDRM`（待っている間に削除）。待つときは眠り、起こされるとき x0 に結果を直接入れる。`wai_sem` |
+  | 100 | 作フラグ | `x0`=初期パターン, `x1`=指定（DELEXIT のみ） | ID／`-EINVAL`・`-EMFILE`。`cre_flg` |
+  | 101 | 削フラグ | `x0`=ID | 0／`-EBADR`・`-ENOENT`。`del_flg` |
+  | 102 | 立フラグ | `x0`=ID, `x1`=パターン | 0／`-EBADR`・`-ENOENT`。`set_flg`（OR して、条件を満たす待ちを FIFO で起こす） |
+  | 103 | 消フラグ | `x0`=ID, `x1`=残すビット | 0／`-EBADR`・`-ENOENT`。`clr_flg`（AND） |
+  | 104 | 待フラグ | `x0`=ID, `x1`=パターン（>0）, `x2`=様式（WF_AND=0 / WF_OR=2、+NOCLR=8）, `x3`=時限 | 条件を満たした時のパターン／`-EINVAL`（ptn=0・不明な様式）・`-ETIMEDOUT`・`-EIDRM`・`-EBADR`・`-ENOENT`。`wai_flg` |
   | 112 | 名作 | `x0`=名前（TC 配列、TNULL 終端、先頭 8 文字）, `x1`=値（下位 32 ビット）, `x2`=指定（0=N_CREATE / 1=N_MODIFY / 2=N_FORCE、+0x8000=DELEXIT） | 0／`-EEXIST`（N_CREATE で既存）・`-ENOENT`（N_MODIFY で無い）・`-ENOSPC`（16 件満杯）・`-EINVAL`（空の名前・不正な指定）・`-EFAULT`。BTRON3 互換層 `cre_nam`（[btron3-compat-layer.md](compat/btron3-compat-layer.md)） |
   | 113 | 名削 | `x0`=名前 | 0／`-ENOENT`・`-EINVAL`・`-EFAULT`。`del_nam` |
   | 114 | 名取 | `x0`=名前, `x1`=値の書き先（窓内の書込可能な 4 バイト） | 0／`-ENOENT`・`-EINVAL`・`-EFAULT`。`get_nam` |
