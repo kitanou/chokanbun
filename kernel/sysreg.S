@@ -97,3 +97,22 @@ local_irq_enable:
 wait_irq:
     wfi
     ret
+
+// read_far_el1(): the faulting virtual address (FAR_EL1) of the last data or
+// instruction abort.  The demand-paging handler (漢令處理) uses it to learn
+// which window page the 行程 touched.
+    .globl read_far_el1
+read_far_el1:
+    mrs x0, far_el1
+    ret
+
+// flush_tlb(): invalidate the EL1&0 TLB after the kernel installs a new
+// translation-table entry (a demand-paged page).  Without this the CPU may keep
+// using the stale "translation fault" result for the retried access.
+    .globl flush_tlb
+flush_tlb:
+    dsb sy
+    tlbi vmalle1
+    dsb sy
+    isb
+    ret
