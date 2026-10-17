@@ -191,7 +191,7 @@ if [ -f "$OUT/kernel.elf" ]; then
         # Then feed 殻 (shell) commands once 甲 has read that line (M4).
         ( printf 'KANBUN\n' > "$PIPE.in"
           for _ in $(seq 1 60); do grep -q "甲得" "$KLOG" 2>/dev/null && break; sleep 0.25; done
-          printf '響 天下太平\n讀 史記\n怪\n讀 無題\n目\n書 筆記 天地玄黄\n讀 筆記\n書 一二三四五六 x\n書 筆記\n目\n終\n' > "$PIPE.in" ) &
+          printf '響 天下太平\n讀 史記\n怪\n讀 無題\n目\n書 筆記 天地玄黄\n讀 筆記\n書 一二三四五六 x\n書 筆記\n目\n助\n終\n' > "$PIPE.in" ) &
         FEEDPID=$!
         # Wait up to ~15s for the final marker, then stop QEMU.  The generic
         # timer fires five times (5 × CNTFRQ/40 ≈ 125 ms), so this is ample.
@@ -408,6 +408,14 @@ if [ -f "$OUT/kernel.elf" ]; then
             pass "kernel qemu: 殻 書 の誤り経路 (長すぎる名前→-EFAULT、引数不足→用法)"
         else
             fail "kernel qemu: 殻 書 の誤り経路"
+            sed 's/^/      /' "$KLOG" 2>/dev/null | head -60
+        fi
+        K_HELP="$(grep -c '殻命令一覧' "$KLOG" 2>/dev/null)"
+        if [ "${K_HELP:-0}" -eq 1 ] && grep -q '書 名 文  … 典籍を作って文を書く' "$KLOG" 2>/dev/null \
+           && grep -q '終        … 殻を終える' "$KLOG" 2>/dev/null; then
+            pass "kernel qemu: 殻 助 (命令一覧を表示)"
+        else
+            fail "kernel qemu: 殻 助 (一覧見出し=${K_HELP:-0})"
             sed 's/^/      /' "$KLOG" 2>/dev/null | head -60
         fi
         if grep -q "殻不明" "$KLOG" 2>/dev/null && grep -q "殻終" "$KLOG" 2>/dev/null; then
