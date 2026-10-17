@@ -3,6 +3,8 @@
 > 目標: **ブートローダー、カーネル、ドライバ、ユーザー空間、コンパイラまで、最終的に人が保守するソースコードをすべて機械漢文に統一する独立ARM64 OS。**
 >
 > 全体追跡: [Issue #10 — 完全機械漢文OS化](https://github.com/kitanou/chokanbun/issues/10)
+>
+> 殻の命令と漢令の一覧: [shell-commands.md](shell-commands.md)
 
 ## 原則
 - 対象は AArch64、初期実行環境は QEMU `virt`。
