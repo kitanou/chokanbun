@@ -103,6 +103,8 @@ qemu-system-aarch64 -M virt,gic-version=2 -cpu cortex-a57 -nographic \
 - [AArch64 ABI・ブート方針・漢令一覧](docs/abi-aarch64.md)
 - [OS 詳細設計 v0.2](docs/detailed-design-v0.2.md)
 - [POSIX 互換方針](docs/posix-compat.md)
+- [行程・外部命令・パイプ・exec/fork の設計](docs/design-process-exec.md)
+- [篇藏 v0.1（ファイル体系）の設計](docs/design-pianfs.md)
 - [殻のコマンド一覧](docs/shell-commands.md)
 - [実装メモ](docs/implementation-notes.md)
 - [ロードマップ](docs/roadmap.md)
