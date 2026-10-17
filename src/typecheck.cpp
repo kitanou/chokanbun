@@ -41,6 +41,22 @@ void TypeChecker::errorAt(const Stmt& s, const std::string& code, const std::str
     error(s.line, s.col, code, msg);
 }
 
+// An untyped integer literal conforms to any integer type, and 空 conforms to
+// any pointer type. Record the resolved type so code generation emits the
+// literal with the right width.
+bool TypeChecker::coerceLiteral(const ExprPtr& value, const TypePtr& target) {
+    if (!value || !target) return false;
+    if (value->kind == Expr::Kind::IntegerLit && target->isInteger()) {
+        exprTypes_[value.get()] = target;
+        return true;
+    }
+    if (value->kind == Expr::Kind::NullLit && target->kind == Type::Kind::Pointer) {
+        exprTypes_[value.get()] = target;
+        return true;
+    }
+    return false;
+}
+
 void TypeChecker::enterScope() {
     scopes_.emplace_back();
 }
@@ -258,6 +274,16 @@ TypePtr TypeChecker::checkBinOp(const Expr& e) {
         return t;
     }
 
+    // An untyped integer literal adopts the other operand's integer type, so
+    // e.g. `u64変数 加 1` and `u64変数 小於 0` type-check.
+    if (lt->isInteger() && rt->isInteger() && !lt->isSameAs(*rt)) {
+        if (coerceLiteral(e.left, rt)) {
+            lt = rt;
+        } else if (coerceLiteral(e.right, lt)) {
+            rt = lt;
+        }
+    }
+
     // Arithmetic operators: both operands must be the same integer type
     if (e.opText == "加" || e.opText == "減" || e.opText == "乘" ||
         e.opText == "除" || e.opText == "餘" ||
@@ -409,9 +435,11 @@ TypePtr TypeChecker::checkCall(const Expr& e) {
         TypePtr at = checkExpr(*e.args[i]);
         TypePtr pt = fn->params[i].type;
         if (at && pt && !at->isSameAs(*pt)) {
-            errorAt(e, "E0001", "argument " + std::to_string(i + 1) +
-                " of " + e.callee + ": expected " + pt->toString() +
-                ", got " + at->toString());
+            if (!coerceLiteral(e.args[i], pt)) {
+                errorAt(e, "E0001", "argument " + std::to_string(i + 1) +
+                    " of " + e.callee + ": expected " + pt->toString() +
+                    ", got " + at->toString());
+            }
         }
     }
 
@@ -672,19 +700,28 @@ TypePtr TypeChecker::checkElemAccess(const Expr& e) {
         return t;
     }
 
-    // The base must be an array or pointer to array
-    TypePtr arrType = base;
+    // Raw pointer indexing: 項(ptr, i) reads element i. Unsafe, so it must be
+    // inside a 險 block.
     if (base->kind == Type::Kind::Pointer && base->pointee) {
-        arrType = base->pointee;
+        if (unsafeDepth_ == 0) {
+            errorAt(e, "E0002", "pointer element access requires 險 block");
+        }
+        if (!idx->isInteger()) {
+            errorAt(e, "E0001", "pointer index must be integer, got " + idx->toString());
+        }
+        exprTypes_[&e] = base->pointee;
+        return base->pointee;
     }
 
-    if (arrType->kind != Type::Kind::Array) {
-        errorAt(e, "E0001", "element access requires array, got " +
-            arrType->toString());
+    if (base->kind != Type::Kind::Array) {
+        errorAt(e, "E0001", "element access requires array or pointer, got " +
+            base->toString());
         auto t = Type::Void();
         exprTypes_[&e] = t;
         return t;
     }
+
+    TypePtr arrType = base;
 
     // Index must be an integer
     if (!idx->isInteger()) {
@@ -742,8 +779,12 @@ void TypeChecker::checkLocalDecl(const Stmt& s) {
     if (s.init) {
         TypePtr it = checkExpr(*s.init);
         if (s.varType && it && !it->isSameAs(*s.varType)) {
-            errorAt(s, "E0001", "initialization type " + it->toString() +
-                " does not match declared type " + s.varType->toString());
+            if (coerceLiteral(s.init, s.varType)) {
+                it = s.varType;
+            } else {
+                errorAt(s, "E0001", "initialization type " + it->toString() +
+                    " does not match declared type " + s.varType->toString());
+            }
         }
     }
 
@@ -770,8 +811,10 @@ void TypeChecker::checkAssign(const Stmt& s) {
     // but the types must match
 
     if (!tt->isSameAs(*vt)) {
-        errorAt(s, "E0001", "assignment type mismatch: target is " +
-            tt->toString() + ", value is " + vt->toString());
+        if (!coerceLiteral(s.value, tt)) {
+            errorAt(s, "E0001", "assignment type mismatch: target is " +
+                tt->toString() + ", value is " + vt->toString());
+        }
     }
 
     // If the target is a dereference, it requires 險
@@ -797,9 +840,11 @@ void TypeChecker::checkCallStmt(const Stmt& s) {
         TypePtr at = checkExpr(*s.args[i]);
         TypePtr pt = fn->params[i].type;
         if (at && pt && !at->isSameAs(*pt)) {
-            errorAt(s, "E0001", "argument " + std::to_string(i + 1) +
-                " of " + s.callee + ": expected " + pt->toString() +
-                ", got " + at->toString());
+            if (!coerceLiteral(s.args[i], pt)) {
+                errorAt(s, "E0001", "argument " + std::to_string(i + 1) +
+                    " of " + s.callee + ": expected " + pt->toString() +
+                    ", got " + at->toString());
+            }
         }
     }
 }
@@ -841,10 +886,16 @@ void TypeChecker::checkReturn(const Stmt& s) {
         return;
     }
 
-    // Check against the current function's return type
-    // (This is handled in checkFunction; here we just check the expression)
+    // Check against the current function's return type.
     TypePtr rt = checkExpr(*s.retVal);
     if (!rt) return;
+    if (currentReturnType_ && !currentReturnType_->isSameAs(*rt)) {
+        if (!coerceLiteral(s.retVal, currentReturnType_)) {
+            errorAt(s, "E0001", "return type " + rt->toString() +
+                " does not match function return type " +
+                currentReturnType_->toString());
+        }
+    }
 }
 
 void TypeChecker::checkUnsafeBlock(const Stmt& s) {
@@ -872,9 +923,12 @@ void TypeChecker::checkFunction(const FunctionDecl& fn) {
         declareVar(p.name, p.type);
     }
 
+    TypePtr savedReturn = currentReturnType_;
+    currentReturnType_ = fn.returnType;
     for (auto& st : fn.body) {
         checkStmt(*st);
     }
+    currentReturnType_ = savedReturn;
 
     exitScope();
 }
@@ -894,9 +948,11 @@ void TypeChecker::checkConstant(const ConstantDecl& c) {
     if (c.value) {
         TypePtr vt = checkExpr(*c.value);
         if (c.type && vt && !vt->isSameAs(*c.type)) {
-            error(c.line, c.col, "E0001",
-                "constant " + c.name + " value type " + vt->toString() +
-                " does not match declared type " + c.type->toString());
+            if (!coerceLiteral(c.value, c.type)) {
+                error(c.line, c.col, "E0001",
+                    "constant " + c.name + " value type " + vt->toString() +
+                    " does not match declared type " + c.type->toString());
+            }
         }
     }
 }

@@ -39,13 +39,16 @@ LLVM ツールは既定で `/opt/homebrew/opt/llvm/bin` と `/opt/homebrew/opt/l
 `make test` は `tests/run_tests.sh` を呼び出し、以下を検証する:
 
 1. `hello` — 機械漢文 → LLVM IR → AArch64オブジェクト（逆アセンブル確認）
-2. `uart` — `取址`/`長度` と `外術曰` 呼び出し → ELF リンク（PL011 UART スタブと結合）
-3. `type_error` — 型不一致の診断（`E00xx`）が出ること
-4. `qemu` — QEMU `virt` 上で PL011 に **世界安寧** が出力されること
+2. `uart` — `取址`/`長度` と `外術曰` 呼び出し → ELF リンク（C 版 UART スタブと結合）
+3. `uart_mmio` — **機械漢文のみで記述した PL011 ドライバ**（`險`/`項`/`讀揮發`/`寫揮發`）→ ELF リンク
+4. `type_error` — 型不一致の診断（`E00xx`）が出ること
+5. `qemu` — QEMU `virt` 上で機械漢文ドライバが PL011 に **世界安寧** を出力すること
 
 ## 開発状況
 Phase 0 完了。機械漢文コンパイラがビルド・テスト可能で、
 QEMU `virt` / AArch64 上で機械漢文ソース由来のコードが UART に「世界安寧」を
-出力する。UART ドライバ本体 (`boot/uart.c`) は当面の暫定 C 実装で、
-機械漢文 MMIO 記述への移行はロードマップ Phase 2 で行う。
+出力する。さらに M2 の一部として、PL011 UART ドライバを機械漢文の
+volatile MMIO・生ポインタ添字で記述できる（`tests/uart_mmio.txt`）。
+`boot/uart.c` の C 版ドライバは `外術曰` 連携の後方互換・参照用として残している。
+起動スタブ `boot/boot.S` は当面の暫定 AArch64 アセンブリ。
 
