@@ -22,11 +22,20 @@
 
 ## 実装状況（M2）
 - `kernel/`: 漢極本体。`kernel.txt`（機械漢文）が PL011 出力・例外診断・
-  物理ページ割当・変換表構築を担い、`boot.S`/`vectors.S`/`sysreg.S`（暫定
-  アセンブリ）がスタック・ベクタ表・システムレジスタ操作を担う。
+  物理ページ割当・変換表構築・GIC 設定・割込処理を担い、
+  `boot.S`/`vectors.S`/`sysreg.S`（暫定アセンブリ）がスタック・ベクタ表・
+  システムレジスタ操作を担う。
 - 例外: 同期例外を捕捉し ESR_EL1 を復号、`eret` で継続する。
 - MMU: レベル1 変換表による 1GiB ブロック恒等写像（RAM/UART/GIC）。
-- 未実装: GIC 割込、汎用タイマー、EL0 行程、スケジューラ、VFS。
+- 割込: GICv2（QEMU `virt`, `gic-version=2`）のディストリビュータ
+  0x08000000 と CPU インタフェース 0x08010000 を機械漢文の volatile MMIO で
+  設定する。EL1 物理タイマー（PPI 30）を `CNTP_TVAL_EL0`/`CNTP_CTL_EL0` で
+  起動し、IRQ はベクタ表（Current EL with SPx, +0x280）から `irq_handler`
+  （暫定アセンブリでレジスタと NZCV を保存）を経て機械漢文の
+  `公開 記號「irq_dispatch」 術曰「割込處理」` に届く。ハンドラは `GICC_IAR`
+  で要因番号を取得し、タイマーを再装填して `GICC_EOIR` で完了、`eret` で
+  中断した計算へ戻る。
+- 未実装: EL0 行程、スケジューラ、VFS。
 
 ## 非目標（初期）
 - Linuxバイナリ互換

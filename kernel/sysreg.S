@@ -38,3 +38,43 @@ enable_mmu:
 read_sctlr:
     mrs x0, sctlr_el1
     ret
+
+// ---- ARM generic timer (EL1 physical timer, CNTP) -----------------------
+// timer_start(x0 = ticks): arm CNTP_TVAL_EL0 and enable the timer interrupt.
+    .globl timer_start
+timer_start:
+    msr cntp_tval_el0, x0
+    mov x1, #1
+    msr cntp_ctl_el0, x1       // ENABLE=1, IMASK=0
+    ret
+
+// timer_rearm(x0 = ticks): reload the down-counter (interrupt stays enabled).
+    .globl timer_rearm
+timer_rearm:
+    msr cntp_tval_el0, x0
+    ret
+
+// timer_stop(): disable the timer interrupt.
+    .globl timer_stop
+timer_stop:
+    msr cntp_ctl_el0, xzr
+    ret
+
+// read_cntfrq(): CNTFRQ_EL0, the system counter frequency in Hz.
+    .globl read_cntfrq
+read_cntfrq:
+    mrs x0, cntfrq_el0
+    ret
+
+// ---- CPU interrupt control ---------------------------------------------
+// local_irq_enable(): clear PSTATE.I so IRQs are delivered.
+    .globl local_irq_enable
+local_irq_enable:
+    msr daifclr, #2
+    ret
+
+// wait_irq(): idle until an IRQ (or other wake event) arrives.
+    .globl wait_irq
+wait_irq:
+    wfi
+    ret

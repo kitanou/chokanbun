@@ -23,7 +23,7 @@ _vectors:
 
     // ---- Current EL with SPx (EL1h) ----
     .p2align 7; b exception_handler       // Synchronous
-    .p2align 7; b exception_handler       // IRQ
+    .p2align 7; b irq_handler             // IRQ
     .p2align 7; b exception_handler       // FIQ
     .p2align 7; b exception_handler       // SError
 
@@ -67,6 +67,55 @@ exception_handler:
     bl exception_dispatch
     msr elr_el1, x0
 
+    ldr x30, [sp, #240]
+    ldp x28, x29, [sp, #224]
+    ldp x26, x27, [sp, #208]
+    ldp x24, x25, [sp, #192]
+    ldp x22, x23, [sp, #176]
+    ldp x20, x21, [sp, #160]
+    ldp x18, x19, [sp, #144]
+    ldp x16, x17, [sp, #128]
+    ldp x14, x15, [sp, #112]
+    ldp x12, x13, [sp, #96]
+    ldp x10, x11, [sp, #80]
+    ldp x8,  x9,  [sp, #64]
+    ldp x6,  x7,  [sp, #48]
+    ldp x4,  x5,  [sp, #32]
+    ldp x2,  x3,  [sp, #16]
+    ldp x0,  x1,  [sp, #0]
+    add sp, sp, #256
+
+    eret
+
+// Common IRQ entry.  Like the synchronous entry, but asynchronous: it also
+// preserves NZCV because the interrupted computation may depend on the flags.
+// The acknowledge/end-of-interrupt and timer logic live in machine-kanbun
+// (kernel/kernel.txt, 割込處理).
+irq_handler:
+    sub sp, sp, #256
+    stp x0,  x1,  [sp, #0]
+    stp x2,  x3,  [sp, #16]
+    stp x4,  x5,  [sp, #32]
+    stp x6,  x7,  [sp, #48]
+    stp x8,  x9,  [sp, #64]
+    stp x10, x11, [sp, #80]
+    stp x12, x13, [sp, #96]
+    stp x14, x15, [sp, #112]
+    stp x16, x17, [sp, #128]
+    stp x18, x19, [sp, #144]
+    stp x20, x21, [sp, #160]
+    stp x22, x23, [sp, #176]
+    stp x24, x25, [sp, #192]
+    stp x26, x27, [sp, #208]
+    stp x28, x29, [sp, #224]
+    str x30, [sp, #240]
+    mrs x2, nzcv
+    str x2, [sp, #248]
+
+    bl irq_dispatch
+
+    ldr x2, [sp, #248]
+    msr nzcv, x2
     ldr x30, [sp, #240]
     ldp x28, x29, [sp, #224]
     ldp x26, x27, [sp, #208]
