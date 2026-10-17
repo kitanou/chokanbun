@@ -35,15 +35,18 @@ user_entry_addr:
     add  x0, x0, :lo12:user_main
     ret
 
-// enter_el0(entry, sp, arg): eret to EL0 at `entry` with SP_EL0 = sp and the
-// first argument in x0.  SPSR_EL1 = EL0t with DAIF masked: the task runs
-// without preemption until a scheduler exists (M3).
+// enter_el0(entry, sp, arg, kernel_sp): eret to EL0 at `entry` with SP_EL0 = sp,
+// the first argument in x0, and SP_EL1 set to the 行程's own kernel stack top.
+// The kernel runs at EL1h, so the current `sp` *is* SP_EL1.
+// SPSR_EL1 = EL0t with DAIF masked: the task runs without preemption until it
+// asks for it (開先取 / 番7).
     .globl enter_el0
 enter_el0:
+    mov sp, x3
     msr elr_el1, x0
     msr sp_el0, x1
-    mov x3, #0x3C0
-    msr spsr_el1, x3
+    mov x4, #0x3C0
+    msr spsr_el1, x4
     mov x0, x2
     eret
 
@@ -95,6 +98,8 @@ lower_sync_handler:
     mrs x0, esr_el1
     mov x1, sp
     bl svc_dispatch
+    cbz x0, el0_park
+    mov sp, x0                 // resume from the frame the handler selected
     b el0_resume
 
 // Lower-EL IRQ entry (vector offset 0x480): the timer interrupt taken while an
@@ -133,14 +138,13 @@ lower_irq_handler:
 
     mov x0, sp
     bl irq_switch
+    cbz x0, el0_park
+    mov sp, x0                 // resume from the frame the handler selected
     // fall through to the shared EL0 resume path
 
-// Resume an EL0 行程 from the 288-byte frame at SP.  x0 holds the frame pointer
-// returned by the machine-kanbun handler (SP itself), or 0 when there is no
-// runnable 行程.
+// Resume an EL0 行程 from the 288-byte frame at SP.  SP has already been set to
+// the frame the machine-kanbun handler selected (its own kernel stack).
 el0_resume:
-    cbz x0, el0_park
-
     // The frame now holds the state of the 行程 to resume (possibly a different
     // one than entered this handler).
     ldr x2, [sp, #248]
