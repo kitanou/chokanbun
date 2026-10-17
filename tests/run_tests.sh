@@ -272,19 +272,22 @@ if [ -f "$OUT/kernel.elf" ]; then
             sed 's/^/      /' "$KLOG" 2>/dev/null | head -20
         fi
         # --- M3 software: タイマーによるプリエンプション (非協調切替) ----------
-        K_PRE="$(grep -oE '甲忙始|乙忙|甲忙終' "$KLOG" 2>/dev/null | paste -sd' ' -)"
-        if [ "$K_PRE" = "甲忙始 乙忙 甲忙終" ]; then
+        K_PRE="$(grep -oE '甲忙始|乙起|甲忙終|甲醒|乙忙終' "$KLOG" 2>/dev/null | paste -sd' ' -)"
+        if [ "$K_PRE" = "甲忙始 乙起 甲忙終 甲醒 乙忙終" ]; then
             pass "kernel qemu: タイマー横取り (甲が回転中に 乙 が割込実行、甲が復歸)"
         else
             fail "kernel qemu: タイマー横取り (got '${K_PRE:-none}')"
             sed 's/^/      /' "$KLOG" 2>/dev/null | head -20
         fi
-        K_PT1="$(grep -oE '乙忙 0x[0-9a-f]{16}' "$KLOG" 2>/dev/null | grep -oE '0x[0-9a-f]{16}')"
-        K_PT2="$(grep -oE '甲忙終0x[0-9a-f]{16}' "$KLOG" 2>/dev/null | grep -oE '0x[0-9a-f]{16}')"
-        if [ -n "$K_PT1" ] && [ -n "$K_PT2" ] && [ $((K_PT1)) -lt $((K_PT2)) ]; then
-            pass "kernel qemu: 割込れた刻数が横取り前 (乙='${K_PT1}' < 甲='${K_PT2}')"
+        # --- M3 software: 待機・起床 (sleep/wake) ------------------------------
+        K_SL1="$(grep -oE '甲忙終0x[0-9a-f]{16}' "$KLOG" 2>/dev/null | grep -oE '0x[0-9a-f]{16}')"
+        K_SL2="$(grep -oE '甲醒 0x[0-9a-f]{16}' "$KLOG" 2>/dev/null | grep -oE '0x[0-9a-f]{16}')"
+        K_SL3="$(grep -oE '乙忙終0x[0-9a-f]{16}' "$KLOG" 2>/dev/null | grep -oE '0x[0-9a-f]{16}')"
+        if [ -n "$K_SL1" ] && [ -n "$K_SL2" ] && [ -n "$K_SL3" ] && \
+           [ $((K_SL1)) -lt $((K_SL2)) ] && [ $((K_SL2)) -lt $((K_SL3)) ]; then
+            pass "kernel qemu: 待機と起床 (甲が眠り乙が回転中に甲が起床: 甲忙終='${K_SL1}' < 甲醒='${K_SL2}' < 乙忙終='${K_SL3}')"
         else
-            fail "kernel qemu: 割込れた刻数が横取り前 (乙='${K_PT1:-none}' 甲='${K_PT2:-none}')"
+            fail "kernel qemu: 待機と起床 (甲忙終='${K_SL1:-none}' 甲醒='${K_SL2:-none}' 乙忙終='${K_SL3:-none}')"
             sed 's/^/      /' "$KLOG" 2>/dev/null | head -20
         fi
         if grep -q "民務終了 行程=0x0000000000000000" "$KLOG" 2>/dev/null && \
