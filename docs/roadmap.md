@@ -76,7 +76,7 @@
 
 ## 進捗（2026-10-17）
 
-検証: `make test` で全 116 ケース PASS（rc=0、M0〜M4 の QEMU ケースを含む）。
+検証: `make test` で全 118 ケース PASS（rc=0、M0〜M4 の QEMU ケースを含む）。
 
 | 項目 | 状態 |
 |------|------|
@@ -110,7 +110,7 @@
 次の一手（優先順）:
 1. init からの外部命令の起動（行程生成 `fork`/`exec` の設計と合わせて）
 2. 行程生成 `fork`/`exec`/`wait`/`pipe` の設計（M5 の前提）
-3. `kernel/kernel.txt`（1085 行）の分割（`kernel/vfs/` など）と暫定アセンブリの縮小
+3. `kernel/kernel.txt` のさらなる分割（スケジューラ・漢令処理・頁管理など。`kernel/vfs/` は分割済み）と暫定アセンブリの縮小
 4. GDB 再現手順の文書化、CI での QEMU テスト導入（#3）
 5. Devicetree 解析（現状は QEMU `virt` 固定配置）
 
@@ -158,4 +158,5 @@
   `読込`/`書出` と同じ働きをする。核は EL1 から民の頁へ書くため、`讀入` の宛先は
   `備宛`（窓内・`令長限` 以内を確認し `給頁` で先に張る）を通す。誤りは無い名前
   `-ENOENT`、閉じた柄 `-EBADF`、窓外・長過 `-EFAULT` で返す。
-- VFS のモジュール分割（`kernel/vfs/`）は未着手で、現状は `kernel/kernel.txt` 内にある。
+- VFS は `kernel/vfs/`（`const.txt`・`ramfs.txt`）に分割済み。コンパイラに取込が無いため、ビルド時に
+  `tools/kernel-expand.sh` が `kernel/kernel.txt` の `註 @取込 パス` 行を展開する（案A）。

@@ -92,8 +92,23 @@ if [ -f "$OUT/uart_mmio.o" ] && [ -f "$OUT/boot.o" ]; then
 fi
 
 # --- kernel: 漢極 (exception vectors + MMU + memory) -> ELF -> QEMU ---------
-"$BIN" kernel/kernel.txt -ir -o "$OUT/kernel.ll" 2>"$OUT/kernel.gen.log" \
+# kernel/kernel.txt の「註 @取込」(kernel/vfs/*.txt) を展開してからコンパイルする。
+sh tools/kernel-expand.sh kernel/kernel.txt "$OUT/kernel_all.txt" \
+    && pass "kernel: 取込の展開 (kernel/vfs/)" || fail "kernel: 取込の展開 (kernel/vfs/)"
+# 展開後の行番号を元のファイル:行へ戻せること (診断の位置合わせ)
+KLINE="$(grep -n '術曰「籍削」' "$OUT/kernel_all.txt" | head -1 | cut -d: -f1)"
+if [ -n "$KLINE" ] && [ "$(sh tools/kernel-line.sh "$OUT/kernel_all.txt.map" "$KLINE")" = \
+     "kernel/vfs/ramfs.txt:$(grep -n '術曰「籍削」' kernel/vfs/ramfs.txt | head -1 | cut -d: -f1)" ]; then
+    pass "kernel: 展開後の行番号を元のファイル:行へ戻せる (籍削 → kernel/vfs/ramfs.txt)"
+else
+    fail "kernel: 展開後の行番号を元のファイル:行へ戻せる"
+fi
+"$BIN" "$OUT/kernel_all.txt" -ir -o "$OUT/kernel.ll" 2>"$OUT/kernel.gen.log" \
     && pass "kernel: IR generation" || fail "kernel: IR generation"
+if [ -s "$OUT/kernel.gen.log" ] && grep -q '錯' "$OUT/kernel.gen.log"; then
+    echo "      (診断の行は展開後のもの。元の位置は: sh tools/kernel-line.sh $OUT/kernel_all.txt.map <行>)"
+    sed 's/^/      /' "$OUT/kernel.gen.log" | head -10
+fi
 # Regression: locals declared in loops must not alloca outside the entry block
 # (otherwise a long-running loop exhausts the stack).
 awk '/^define /{e=1} /^[A-Za-z0-9_.]+:$/{ if ($0!="entry:") e=0 } /alloca/{ if(!e) bad=1 } END{exit bad}' "$OUT/kernel.ll" \

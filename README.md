@@ -22,7 +22,7 @@ QEMU `virt` / AArch64 で動く研究用 OS。カーネルも、その上で動�
 | M6 | 機械漢文製ブートローダー | 未着手 |
 | M7 | セルフホスティング | 未着手 |
 
-`make test` は 116 ケースすべて PASS（IR 生成 → AArch64 オブジェクト → ELF リンク → QEMU 実行まで）。
+`make test` は 118 ケースすべて PASS（IR 生成 → AArch64 オブジェクト → ELF リンク → QEMU 実行まで）。
 詳しい進捗と次の一手は [ロードマップ](docs/roadmap.md)、実装の中身は [実装メモ](docs/implementation-notes.md)。
 
 ## クイックスタート
@@ -79,7 +79,8 @@ qemu-system-aarch64 -M virt,gic-version=2 -cpu cortex-a57 -nographic \
 | パス | 内容 |
 |---|---|
 | `src/` | コンパイラ（字句解析・構文解析・型検査・LLVM IR 生成） |
-| `kernel/` | 漢極（カーネル）。本体 `kernel.txt` は機械漢文、入口は暫定アセンブリ（`boot.S`・`vectors.S`・`sysreg.S`・`el0.S`） |
+| `kernel/` | 漢極（カーネル）。本体 `kernel.txt` は機械漢文、入口は暫定アセンブリ（`boot.S`・`vectors.S`・`sysreg.S`・`el0.S`）。典籍（VFS/RAMFS）は `kernel/vfs/` |
+| `tools/` | ビルド補助。`kernel-expand.sh` が `kernel.txt` の `註 @取込` を展開する |
 | `boot/` | Phase 0 の起動スタブと C 版 UART ドライバ（参照用） |
 | `tests/` | テスト（`run_tests.sh`）と機械漢文のサンプル |
 | `docs/` | 設計文書 |
