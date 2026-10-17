@@ -247,6 +247,20 @@ if [ -f "$OUT/kernel.elf" ]; then
         else
             fail "kernel qemu: physical page allocator"
         fi
+        # --- M5/P0: 頁池 (ビットマップ) の割当・解放 ---------------------------
+        pool_val() { grep -a "頁池 $1 " "$KLOG" 2>/dev/null | head -1 | grep -oE '0x[0-9a-f]{16}'; }
+        POOL_BAD=""
+        for kv in 異頁=1 残減=1 解放=1 二重=0 範囲外=0 境界外=0 再利用=1 零埋=0 復元=1; do
+            k="${kv%%=*}"; want="$(printf '0x%016x' "${kv##*=}")"
+            got="$(pool_val "$k")"
+            [ "$got" = "$want" ] || POOL_BAD="$POOL_BAD $k(want=$want got=${got:-none})"
+        done
+        if [ -z "$POOL_BAD" ]; then
+            pass "kernel qemu: 頁池 割当・解放・二重解放・範囲外・再利用・ゼロ埋め・空き数の復元"
+        else
+            fail "kernel qemu: 頁池 (不一致:$POOL_BAD)"
+            grep -a '頁池' "$KLOG" 2>/dev/null | sed 's/^/      /'
+        fi
         # --- M2 hardware: generic timer + GICv2 timer interrupt ---------------
         if grep -q "刻止" "$KLOG" 2>/dev/null; then
             pass "kernel qemu: GICv2 timer IRQ delivered (刻止)"
