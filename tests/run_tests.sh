@@ -172,11 +172,20 @@ fi
 if [ -f "$OUT/kernel.elf" ]; then
     if command -v qemu-system-aarch64 >/dev/null 2>&1; then
         KLOG="$OUT/kernel_qemu.log"
-        rm -f "$KLOG"
+        PIPE="$OUT/kernel_serial"
+        rm -f "$KLOG" "$PIPE.in" "$PIPE.out"
+        mkfifo "$PIPE.in" "$PIPE.out"
+        # QEMU's pipe chardev: <path>.in is guest input, <path>.out is guest output.
+        # The kernel's console is bidirectional, so 読込 (番10) can read this input.
+        cat "$PIPE.out" > "$KLOG" &
+        CATPID=$!
         qemu-system-aarch64 -M virt,gic-version=2 -cpu cortex-a57 -nographic \
-            -serial "file:$KLOG" -kernel "$OUT/kernel.elf" \
+            -serial "pipe:$PIPE" -kernel "$OUT/kernel.elf" \
             >"$OUT/kernel_qemu.console.log" 2>&1 &
         QPID=$!
+        # Feed one console line for the 読込 (番10) test.
+        printf 'KANBUN\n' > "$PIPE.in" &
+        FEEDPID=$!
         # Wait up to ~15s for the final marker, then stop QEMU.  The generic
         # timer fires five times (5 × CNTFRQ/40 ≈ 125 ms), so this is ample.
         for _ in $(seq 1 30); do
@@ -185,6 +194,9 @@ if [ -f "$OUT/kernel.elf" ]; then
         done
         kill "$QPID" 2>/dev/null
         wait "$QPID" 2>/dev/null
+        wait "$CATPID" 2>/dev/null
+        kill "$FEEDPID" 2>/dev/null
+        wait "$FEEDPID" 2>/dev/null
         if grep -q "超漢文起動" "$KLOG" 2>/dev/null; then
             pass "kernel qemu: 超漢文起動 output"
         else
@@ -282,6 +294,13 @@ if [ -f "$OUT/kernel.elf" ]; then
             fail "kernel qemu: 欠址が窓内の未写像頁 (0x40701000 x${K_FA:-0})"
             sed 's/^/      /' "$KLOG" 2>/dev/null | head -30
         fi
+        K_PF="$(grep -oE '頁供 0x[0-9a-f]{16}' "$KLOG" 2>/dev/null | grep -c '0000000040702000')"
+        if [ "${K_PF:-0}" -ge 1 ]; then
+            pass "kernel qemu: 読込 が書込先の頁を先に張る (0x40702000)"
+        else
+            fail "kernel qemu: 読込 が書込先の頁を先に張る (0x40702000 x${K_PF:-0})"
+            sed 's/^/      /' "$KLOG" 2>/dev/null | head -30
+        fi
         K_AE="$(grep -oE '甲禁 0x[0-9a-f]{16}' "$KLOG" 2>/dev/null | grep -oE '0x[0-9a-f]{16}')"
         K_BE="$(grep -oE '乙禁 0x[0-9a-f]{16}' "$KLOG" 2>/dev/null | grep -oE '0x[0-9a-f]{16}')"
         if [ "$K_AE" = "0xfffffffffffffff2" ] && [ "$K_BE" = "0xfffffffffffffff2" ]; then
@@ -290,12 +309,37 @@ if [ -f "$OUT/kernel.elf" ]; then
             fail "kernel qemu: 核専用域への 書出 を -EFAULT で拒否 (甲='${K_AE:-none}' 乙='${K_BE:-none}')"
             sed 's/^/      /' "$KLOG" 2>/dev/null | head -20
         fi
-        K_ERR="$(grep -oE '0xfffffffffffffff2|0xffffffffffffffda' "$KLOG" 2>/dev/null | paste -sd' ' -)"
-        if [ "$K_ERR" = "0xfffffffffffffff2 0xffffffffffffffda 0xfffffffffffffff2 0xffffffffffffffda" ]; then
+        K_ALE="$(grep -oE '甲令 0x[0-9a-f]{16}' "$KLOG" 2>/dev/null | grep -oE '0x[0-9a-f]{16}')"
+        K_BLE="$(grep -oE '乙令 0x[0-9a-f]{16}' "$KLOG" 2>/dev/null | grep -oE '0x[0-9a-f]{16}')"
+        if [ "$K_ALE" = "0xffffffffffffffda" ] && [ "$K_BLE" = "0xffffffffffffffda" ]; then
             pass "kernel qemu: 未知の漢令番号を -ENOSYS で拒否"
         else
-            fail "kernel qemu: 未知の漢令番号を -ENOSYS で拒否 (got '${K_ERR:-none}')"
+            fail "kernel qemu: 未知の漢令番号を -ENOSYS で拒否 (甲='${K_ALE:-none}' 乙='${K_BLE:-none}')"
             sed 's/^/      /' "$KLOG" 2>/dev/null | head -20
+        fi
+        K_ALN="$(grep -oE '甲長 0x[0-9a-f]{16}' "$KLOG" 2>/dev/null | grep -oE '0x[0-9a-f]{16}')"
+        K_BLN="$(grep -oE '乙長 0x[0-9a-f]{16}' "$KLOG" 2>/dev/null | grep -oE '0x[0-9a-f]{16}')"
+        if [ "$K_ALN" = "0xfffffffffffffff2" ] && [ "$K_BLN" = "0xfffffffffffffff2" ]; then
+            pass "kernel qemu: 長さの上限超過を -EFAULT で拒否"
+        else
+            fail "kernel qemu: 長さの上限超過を -EFAULT で拒否 (甲='${K_ALN:-none}' 乙='${K_BLN:-none}')"
+            sed 's/^/      /' "$KLOG" 2>/dev/null | head -20
+        fi
+        K_ARD="$(grep -oE '甲読 0x[0-9a-f]{16}' "$KLOG" 2>/dev/null | grep -oE '0x[0-9a-f]{16}')"
+        K_BRD="$(grep -oE '乙読 0x[0-9a-f]{16}' "$KLOG" 2>/dev/null | grep -oE '0x[0-9a-f]{16}')"
+        if [ "$K_ARD" = "0xfffffffffffffff2" ] && [ "$K_BRD" = "0xfffffffffffffff2" ]; then
+            pass "kernel qemu: 核専用域への 読込 を -EFAULT で拒否"
+        else
+            fail "kernel qemu: 核専用域への 読込 を -EFAULT で拒否 (甲='${K_ARD:-none}' 乙='${K_BRD:-none}')"
+            sed 's/^/      /' "$KLOG" 2>/dev/null | head -20
+        fi
+        K_AG="$(grep -oE '甲得 0x[0-9a-f]{16}' "$KLOG" 2>/dev/null | grep -oE '0x[0-9a-f]{16}')"
+        K_RX="$(grep -oE 'KANBUN' "$KLOG" 2>/dev/null | head -1)"
+        if [ "$K_AG" = "0x0000000000000007" ] && [ "$K_RX" = "KANBUN" ]; then
+            pass "kernel qemu: UART 入力の 読込 (甲得=0x7, 入力 KANBUN を読み戻す)"
+        else
+            fail "kernel qemu: UART 入力の 読込 (甲得='${K_AG:-none}' 入力='${K_RX:-none}')"
+            sed 's/^/      /' "$KLOG" 2>/dev/null | head -30
         fi
         KSEQ="$(grep -oE '甲書|乙書|甲讀|乙讀' "$KLOG" 2>/dev/null | paste -sd' ' -)"
         if [ "$KSEQ" = "甲書 乙書 甲讀 乙讀" ]; then
