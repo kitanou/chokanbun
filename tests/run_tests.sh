@@ -476,6 +476,27 @@ if [ -f "$OUT/kernel.elf" ]; then
             fail "kernel qemu: 殻 未知の命令と 終"
             sed 's/^/      /' "$KLOG" 2>/dev/null | head -40
         fi
+        # --- M5/P0: 行程表の統合・行程数 8・頁池の拡大 ---------------------------
+        tbl_val() { grep -a "$1 " "$KLOG" 2>/dev/null | head -1 | grep -oE '0x[0-9a-f]{16}'; }
+        TBL_BAD=""
+        for kv in '行程表 項数=8' '行程表 独立=1' '行程表 頁表=1' '行程表 識甲=1' '行程表 識乙=2' '行程表 状空=0'; do
+            k="${kv%%=*}"; want="$(printf '0x%016x' "${kv##*=}")"
+            got="$(tbl_val "$k")"
+            [ "$got" = "$want" ] || TBL_BAD="$TBL_BAD [$k want=$want got=${got:-none}]"
+        done
+        if [ -z "$TBL_BAD" ]; then
+            pass "kernel qemu: 行程表 (8 項が独立・識と状・8 行程分の頁表と動的頁域のブロック写像)"
+        else
+            fail "kernel qemu: 行程表 (不一致:$TBL_BAD)"
+            grep -a '行程表' "$KLOG" 2>/dev/null | sed 's/^/      /'
+        fi
+        K_TOTAL="$(tbl_val '頁池 総')"
+        if [ "$K_TOTAL" = "$(printf '0x%016x' 4096)" ]; then
+            pass "kernel qemu: 頁池 16 MiB (4096 ページ = 空き + 行程の棧 2 ページ × 8)"
+        else
+            fail "kernel qemu: 頁池 16 MiB (総=${K_TOTAL:-none}、期待 0x1000)"
+            grep -a '頁池' "$KLOG" 2>/dev/null | sed 's/^/      /'
+        fi
         # --- M5/P0: 柄表・開表 (行程ごとの柄、開くたびに独立した位置) ---------------
         K_IND="$(grep -a '籍独立 ' "$KLOG" 2>/dev/null | head -1 | grep -oE '0x[0-9a-f]{16}')"
         K_SEP="$(grep -a '籍別柄 ' "$KLOG" 2>/dev/null | head -1 | grep -oE '0x[0-9a-f]{16}')"
