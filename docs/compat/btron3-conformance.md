@@ -118,7 +118,7 @@ API 一覧: [btron3-api-inventory.md](btron3-api-inventory.md)（約 247 関数�
 | 第2編 第3章 シェル | 11 節・約 247 関数 | 0 | 0 | 0 | 11 節 | 0 |
 
 - 節単位の状態は最も低い API に引きずられるため、実質の進捗は第1章の API 単位表（[btron3-os.md](btron3-os.md)）で見る。
-- **適合確認済は 0**。合否基準と既存試験の対応は [btron3-test-plan.md](btron3-test-plan.md)（互換層の QEMU 試験 9 種・250 項目を規範項目に紐付け済み）。
+- **適合確認済は 0**。合否基準と既存試験の対応は [btron3-test-plan.md](btron3-test-plan.md)（互換層の QEMU 試験 9 種・252 項目を規範項目に紐付け済み）。
 - 1.6 は篇藏 F0〜F3 と録層 B5（作成・削除・開閉・状態・レコード操作・ロック・属性・アクセス制御・パスワード・SYS の像ファイルと `cre_prc` の LINK 版。`gen_fil`・`fnd_lnk` を除く）まで実装済み。B6（写像・永続化）が次。
 
 ## 次の作業（Phase 0 の残り）

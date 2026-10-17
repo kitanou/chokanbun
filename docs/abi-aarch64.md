@@ -235,15 +235,15 @@
   | 149 | ファイル状態 | `x0`=LINK, `x1`=名前の書き先（42 B）, `x2`=F_STATE（96 B）, `x3`=F_LOCATE（100 B） | 参照数／`-ENOENT`・`-ENODEV`・`-EINVAL`・`-EFAULT`。`fil_sts` |
   | 150 | 開ファイル状態 | `x0`=記述子, `x1`〜`x3` は 149 と同じ | 参照数／`-EBADF`・`-ENOENT`・`-EINVAL`・`-EFAULT`。`ofl_sts` |
   | 152 | レコード移動 | `x0`=記述子, `x1`=offset, `x2`=mode（0=現在から相対, 正=offset が番号, 負=終端から相対）, `x3`=recnum の書き先（NULL 可） | 0／`-EBADF`・`-ENOEXEC`（ER_REC）・`-EFAULT`。`see_rec`。W の引数は下位 32 ビットが効く |
-  | 153 | レコード検索 | `x0`=記述子, `x1`=mode（0=F_FWD, 1=F_NFWD）, `x2`=typemask, `x3`=subtype, `x4`=recnum の書き先 | 0／`-EBADF`・`-ENOEXEC`・`-EINVAL`・`-EFAULT`。`fnd_rec` |
-  | 154 | レコード読み | `x0`=記述子, `x1`=offset, `x2`=buf, `x3`=size, `x4`=r_size の書き先, `x5`=subtype の書き先 | 型（0〜31）／`-EBADF`・`-ENODATA`（ER_ENDR）・`-ETXTBSY`（ER_LOCK）・`-EINVAL`・`-EFAULT`。`rea_rec` |
+  | 153 | レコード検索 | `x0`=記述子, `x1`=mode（0=F_FWD, 1=F_NFWD, 2=F_BWD, 3=F_NBWD, 4=F_TOPEND, 5=F_ENDTOP）, `x2`=typemask, `x3`=subtype, `x4`=recnum の書き先 | 見つけたレコードの型／`-EBADF`・`-ENOEXEC`・`-EINVAL`・`-EFAULT`。`fnd_rec` |
+  | 154 | レコード読み | `x0`=記述子, `x1`=offset, `x2`=buf, `x3`=size, `x4`=r_size（レコードサイズ − offset）の書き先, `x5`=subtype の書き先 | 型（0〜31）／`-EBADF`・`-ENODATA`（ER_ENDR）・`-ETXTBSY`（ER_LOCK）・`-EINVAL`・`-EFAULT`。`rea_rec` |
   | 155 | レコード書き | 154 と同じ並び（offset=-1 は追記, subtype は読み先）。`units` は渡さない | 0／`-EBADF`・`-ENODATA`・`-ETXTBSY`・`-EINVAL`・`-E2BIG`（ER_SZOVR）・`-EFAULT`。`wri_rec` |
   | 156 | レコード挿入 | `x0`=記述子, `x1`=buf, `x2`=size, `x3`=type（0=リンク, 1〜31）, `x4`=subtype, `x5`=units（無視） | 0／`-EBADF`・`-EINVAL`・`-E2BIG`・`-ENOENT`・`-ENODEV`・`-EMFILE`（ER_LIMIT）・`-EFAULT`。`ins_rec`。現在レコードの前 |
   | 157 | レコード追加 | 156 と同じ引数 | 0／156 と同じ。`apd_rec`。末尾 |
-  | 158 | レコード削除 | `x0`=記述子 | 参照数が 0 になれば 1、そうでなければ 0／`-EBADF`・`-ENODATA`・`-ETXTBSY`。`del_rec` |
+  | 158 | レコード削除 | `x0`=記述子 | 参照数が 0 になれば 1、そうでなければ 0／`-EBADF`・`-ENODATA`・`-ETXTBSY`・`-EBUSY`（他のオープンの現在レコード）。`del_rec` |
   | 159 | レコード切詰 | `x0`=記述子, `x1`=size | 0／`-EBADF`・`-ENODATA`・`-ETXTBSY`・`-ENOEXEC`（リンク）・`-EINVAL`。`trc_rec` |
-  | 160 | レコードロック | `x0`=記述子, `x1`=mode（0=解除, 1=F_LOCK, 2=F_TSLOCK, 3=F_CKLOCK） | 0／`-EBADF`・`-ENODATA`・`-ETXTBSY`・`-EMFILE`（別のレコードを既にロック）・`-EINVAL`。`loc_rec`。F_LOCK は待たない |
-  | 161 | ファイル交換 | `x0`=記述子 1, `x1`=記述子 2 | 0／`-EBADF`・`-EINVAL`（同じファイル）・`-EXDEV`（ER_XFS）・`-ETXTBSY`。`xch_fil` |
+  | 160 | レコードロック | `x0`=記述子, `x1`=mode（0=解除, 1=F_LOCK, 2=F_TSLOCK, 3=F_CKLOCK） | 0／`-EBADF`・`-ENODATA`・`-ETXTBSY`・`-EMFILE`（別のレコードを既にロック）・`-EINVAL`。`loc_rec`。F_LOCK は他の行程のロックが外れるまで眠って待つ（`svc` を再実行。待ちの順は行程番号順）。自行程の別の記述子のロックは `-ETXTBSY` |
+  | 161 | ファイル交換 | `x0`=記述子 1, `x1`=記述子 2 | 0／`-EBADF`・`-EINVAL`（同じファイル）・`-EXDEV`（ER_XFS）・`-ETXTBSY`。両方が F_UPDATE\|F_EXCL で開かれていなければ `-EBADF`。`xch_fil` |
   | 163 | ファイル検査 | `x0`=LINK, `x1`=mode（0=F_EXIST, 1=E, 2=W, 4=R の組み合わせ。F_PASWD(8) は戻り値の欄で、指定すると `-EINVAL`）, `x2`=パスワード（NULL 可） | mode=0 は情報の欄（ビット 0〜2=呼出側の E・W・R, 3=パスワード有り, 4〜7=O・P・A・B）、それ以外は 0／`-EACCES`・`-ENOKEY`（ER_PWD）・`-EROFS`・`-ENOENT`・`-EINVAL`・`-EFAULT`。`chk_fil` |
   | 164 | アクセス変更 | `x0`=LINK, `x1`=A_MODE（8 B: 所有者, グループ番号, グループ, 公開。各欄 0x8000 は変更なし） | 0／`-EACCES`・`-EROFS`・`-EINVAL`・`-EFAULT`。`chg_fmd` |
   | 165 | 属性変更 | `x0`=LINK, `x1`=1〜8（SETRONLY, RSTRONLY, SETPERM, RSTPERM, SETA1, RSTA1, SETA2, RSTA2） | 0／`-EACCES`・`-EROFS`・`-EINVAL`。`chg_fat` |
