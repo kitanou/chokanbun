@@ -40,7 +40,7 @@
 | 項目 | 型 | 意味 |
 |---|---|---|
 | `識` | u64 | 篇ID |
-| `型` | u8 | `文`（バイト列）・`章`（名前空間）・`器`（資源参照）・`術`（実行イメージ、[design-process-exec.md](design-process-exec.md) の漢像）・`志`（追記専用の記録） |
+| `型` | u8 | `文`（バイト列）・`章`（名前空間）・`器`（資源参照）・`術`（実行イメージ、[design-process-exec.md](design-process-exec.md) の漢像）・`志`（追記専用の記録）・`録`（BTRON3 のレコード列ファイル。中身は録層だけが解釈する。[compat/btron3-file-design.md](compat/btron3-file-design.md)） |
 | `大` | u64 | 本文の大きさ（バイト） |
 | `主` | u32 | 所有者（利用者番号）。v0.1 は単一利用者で常に 0 |
 | `權` | u16 | 権限ビット（§6） |

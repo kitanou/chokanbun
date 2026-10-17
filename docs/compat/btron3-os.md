@@ -170,6 +170,8 @@
 | ファイルシステム | `att_fls` `det_fls` `syn_fls` `fls_sts` `chg_fls` `chg_fsm` `lst_fls` | なし（RAMFS 固定） | 未実装 |
 | 写像 | `map_rec` `ump_rec` | なし | 未実装 |
 
+**設計**: [btron3-file-design.md](btron3-file-design.md)（篇藏の上に「録」層を置き、型 `録` の篇をレコード列のファイルとして扱う。段階 B0〜B6）。
+
 **主な差分**: BTRON3 の「レコード列＋リンク＋ファイル ID」モデルと、現在の「名前→バイト列（最大 256 B、8 件）」は構造が異なる。Issue の Phase 4 に従い、**篇藏（`design-pianfs.md`）を内部ストレージ、BTRON3 互換モデルを外部層**とする分離が必要。RAMFS の上限（8 件・256 B）は互換試験の障害になるため、拡張が前提。
 **要確認**: レコード番号の基準、パス区切り文字の具体、`ER_*` 割当、`map_rec` のモード。
 
