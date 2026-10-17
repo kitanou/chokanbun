@@ -1,4 +1,5 @@
 #include "llvmir.h"
+#include "typecheck.h"
 #include <iostream>
 #include <sstream>
 #include <cstring>
@@ -27,6 +28,13 @@ static std::string fnSymbol(const FunctionDecl& fn) {
     if (!fn.symbolName.empty()) return fn.symbolName;
     if (fn.name == "核主") return "main";
     return fn.name;
+}
+
+// LLVM 23 dropped the redundant type on the right-hand operand of binary
+// instructions (e.g. `add i64 %a, 1`). Strip the type from a value string.
+static std::string valueOnly(const std::string& v) {
+    auto p = v.find(' ');
+    return p == std::string::npos ? v : v.substr(p + 1);
 }
 
 static std::string escapeIrBytes(const std::string& s) {
@@ -69,6 +77,18 @@ std::string LLVMIRGen::freshName(const std::string& base) {
 
 void LLVMIRGen::error(uint32_t line, uint32_t col, const std::string& code, const std::string& msg) {
     diags_.emplace_back(Diagnostic::Level::Error, line, col, code, msg);
+}
+
+TypePtr LLVMIRGen::typeOfExpr(const ExprPtr& e) const {
+    if (!tc_ || !e) return nullptr;
+    return tc_->exprType(*e);
+}
+
+std::string LLVMIRGen::intLiteral(const ExprPtr& e, const TypePtr& t) {
+    std::string ty = (t && t->isInteger()) ? llvmType(t) : "i64";
+    std::string v = std::to_string(e->intValue);
+    if (e->isNegative) v = "-" + v;
+    return ty + " " + v;
 }
 
 std::string LLVMIRGen::llvmType(const TypePtr& t) {
@@ -147,7 +167,7 @@ void LLVMIRGen::genFunction(const FunctionDecl& fn) {
     emit(define);
     for (size_t i = 0; i < fn.params.size(); i++) {
         if (i > 0) ir_ += ", ";
-        ir_ += llvmType(fn.params[i].type) + " %" + fn.params[i].name;
+        ir_ += llvmType(fn.params[i].type) + " %arg" + std::to_string(i);
     }
     ir_ += ")";
     if (!fn.section.empty()) {
@@ -159,16 +179,20 @@ void LLVMIRGen::genFunction(const FunctionDecl& fn) {
     emit("entry:");
     currentBlock_ = "entry";
 
-    // Allocate locals for parameters
-    for (auto& p : fn.params) {
+    // Allocate locals for parameters (params are passed as %argN).
+    for (size_t i = 0; i < fn.params.size(); i++) {
+        auto& p = fn.params[i];
         std::string alloca = freshName("p");
         emit("%" + alloca + " = alloca " + llvmType(p.type) + ", align 8");
-        emit("store " + llvmType(p.type) + " %" + p.name + ", ptr %" + alloca);
+        emit("store " + llvmType(p.type) + " %arg" + std::to_string(i) + ", ptr %" + alloca);
         params_[p.name] = {p.type, alloca};
     }
 
     // Generate body
+    TypePtr savedReturn = currentReturnType_;
+    currentReturnType_ = fn.returnType;
     genBody(fn.body);
+    currentReturnType_ = savedReturn;
 
     // If function doesn't end with a terminator, add one
     if (!endsWithTerminator()) {
@@ -225,9 +249,8 @@ void LLVMIRGen::genLocal(const StmtPtr& s) {
     emit("%" + alloca + " = alloca " + llvmType(s->varType) + ", align 8");
     // Initialize
     std::string val = genExpr(s->init);
-    std::string storeType = llvmType(s->varType);
-    // If val is a different type (e.g., integer literal for a typed variable), we need a cast
-    emit("store " + storeType + " " + val + ", ptr %" + alloca);
+    // `val` already carries its LLVM type (e.g. "i64 5").
+    emit("store " + val + ", ptr %" + alloca);
     locals_[s->varName] = {s->varType, alloca};
 }
 
@@ -240,12 +263,12 @@ void LLVMIRGen::genAssign(const StmtPtr& s) {
         if (it == locals_.end()) {
             auto pit = params_.find(s->target->identName);
             if (pit != params_.end()) {
-                emit("store " + llvmType(pit->second.first) + " " + val + ", ptr %" + pit->second.second);
+                emit("store " + val + ", ptr %" + pit->second.second);
                 return;
             }
         }
         if (it != locals_.end()) {
-            emit("store " + llvmType(it->second.first) + " " + val + ", ptr %" + it->second.second);
+            emit("store " + val + ", ptr %" + it->second.second);
             return;
         }
     }
@@ -285,7 +308,7 @@ void LLVMIRGen::genIf(const StmtPtr& s) {
     std::string mergeLabel = "if.merge." + std::to_string(blockCounter_);
     blockCounter_++;
 
-    emit("br i1 " + cond + ", label %" + thenLabel + ", label %" + elseLabel);
+    emit("br " + cond + ", label %" + thenLabel + ", label %" + elseLabel);
     emit(thenLabel + ":");
     currentBlock_ = thenLabel;
     genBody(s->thenBlock);
@@ -312,7 +335,7 @@ void LLVMIRGen::genWhile(const StmtPtr& s) {
     emit(condLabel + ":");
     currentBlock_ = condLabel;
     std::string cond = genExpr(s->cond);
-    emit("br i1 " + cond + ", label %" + bodyLabel + ", label %" + endLabel);
+    emit("br " + cond + ", label %" + bodyLabel + ", label %" + endLabel);
     emit(bodyLabel + ":");
     currentBlock_ = bodyLabel;
     genBody(s->body);
@@ -369,12 +392,9 @@ std::string LLVMIRGen::genExpr(const ExprPtr& e) {
 }
 
 std::string LLVMIRGen::genIntegerLit(const ExprPtr& e) {
-    // The type is determined by context; for now, assume i64
-    // In a full implementation, we'd have type information on the expression
-    if (e->isNegative) {
-        return "i64 -" + std::to_string(e->intValue);
-    }
-    return "i64 " + std::to_string(e->intValue);
+    // Width/type comes from the type checker (literals are coerced to the
+    // expected integer type); fall back to i64 when unknown.
+    return intLiteral(e, typeOfExpr(e));
 }
 
 std::string LLVMIRGen::genBoolLit(const ExprPtr& e) {
@@ -426,18 +446,28 @@ std::string LLVMIRGen::genIdent(const ExprPtr& e) {
 }
 
 std::string LLVMIRGen::genBinOp(const ExprPtr& e) {
-    std::string left = genExpr(e->left);
-    std::string right = genExpr(e->right);
+    TypePtr lt = typeOfExpr(e->left);
+    TypePtr rt = typeOfExpr(e->right);
+    bool lLit = e->left && e->left->kind == Expr::Kind::IntegerLit;
+    bool rLit = e->right && e->right->kind == Expr::Kind::IntegerLit;
 
-    // Determine the type from the left operand
-    std::string leftType = left.substr(0, left.find(' '));
-    bool isSigned = false;
-    // Check if the left operand's type is signed
-    if (leftType == "i8" || leftType == "i16" || leftType == "i32" || leftType == "i64") {
-        // We need to know if it's signed or unsigned; default to signed for now
-        // A full type checker would provide this
-        isSigned = true;
+    // Materialize the operands with a common integer type, letting an untyped
+    // literal adopt the other operand's type.
+    std::string left, right;
+    if (lLit && rt && rt->isInteger()) {
+        right = genExpr(e->right);
+        left = intLiteral(e->left, rt);
+        lt = rt;
+    } else if (rLit && lt && lt->isInteger()) {
+        left = genExpr(e->left);
+        right = intLiteral(e->right, lt);
+        rt = lt;
+    } else {
+        left = genExpr(e->left);
+        right = genExpr(e->right);
     }
+
+    bool isSigned = lt && lt->isSigned();
 
     std::string op;
     if (e->opText == "加") op = "add";
@@ -466,7 +496,7 @@ std::string LLVMIRGen::genBinOp(const ExprPtr& e) {
     // For comparison operators, the result is i1
     if (op.find("icmp") == 0) {
         std::string result = freshName("cmp");
-        emit("%" + result + " = " + op + " " + left + ", " + right);
+        emit("%" + result + " = " + op + " " + left + ", " + valueOnly(right));
         return "i1 %" + result;
     }
 
@@ -474,18 +504,18 @@ std::string LLVMIRGen::genBinOp(const ExprPtr& e) {
     if (op == "and" && e->opText == "且") {
         // Simplified: just do bitwise and for now
         std::string result = freshName("and");
-        emit("%" + result + " = and " + left + ", " + right);
+        emit("%" + result + " = and " + left + ", " + valueOnly(right));
         return left.substr(0, left.find(' ')) + " %" + result;
     }
     if (op == "or" && e->opText == "或") {
         std::string result = freshName("or");
-        emit("%" + result + " = or " + left + ", " + right);
+        emit("%" + result + " = or " + left + ", " + valueOnly(right));
         return left.substr(0, left.find(' ')) + " %" + result;
     }
 
     std::string result = freshName("r");
     std::string type = left.substr(0, left.find(' '));
-    emit("%" + result + " = " + op + " " + left + ", " + right);
+    emit("%" + result + " = " + op + " " + left + ", " + valueOnly(right));
     return type + " %" + result;
 }
 
@@ -500,7 +530,7 @@ std::string LLVMIRGen::genUnaryOp(const ExprPtr& e) {
     }
     if (e->unaryOp == "非") {
         std::string result = freshName("not");
-        emit("%" + result + " = xor i1 " + operand + ", true");
+        emit("%" + result + " = xor " + operand + ", true");
         return "i1 %" + result;
     }
     if (e->unaryOp == "位非") {
@@ -559,39 +589,47 @@ std::string LLVMIRGen::genAddrOf(const ExprPtr& e) {
 
 std::string LLVMIRGen::genDeref(const ExprPtr& e) {
     std::string ptr = genExpr(e->pointee);
+    TypePtr pt = typeOfExpr(e->pointee);
+    TypePtr elemT = (pt && pt->kind == Type::Kind::Pointer && pt->pointee) ? pt->pointee : Type::I64();
+    std::string elemLLVM = llvmType(elemT);
     std::string result = freshName("deref");
-    // We need the pointee type; for now, assume i64
-    // In a full implementation, we'd get this from type checking
-    emit("%" + result + " = load i64, ptr " + ptr);
-    return "i64 %" + result;
+    emit("%" + result + " = load " + elemLLVM + ", " + ptr);
+    return elemLLVM + " %" + result;
 }
 
 std::string LLVMIRGen::genCast(const ExprPtr& e) {
     std::string from = genExpr(e->castFrom);
-    std::string toType = llvmType(e->castTo);
+    TypePtr fromT = typeOfExpr(e->castFrom);
+    TypePtr toT = e->castTo;
+    if (!toT) return from;
+
+    std::string toType = llvmType(toT);
     std::string fromType = from.substr(0, from.find(' '));
 
+    // No-op if the LLVM repr is unchanged (covers ptr<->ptr with opaque ptrs).
+    if (fromType == toType) return from;
+
     std::string result = freshName("cast");
-    // Determine cast kind
-    if (fromType == "i8" && toType == "i64") {
-        // sign extend or zext
-        emit("%" + result + " = zext i8 " + from + " to i64");
-    } else if (fromType == "i16" && toType == "i64") {
-        emit("%" + result + " = zext i16 " + from + " to i64");
-    } else if (fromType == "i32" && toType == "i64") {
-        emit("%" + result + " = zext i32 " + from + " to i64");
-    } else if (fromType == "i64" && toType == "i32") {
-        emit("%" + result + " = trunc i64 " + from + " to i32");
-    } else if (fromType == "i64" && toType == "i16") {
-        emit("%" + result + " = trunc i64 " + from + " to i16");
-    } else if (fromType == "i64" && toType == "i8") {
-        emit("%" + result + " = trunc i64 " + from + " to i8");
-    } else if (fromType == "i1" && toType == "i64") {
-        emit("%" + result + " = zext i1 " + from + " to i64");
-    } else if (fromType == "i64" && toType == "i1") {
-        emit("%" + result + " = icmp ne i64 " + from + ", 0");
+
+    if (fromT && fromT->isInteger() && toT->isInteger()) {
+        uint64_t fs = fromT->sizeBytes();
+        uint64_t ts = toT->sizeBytes();
+        if (fs == ts) {
+            return from; // same width, just reinterpret the type
+        }
+        if (fs < ts) {
+            std::string ext = fromT->isSigned() ? "sext" : "zext";
+            emit("%" + result + " = " + ext + " " + from + " to " + toType);
+        } else {
+            emit("%" + result + " = trunc " + from + " to " + toType);
+        }
+    } else if (fromT && fromT->isInteger() && toT->kind == Type::Kind::Pointer) {
+        emit("%" + result + " = inttoptr " + from + " to " + toType);
+    } else if (fromT && fromT->kind == Type::Kind::Pointer && toT->isInteger()) {
+        emit("%" + result + " = ptrtoint " + from + " to " + toType);
+    } else if (fromType == "i1" && toT->isInteger()) {
+        emit("%" + result + " = zext " + from + " to " + toType);
     } else {
-        // Default: just emit as-is (may be wrong)
         emit("%" + result + " = bitcast " + from + " to " + toType);
     }
     return toType + " %" + result;
@@ -601,15 +639,14 @@ std::string LLVMIRGen::genVolatileRead(const ExprPtr& e) {
     std::string ptr = genExpr(e->volPtr);
     std::string type = llvmType(e->volType);
     std::string result = freshName("vol");
-    emit("%" + result + " = load volatile " + type + ", ptr " + ptr);
+    emit("%" + result + " = load volatile " + type + ", " + ptr);
     return type + " %" + result;
 }
 
 std::string LLVMIRGen::genVolatileWrite(const ExprPtr& e) {
     std::string ptr = genExpr(e->volPtr);
     std::string val = genExpr(e->volVal);
-    std::string type = llvmType(e->volType);
-    emit("store volatile " + type + " " + val + ", ptr " + ptr);
+    emit("store volatile " + val + ", " + ptr);
     return "void ";
 }
 
@@ -646,21 +683,32 @@ std::string LLVMIRGen::genStrLen(const ExprPtr& e) {
 
 std::string LLVMIRGen::genFieldAccess(const ExprPtr& e) {
     // 欄(base, 「field」)
-    // For now, we'll generate a GEP
+    // Simplified: v0.1 does not yet compute real struct offsets.
     std::string base = genExpr(e->base);
     std::string result = freshName("field");
-    // This is a simplification; proper struct layout is needed
-    emit("%" + result + " = getelementptr i8, ptr " + base + ", i64 0");
-    return "i64 %" + result;
+    emit("%" + result + " = getelementptr i8, " + base + ", i64 0");
+    return "ptr %" + result;
 }
 
 std::string LLVMIRGen::genElemAccess(const ExprPtr& e) {
-    // 項(base, index)
+    // 項(base, index): array/pointer indexing. Loads element `index`.
+    TypePtr baseT = typeOfExpr(e->base);
+    TypePtr elemT;
+    if (baseT && baseT->kind == Type::Kind::Pointer && baseT->pointee) {
+        elemT = baseT->pointee;
+    } else if (baseT && baseT->kind == Type::Kind::Array && baseT->element) {
+        elemT = baseT->element;
+    }
+    if (!elemT) elemT = Type::I8();
+
+    std::string elemLLVM = llvmType(elemT);
     std::string base = genExpr(e->base);
     std::string index = genExpr(e->index);
+    std::string gep = freshName("elemptr");
+    emit("%" + gep + " = getelementptr " + elemLLVM + ", " + base + ", " + index);
     std::string result = freshName("elem");
-    emit("%" + result + " = getelementptr i8, ptr " + base + ", i64 " + index);
-    return "i64 %" + result;
+    emit("%" + result + " = load " + elemLLVM + ", ptr %" + gep);
+    return elemLLVM + " %" + result;
 }
 
 void LLVMIRGen::genExternal(const FunctionDecl& fn) {
@@ -697,7 +745,9 @@ void LLVMIRGen::genStruct(const StructDecl& s) {
     (void)s;
 }
 
-std::string LLVMIRGen::generate(const Module& mod) {
+std::string LLVMIRGen::generate(const Module& mod, const TypeChecker& tc) {
+    tc_ = &tc;
+
     // Pass 0: register declarations so calls/fields can be resolved.
     for (auto& d : mod.decls) {
         switch (d.kind) {

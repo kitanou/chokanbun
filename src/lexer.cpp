@@ -134,11 +134,11 @@ void Lexer::skipWhitespaceAndComments() {
         uint8_t c = peek();
         if (c == ' ' || c == '\t' || c == '\r' || c == '\n') {
             advance();
-        } else if (c == 0xE6) {
-            // Check for 註 (E6 B3 A8) - line comment
+        } else if (c == 0xE8) {
+            // Check for 註 (E8 A8 BB) - line comment (spec §2)
             if (pos_ + 2 < src_.size() &&
-                static_cast<uint8_t>(src_[pos_+1]) == 0xB3 &&
-                static_cast<uint8_t>(src_[pos_+2]) == 0xA8) {
+                static_cast<uint8_t>(src_[pos_+1]) == 0xA8 &&
+                static_cast<uint8_t>(src_[pos_+2]) == 0xBB) {
                 while (!atEnd() && peek() != '\n') advance();
                 if (!atEnd()) advance();
             } else {

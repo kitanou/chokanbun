@@ -64,6 +64,8 @@
 | M0: LLVM IR 出力と AArch64 ABI の検証（逆アセンブル） | 達成 |
 | M1: QEMU `virt` / AArch64 で起動 | 達成 |
 | M1: PL011 に「世界安寧」を表示 | 達成（`make test` の qemu ケース） |
+| M2: 整数リテラルの文脈型適合・ポインタ添字・volatile MMIO | 一部達成 |
+| M2: UART ドライバを機械漢文で記述（`tests/uart_mmio.txt`） | 達成 |
 | M1: GDB による再現可能なデバッグ手順 | 未着手 |
 
 再現手順: `make test`（`tests/run_tests.sh` が IR 生成 → AArch64 オブジェクト/ELF

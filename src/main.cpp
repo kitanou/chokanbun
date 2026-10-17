@@ -136,7 +136,7 @@ int main(int argc, char* argv[]) {
 
     // Generate LLVM IR
     LLVMIRGen irgen;
-    std::string ir = irgen.generate(mod);
+    std::string ir = irgen.generate(mod, typechecker);
 
     if (irgen.hasErrors()) {
         printDiagnostics(irgen.diagnostics());

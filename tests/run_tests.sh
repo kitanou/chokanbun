@@ -75,6 +75,22 @@ if [ -f "$OUT/uart.o" ] && [ -f "$OUT/uart_c.o" ] && [ -f "$OUT/boot.o" ]; then
     fi
 fi
 
+# --- uart_mmio: 機械漢文のみの PL011 ドライバ (volatile MMIO + 項) -> ELF ---
+"$BIN" tests/uart_mmio.txt -ir -o "$OUT/uart_mmio.ll" 2>"$OUT/uart_mmio.gen.log" \
+    && pass "uart_mmio: IR generation" || fail "uart_mmio: IR generation"
+"$LLC" -march=aarch64 -filetype=obj "$OUT/uart_mmio.ll" -o "$OUT/uart_mmio.o" \
+    >"$OUT/uart_mmio.llc.log" 2>&1 \
+    && pass "uart_mmio: AArch64 object" || fail "uart_mmio: AArch64 object"
+if [ -f "$OUT/uart_mmio.o" ] && [ -f "$OUT/boot.o" ]; then
+    "$LD" -T boot/boot.lds "$OUT/boot.o" "$OUT/uart_mmio.o" \
+        -o "$OUT/uart_mmio.elf" >"$OUT/uart_mmio.link.log" 2>&1 \
+        && pass "uart_mmio: ELF link" || fail "uart_mmio: ELF link"
+    if [ -f "$OUT/uart_mmio.elf" ]; then
+        "$OBJDUMP" -d "$OUT/uart_mmio.elf" >"$OUT/uart_mmio.dis" 2>&1 \
+            && pass "uart_mmio: disassembly" || fail "uart_mmio: disassembly"
+    fi
+fi
+
 # --- type_error: 錯 E00xx must be reported --------------------------------
 "$BIN" tests/type_error.txt -ir -o /dev/null >"$OUT/type_error.log" 2>&1 \
     && fail "type_error: unexpected success" || pass "type_error: rejected"
@@ -84,13 +100,13 @@ else
     fail "type_error: diagnostic E00xx"
 fi
 
-# --- QEMU: 世界安寧 on the PL011 UART --------------------------------------
-if [ -f "$OUT/uart.elf" ]; then
+# --- QEMU: pure 機械漢文 driver prints 世界安寧 on the PL011 ---------------
+if [ -f "$OUT/uart_mmio.elf" ]; then
     if command -v qemu-system-aarch64 >/dev/null 2>&1; then
         QLOG="$OUT/qemu.log"
         rm -f "$QLOG"
         qemu-system-aarch64 -M virt -cpu cortex-a57 -nographic \
-            -serial "file:$QLOG" -kernel "$OUT/uart.elf" \
+            -serial "file:$QLOG" -kernel "$OUT/uart_mmio.elf" \
             >"$OUT/qemu.console.log" 2>&1 &
         QPID=$!
         # Wait up to ~10s for the expected output, then stop QEMU.
@@ -101,16 +117,16 @@ if [ -f "$OUT/uart.elf" ]; then
         kill "$QPID" 2>/dev/null
         wait "$QPID" 2>/dev/null
         if grep -q "世界安寧" "$QLOG" 2>/dev/null; then
-            pass "qemu: 世界安寧 output"
+            pass "qemu: 世界安寧 output (機械漢文 driver)"
         else
-            fail "qemu: 世界安寧 output"
+            fail "qemu: 世界安寧 output (機械漢文 driver)"
             sed 's/^/      /' "$QLOG" 2>/dev/null | head -20
         fi
     else
         echo "SKIP: qemu (qemu-system-aarch64 not found)"
     fi
 else
-    echo "SKIP: qemu (uart.elf not built)"
+    echo "SKIP: qemu (uart_mmio.elf not built)"
 fi
 
 echo "=== Tests complete (rc=$RC) ==="

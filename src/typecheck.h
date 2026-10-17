@@ -63,6 +63,10 @@ private:
     void errorAt(const Expr& e, const std::string& code, const std::string& msg);
     void errorAt(const Stmt& s, const std::string& code, const std::string& msg);
 
+    // Literal coercion: an untyped integer literal adopts the expected integer
+    // type, and 空 adopts the expected pointer type. Returns true if applied.
+    bool coerceLiteral(const ExprPtr& value, const TypePtr& target);
+
     // Scope management
     struct Scope {
         std::map<std::string, TypePtr> vars;
@@ -83,6 +87,9 @@ private:
 
     // Unsafe context tracking
     int unsafeDepth_ = 0;
+
+    // Return type of the function currently being checked (for 歸 coercion)
+    TypePtr currentReturnType_;
 
     // Module
     const Module& mod_;

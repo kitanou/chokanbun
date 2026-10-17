@@ -7,13 +7,16 @@
 
 namespace chokanbun {
 
+class TypeChecker;
+
 class LLVMIRGen {
 public:
     LLVMIRGen();
     ~LLVMIRGen();
 
-    // Generate LLVM IR text for a module
-    std::string generate(const Module& mod);
+    // Generate LLVM IR text for a module. The type checker supplies the
+    // resolved type of every expression (used for width/signedness).
+    std::string generate(const Module& mod, const TypeChecker& tc);
 
     const std::vector<Diagnostic>& diagnostics() const { return diags_; }
     bool hasErrors() const { return !diags_.empty(); }
@@ -68,10 +71,17 @@ private:
     void emitBlank();
     void error(uint32_t line, uint32_t col, const std::string& code, const std::string& msg);
 
+    // Resolved type of an expression, from the type checker (may be null).
+    TypePtr typeOfExpr(const ExprPtr& e) const;
+    // Materialize an integer literal with the given LLVM type.
+    std::string intLiteral(const ExprPtr& e, const TypePtr& t);
+
     // State
     std::string ir_;
     std::vector<Diagnostic> diags_;
     int counter_ = 0;
+    const TypeChecker* tc_ = nullptr;
+    TypePtr currentReturnType_;
 
     // Current function context
     std::map<std::string, std::pair<TypePtr, std::string>> locals_; // name -> (type, ssa)
