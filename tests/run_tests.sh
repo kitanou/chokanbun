@@ -91,6 +91,41 @@ if [ -f "$OUT/uart_mmio.o" ] && [ -f "$OUT/boot.o" ]; then
     fi
 fi
 
+# --- kernel: 漢極 (exception vectors + MMU + memory) -> ELF -> QEMU ---------
+"$BIN" kernel/kernel.txt -ir -o "$OUT/kernel.ll" 2>"$OUT/kernel.gen.log" \
+    && pass "kernel: IR generation" || fail "kernel: IR generation"
+"$LLC" -march=aarch64 -filetype=obj "$OUT/kernel.ll" -o "$OUT/kernel.o" \
+    >"$OUT/kernel.llc.log" 2>&1 \
+    && pass "kernel: AArch64 object" || fail "kernel: AArch64 object"
+"$CLANG" --target=aarch64-none-elf -c kernel/boot.S -o "$OUT/kernel_boot.o" \
+    >"$OUT/kernel_boot.log" 2>&1 \
+    && pass "kernel: boot stub object" || fail "kernel: boot stub object"
+"$CLANG" --target=aarch64-none-elf -c kernel/vectors.S -o "$OUT/kernel_vectors.o" \
+    >"$OUT/kernel_vectors.log" 2>&1 \
+    && pass "kernel: exception vectors object" || fail "kernel: exception vectors object"
+"$CLANG" --target=aarch64-none-elf -c kernel/sysreg.S -o "$OUT/kernel_sysreg.o" \
+    >"$OUT/kernel_sysreg.log" 2>&1 \
+    && pass "kernel: sysreg helpers object" || fail "kernel: sysreg helpers object"
+
+if [ -f "$OUT/kernel.o" ] && [ -f "$OUT/kernel_boot.o" ] && \
+   [ -f "$OUT/kernel_vectors.o" ] && [ -f "$OUT/kernel_sysreg.o" ]; then
+    "$LD" -T kernel/kernel.lds "$OUT/kernel_boot.o" "$OUT/kernel_vectors.o" \
+        "$OUT/kernel_sysreg.o" "$OUT/kernel.o" -o "$OUT/kernel.elf" \
+        >"$OUT/kernel.link.log" 2>&1 \
+        && pass "kernel: ELF link" || fail "kernel: ELF link"
+    if [ -f "$OUT/kernel.elf" ]; then
+        "$OBJDUMP" -d "$OUT/kernel.elf" >"$OUT/kernel.dis" 2>&1 \
+            && pass "kernel: disassembly" || fail "kernel: disassembly"
+        # _vectors must be 2 KiB aligned (AArch64 requirement).
+        VADDR="$("$LLVM_BIN/llvm-nm" "$OUT/kernel.elf" 2>/dev/null | awk '/ _vectors$/{print $1}')"
+        if [ -n "$VADDR" ] && [ $(( 16#$VADDR % 2048 )) -eq 0 ]; then
+            pass "kernel: vector table 2KiB aligned ($VADDR)"
+        else
+            fail "kernel: vector table 2KiB aligned (got '${VADDR:-none}')"
+        fi
+    fi
+fi
+
 # --- type_error: 錯 E00xx must be reported --------------------------------
 "$BIN" tests/type_error.txt -ir -o /dev/null >"$OUT/type_error.log" 2>&1 \
     && fail "type_error: unexpected success" || pass "type_error: rejected"
@@ -127,6 +162,57 @@ if [ -f "$OUT/uart_mmio.elf" ]; then
     fi
 else
     echo "SKIP: qemu (uart_mmio.elf not built)"
+fi
+
+# --- QEMU: 漢極 kernel — exception handler, MMU, memory ------------------
+if [ -f "$OUT/kernel.elf" ]; then
+    if command -v qemu-system-aarch64 >/dev/null 2>&1; then
+        KLOG="$OUT/kernel_qemu.log"
+        rm -f "$KLOG"
+        qemu-system-aarch64 -M virt -cpu cortex-a57 -nographic \
+            -serial "file:$KLOG" -kernel "$OUT/kernel.elf" \
+            >"$OUT/kernel_qemu.console.log" 2>&1 &
+        QPID=$!
+        # Wait up to ~10s for the final marker, then stop QEMU.
+        for _ in $(seq 1 20); do
+            grep -q "頁割当" "$KLOG" 2>/dev/null && break
+            sleep 0.5
+        done
+        kill "$QPID" 2>/dev/null
+        wait "$QPID" 2>/dev/null
+        if grep -q "超漢文起動" "$KLOG" 2>/dev/null; then
+            pass "kernel qemu: 超漢文起動 output"
+        else
+            fail "kernel qemu: 超漢文起動 output"
+            sed 's/^/      /' "$KLOG" 2>/dev/null | head -20
+        fi
+        if grep -q "異常捕獲 ESR=0x00000000f2000000" "$KLOG" 2>/dev/null; then
+            pass "kernel qemu: exception handler caught BRK (ESR decode)"
+        else
+            fail "kernel qemu: exception handler caught BRK (ESR decode)"
+            sed 's/^/      /' "$KLOG" 2>/dev/null | head -20
+        fi
+        if grep -q "異常後継続" "$KLOG" 2>/dev/null; then
+            pass "kernel qemu: resumed after exception (eret)"
+        else
+            fail "kernel qemu: resumed after exception (eret)"
+        fi
+        if grep -q "記憶管理有効" "$KLOG" 2>/dev/null; then
+            pass "kernel qemu: MMU enabled (identity map live)"
+        else
+            fail "kernel qemu: MMU enabled (identity map live)"
+            sed 's/^/      /' "$KLOG" 2>/dev/null | head -20
+        fi
+        if grep -q "0x0000000040400000" "$KLOG" 2>/dev/null; then
+            pass "kernel qemu: physical page allocator"
+        else
+            fail "kernel qemu: physical page allocator"
+        fi
+    else
+        echo "SKIP: kernel qemu (qemu-system-aarch64 not found)"
+    fi
+else
+    echo "SKIP: kernel qemu (kernel.elf not built)"
 fi
 
 echo "=== Tests complete (rc=$RC) ==="

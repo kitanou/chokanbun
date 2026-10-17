@@ -47,9 +47,9 @@ test: $(BIN)
 		bash tests/run_tests.sh
 
 run: test
-	@echo "=== Running QEMU ==="
+	@echo "=== Running QEMU (漢極 kernel) ==="
 	qemu-system-aarch64 -M virt -cpu cortex-a57 -nographic -serial stdio \
-		-kernel tests/output/uart.elf
+		-kernel tests/output/kernel.elf
 
 clean:
 	rm -rf $(OBJ_DIR) $(BIN) tests/output

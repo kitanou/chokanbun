@@ -120,7 +120,14 @@ bool Lexer::isIdentStart(char32_t cp) const {
 }
 
 bool Lexer::isIdentPart(char32_t cp) const {
-    return isIdentStart(cp) || (cp >= 0x0030 && cp <= 0x0039);
+    // Inside 「」 identifiers may hold CJK, ASCII letters, digits and '_'.
+    // ASCII is required so that 記號「ascii_symbol」 (spec §7) can name linker
+    // symbols, and so identifiers stay usable from hand-written assembly.
+    if (cp >= 0x0030 && cp <= 0x0039) return true; // 0-9
+    if (cp >= 0x0041 && cp <= 0x005A) return true; // A-Z
+    if (cp >= 0x0061 && cp <= 0x007A) return true; // a-z
+    if (cp == 0x005F) return true;                 // _
+    return isIdentStart(cp);
 }
 
 bool Lexer::isDigit(uint8_t c) const { return c >= '0' && c <= '9'; }

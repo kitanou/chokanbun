@@ -224,11 +224,14 @@ TypePtr TypeChecker::checkIdent(const Expr& e) {
     if (c) {
         if (c->value) {
             TypePtr vt = checkExpr(*c->value);
-            // Check type compatibility with declared type
+            // Check type compatibility with declared type; an untyped integer
+            // literal in the initializer adopts the declared type.
             if (c->type && vt && !vt->isSameAs(*c->type)) {
-                errorAt(e, "E0004", "constant " + e.identName +
-                    " value type " + vt->toString() +
-                    " does not match declared type " + c->type->toString());
+                if (!coerceLiteral(c->value, c->type)) {
+                    errorAt(e, "E0004", "constant " + e.identName +
+                        " value type " + vt->toString() +
+                        " does not match declared type " + c->type->toString());
+                }
             }
             exprTypes_[&e] = c->type ? c->type : vt;
             return c->type ? c->type : vt;
@@ -588,8 +591,11 @@ TypePtr TypeChecker::checkVolatileWrite(const Expr& e) {
     }
 
     if (vt && e.volType && !vt->isSameAs(*e.volType)) {
-        errorAt(e, "E0001", "volatile write value type " + vt->toString() +
-            " does not match " + e.volType->toString());
+        // An untyped integer literal adopts the volatile access type.
+        if (!coerceLiteral(e.volVal, e.volType)) {
+            errorAt(e, "E0001", "volatile write value type " + vt->toString() +
+                " does not match " + e.volType->toString());
+        }
     }
 
     auto t = Type::Void();

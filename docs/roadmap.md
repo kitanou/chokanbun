@@ -26,9 +26,12 @@
 - [ ] GDBで再現可能な起動テスト、ビルド手順、ログ
 
 ## M2: 機械漢文カーネル基盤
-- [ ] 低レベル言語機能（volatile MMIO、メモリバリア、システムレジスタ、セクション、例外ハンドラ等）
-- [ ] UART・カーネル起動部分を機械漢文で記述し、「超漢文起動」を出力
-- [ ] 例外ベクタ、タイマー、物理メモリ管理、MMU
+- [x] 低レベル言語機能（volatile MMIO、メモリバリア、セクション、例外ハンドラ、`記號` による ASCII シンボル）
+- [x] UART・カーネル起動部分を機械漢文で記述し、「超漢文起動」を出力（`kernel/kernel.txt`）
+- [x] 例外ベクタと例外ハンドラ（BRK 捕捉・ESR 復号・`eret` 継続）
+- [x] 物理メモリ管理の初段（ページ割当）
+- [x] MMU（レベル1 変換表・1GiB ブロック恒等写像の有効化）
+- [ ] タイマー（汎用タイマー）と割込
 - [ ] 暫定アセンブリ依存を洗い出し、機械漢文生成コードへ段階的に移行
 
 ## M3: 行程 — プロセス基盤
@@ -64,13 +67,26 @@
 | M0: LLVM IR 出力と AArch64 ABI の検証（逆アセンブル） | 達成 |
 | M1: QEMU `virt` / AArch64 で起動 | 達成 |
 | M1: PL011 に「世界安寧」を表示 | 達成（`make test` の qemu ケース） |
-| M2: 整数リテラルの文脈型適合・ポインタ添字・volatile MMIO | 一部達成 |
+| M2: 整数リテラルの文脈型適合・ポインタ添字・volatile MMIO | 達成 |
 | M2: UART ドライバを機械漢文で記述（`tests/uart_mmio.txt`） | 達成 |
+| M2: 漢極 `kernel/` 新設・機械漢文で「超漢文起動」を出力 | 達成（`make test` の kernel qemu ケース） |
+| M2: 例外ベクタとハンドラ（BRK 捕捉・ESR 復号・継続） | 達成 |
+| M2: 物理ページ割当 | 達成（初段・bump 割当） |
+| M2: MMU（恒等写像の有効化） | 達成（1GiB ブロック・2GiB 領域） |
+| M2: タイマーと割込 | 未着手 |
 | M1: GDB による再現可能なデバッグ手順 | 未着手 |
 
 再現手順: `make test`（`tests/run_tests.sh` が IR 生成 → AArch64 オブジェクト/ELF
 リンク → QEMU 実行までを検証する）。ログは `tests/output/` に出力される。
 
 既知の暫定措置:
-- UART ドライバ `boot/uart.c` は C の暫定実装。M2 で機械漢文の MMIO 記述へ移植する。
-- 起動スタブ `boot/boot.S` はスタック設定と `main` 呼び出しのみを行う。
+- UART ドライバ `boot/uart.c` は C の暫定実装。M2 の機械漢文 MMIO 記述
+  （`kernel/kernel.txt`、`tests/uart_mmio.txt`）へ移植済みで、C 版は
+  `外術曰` 連携の参照用に残している。
+- 漢極の低水準入口は暫定アセンブリに限定する:
+  `kernel/boot.S`（スタック・BSS 零化・`VBAR_EL1` 設定）、
+  `kernel/vectors.S`（例外ベクタ表・レジスタ保存）、
+  `kernel/sysreg.S`（`enable_mmu`/`read_sctlr`）。例外診断・ページ割当・
+  変換表構築は機械漢文（`kernel/kernel.txt`）で実装している。
+- MMU は当面 QEMU `virt` の固定配置を前提とした恒等写像（Devicetree 未解析）。
+- タイマー・GIC 割込・EL0/プロセスは未実装。
