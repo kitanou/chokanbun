@@ -147,7 +147,12 @@ if [ -f "$OUT/hello.zo" ] && [ "$(head -c 4 "$OUT/hello.zo")" = "KBN1" ]; then
 else
     fail "user: 漢像のヘッダ"
 fi
-sh tools/gen-images.sh "$OUT/kernel_images.S" 問安="$OUT/hello.zo" 數="$OUT/count.zo" \
+sh tools/mkimage.sh user/btron_gtid.txt "$OUT/btron_gtid.zo" "$OUT" 2>"$OUT/user_btron_gtid.build.log" \
+    && pass "user: BTRON3 互換層の試験 識試 (get_tid・ER_*) を漢像にビルド" || {
+        fail "user: BTRON3 互換層の試験 識試 を漢像にビルド"
+        sed 's/^/      /' "$OUT/user_btron_gtid.build.log" | head -10
+    }
+sh tools/gen-images.sh "$OUT/kernel_images.S" 問安="$OUT/hello.zo" 數="$OUT/count.zo" 識試="$OUT/btron_gtid.zo" \
     && "$CLANG" --target=aarch64-none-elf -c "$OUT/kernel_images.S" -o "$OUT/kernel_images.o" \
         >"$OUT/kernel_images.log" 2>&1 \
     && pass "kernel: 漢像の埋め込み (像表)" || fail "kernel: 漢像の埋め込み (像表)"
@@ -229,7 +234,7 @@ if [ -f "$OUT/kernel.elf" ]; then
         # Then feed 殻 (shell) commands once 甲 has read that line (M4).
         ( printf 'KANBUN\n' > "$PIPE.in"
           for _ in $(seq 1 60); do grep -q "甲得" "$KLOG" 2>/dev/null && break; sleep 0.25; done
-          printf '響 天下太平\n讀 史記\n怪\n讀 無題\n目\n書 筆記 天地玄黄\n讀 筆記\n書 一二三四五六 x\n書 筆記\n目\n削 筆記\n讀 筆記\n目\n削 筆記\n書 新稿 草\n目\n問安 日月\n數 一 二 三\n存在せず 子\n助\n終\n' > "$PIPE.in" ) &
+          printf '響 天下太平\n讀 史記\n怪\n讀 無題\n目\n書 筆記 天地玄黄\n讀 筆記\n書 一二三四五六 x\n書 筆記\n目\n削 筆記\n讀 筆記\n目\n削 筆記\n書 新稿 草\n目\n問安 日月\n數 一 二 三\n識試\n存在せず 子\n助\n終\n' > "$PIPE.in" ) &
         FEEDPID=$!
         # Wait up to ~15s for the final marker, then stop QEMU.  The generic
         # timer fires five times (5 × CNTFRQ/40 ≈ 125 ms), so this is ample.
@@ -542,6 +547,19 @@ if [ -f "$OUT/kernel.elf" ]; then
         else
             fail "kernel qemu: argv の受け渡し (argc=${K_ARGC:-none} 長合=${K_ARGL:-none} 殻碼='${K_RC:-none}')"
             grep -a '殻\|數\|子行程' "$KLOG" 2>/dev/null | sed 's/^/      /' | tail -20
+        fi
+        # --- #42 G0: BTRON3 互換層 (user/btron/) の get_tid と ER_* ----------------
+        btron_val() { grep -a "^識試 $1 " "$KLOG" 2>/dev/null | head -1 | grep -oE '0x[0-9a-f]{16}'; }
+        BTRON_BAD=""
+        for k in 'get_tid=識別' 'get_tid>0' 'ER_負' '錯換'; do
+            got="$(btron_val "$k")"
+            [ "$got" = "0x0000000000000001" ] || BTRON_BAD="$BTRON_BAD $k(got=${got:-none})"
+        done
+        if [ -z "$BTRON_BAD" ]; then
+            pass "kernel qemu: BTRON3 互換層 get_tid が 漢令 識別 と一致し正、ER_* が負、錯換の対応が正しい"
+        else
+            fail "kernel qemu: BTRON3 互換層 (不一致:$BTRON_BAD)"
+            grep -a '識試' "$KLOG" 2>/dev/null | sed 's/^/      /'
         fi
         K_UNK="$(grep -ac '殻不明' "$KLOG" 2>/dev/null)"
         if [ "${K_UNK:-0}" -ge 2 ]; then
