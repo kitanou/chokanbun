@@ -38,7 +38,7 @@
 
 | § | 項目 | 参照 | 関連する既存実装 | 差分 | 試験方法 | 状態 |
 |---|---|---|---|---|---|---|
-| 1 | 基本データタイプ | data_type.html | 言語仕様の整数型、`user/btron/types.txt` | 一部のみ照合（[詳細](btron3-shared-data.md)） | 型幅・符号・順序の単体試験 | 部分適合（`SIZE`/`PNT`/`RECT`・浮動小数点なし） |
+| 1 | 基本データタイプ | data_type.html | 言語仕様の整数型、`user/btron/types.txt` | 一部のみ照合（[詳細](btron3-shared-data.md)） | 型幅・符号・順序の単体試験 | 部分適合（浮動小数点・`ErrCode` 二定義が未対応。`SIZE`/`PNT`/`RECT`/`Bool` は実装済・未検証） |
 | 2.1 | TRON 標準コードの概要（多国語、文字セット、書体セット） | tron_code.html#aat | 内部は漢字文字列（UTF-8 想定） | 未照合（[詳細](btron3-shared-data.md)） | — | 未実装 |
 | 2.2 | 既存コード体系との関連（JIS X 0201 / 0208） | tron_code.html#aax | なし | 未照合（[詳細](btron3-shared-data.md)） | 変換表の往復試験 | 未実装 |
 | 2.3 | TRON 標準文字コード | tron_code.html#aba | なし | 未照合（[詳細](btron3-shared-data.md)） | テストベクトル | 未実装 |

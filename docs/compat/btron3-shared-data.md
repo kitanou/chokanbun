@@ -39,12 +39,15 @@
 | `TC`=UH、`TNULL` | 対応表のみ。文字列関数なし | 部分適合 |
 | `CLR`/`NOCLR`/`DELEXIT` | `types.txt` に定数 | 実装済・未検証 |
 | `ERR`/`ErrCode` | `user/btron/er.txt`（`(eclass<<16)|detail`、eclass=-1） | 実装済・未検証（数値は実装依存の選択。OS 編 G0） |
-| `SIZE`/`PNT`/`RECT`/`LINK` | `get_lnk` が `LINK` を扱う（OS 編 1.6） | 部分適合（`SIZE`/`PNT`/`RECT` は未定義） |
+| `SIZE`/`PNT`/`RECT` | `types.txt` に欄の配置定数（`SIZE_*`/`PNT_*`/`RECT_*`）と `SIZE置`/`PNT置`/`RECT置`、`H置`/`H読`。QEMU 試験 `識試` の 5 項目（H の符号・範囲・隣欄保持、SIZE/PNT/RECT の配置、RECT の共用体）で確認 | 実装済・未検証（欄名は慣用を仮採用、要確認） |
+| `LINK` | `get_lnk` が扱う（OS 編 1.6） | 部分適合 |
 | `FLOAT`/`DOUBLE` | 言語に浮動小数点なし | 未実装 |
-| `BOOL`/`Bool`/`MSEC`/`STIME`/`VP`/`FP` | 対応表に `ID`/`MSEC`/`STIME`/`VP`/`FP` のみ | 部分適合 |
+| `Bool`/`BOOL` | `types.txt` に `False`=0・`True`=1 と正規化の `BOOL化`。試験 `識試` の `Bool=False0True1` | 実装済・未検証 |
+| `MSEC`/`STIME`/`VP`/`FP` | 対応表のみ | 部分適合 |
 
 **要確認**: バイト順・構造体のパディング、`ErrCode` の二つの定義の使い分け、`FLOAT`/`DOUBLE` を持つか（持たなければ非適合として理由を記録）、`_B` 等の volatile 版の扱い（機械漢文の `揮發` 読み書きで足りるか）。
-**試験**: 型幅・符号拡張・構造体の配置を QEMU 上で確かめる単体試験（既存 `信試` などの形式に合わせる）。
+**試験**: `識試`（`user/btron_gtid.txt`）に H・Bool・SIZE・PNT・RECT の 9 項目を追加済み。残り: `ErrCode` の二定義、`FLOAT`/`DOUBLE`、`VP`/`FP`、`MSEC`/`STIME` の幅。
+**実装上の注意**: 機械漢文では識別子を `「」` で囲む（ASCII を含む名は必須）。`0 減 1` のような符号付き 64 ビットのリテラル演算は `無符六四` に入らないため、負値は `負値` 術で作る。
 
 ## 2. TRON コード（tron_code.html）
 
@@ -150,7 +153,7 @@
 
 | 優先 | 項目 | 理由 |
 |---|---|---|
-| 1 | §1 基本型の穴埋め（`SIZE`/`PNT`/`RECT`、`Bool`/`BOOL`、バイト順の確認） | OS 編が既に依存。小さく試験できる |
+| 1 | §1 基本型の残り（`ErrCode` の二定義、浮動小数点の方針、バイト順の確認）。`SIZE`/`PNT`/`RECT`/`Bool`/`BOOL` は実装済 | OS 編が既に依存。小さく試験できる |
 | 2 | §2 符号表の入手経路の確定 | 文字コードも TAD も、これが無いと進まない |
 | 3 | §3 TAD の原文直接確認 → BNF とセグメント表の確定 | 適合の中核。仮身・実身と結ぶ |
 | 4 | §3 TAD の読み書き実装（管理情報 → 文章 → 図形） | 往復試験が書ける範囲から |

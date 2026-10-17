@@ -597,12 +597,12 @@ if [ -f "$OUT/kernel.elf" ]; then
         # --- #42 G0: BTRON3 互換層 (user/btron/) の get_tid と ER_* ----------------
         btron_val() { grep -a "^識試 $1 " "$KLOG" 2>/dev/null | head -1 | grep -oE '0x[0-9a-f]{16}'; }
         BTRON_BAD=""
-        for k in 'get_tid=識別' 'get_tid>0' 'ER_負' '錯換'; do
+        for k in 'get_tid=識別' 'get_tid>0' 'ER_負' '錯換' 'H=符号付16' 'H=32767' 'H=-32768' 'H隣欄保持' 'Bool=False0True1' 'SIZE配置' 'PNT配置' 'RECT4辺' 'RECT共用体'; do
             got="$(btron_val "$k")"
             [ "$got" = "0x0000000000000001" ] || BTRON_BAD="$BTRON_BAD $k(got=${got:-none})"
         done
         if [ -z "$BTRON_BAD" ]; then
-            pass "kernel qemu: BTRON3 互換層 get_tid が 漢令 識別 と一致し正、ER_* が負、錯換の対応が正しい"
+            pass "kernel qemu: BTRON3 互換層 get_tid が 漢令 識別 と一致し正、ER_* が負、錯換の対応が正しい、共有データ編 §1 の H・Bool・SIZE・PNT・RECT が配置どおり"
         else
             fail "kernel qemu: BTRON3 互換層 (不一致:$BTRON_BAD)"
             grep -a '識試' "$KLOG" 2>/dev/null | sed 's/^/      /'
