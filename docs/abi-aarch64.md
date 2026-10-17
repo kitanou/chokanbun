@@ -83,7 +83,7 @@
   先頭 2 ページだけで、残りは EL0 が触れた時に `漢令處理`（`svc_dispatch`）が
   下位EL データアボート（EC=36）を捕らえ、`頁取`（動的頁域 `頁元` 0x40800000
   のビットマップ割当）で物理ページを与えて同じ命令を再試行する。仮想アドレスは
-  全行程で共通（民の棧 `0x40601000`、データ `0x40700000`）だが物理ページが
+  全行程で共通（民の棧の頭 `0x40608000`＝窓の先頭から 32 KiB、データ `0x40700000`）だが物理ページが
   異なるため、行程間で互いの書き込みは見えない。
 - 変換表（1 行程あたり 12 KiB = レベル1 + レベル2 + レベル3）は機械漢文
   （`設頁表`）が構築し、システムレジスタ設定のみ `kernel/sysreg.S` に委譲する
@@ -227,7 +227,7 @@
   | 146 | ファイル削除 | `x0`=親 LINK（NULL 可）, `x1`=LINK, `x2`=force | 含んでいたリンクの先で参照数が 0 になった数／`-ENOENT`・`-EBUSY`（開いている・作業ファイル・参照数≠0（親なし）・親が排他で開かれている・他の fd の現在レコード）・`-EPERM`（削除不可）・`-ENOEXEC`（ER_REC。リンクを含む）・`-EROFS`・`-EACCES`（親の W）・`-ETXTBSY`（リンクレコードがロックされている）・`-EFAULT`・`-EINVAL`。`del_fil`。親ありは親から固定リンクを 1 つ消して参照数 -1、0 になれば本体も消す。親なしは参照数 0 のときだけ |
   | 147 | ファイル開 | `x0`=LINK, `x1`=モード（4=READ, 2=WRITE, 6=UPDATE, 0x100=EXCL, 0x200=WEXCL）, `x2`=パスワード（NULL 可） | 記述子（正）／`-ENOENT`・`-ENODEV`・`-EBUSY`・`-EROFS`・`-EINVAL`・`-EFAULT`・`-EMFILE`。`opn_fil` |
   | 148 | ファイル閉 | `x0`=記述子 | 0／`-EBADF`。`cls_fil`。行程の終了で自動的に閉じる |
-  | 149 | ファイル状態 | `x0`=LINK, `x1`=名前の書き先（40 B）, `x2`=F_STATE（68 B）, `x3`=F_LOCATE（NULL のみ） | 参照数／`-ENOENT`・`-ENODEV`・`-EINVAL`・`-EFAULT`。`fil_sts` |
+  | 149 | ファイル状態 | `x0`=LINK, `x1`=名前の書き先（42 B）, `x2`=F_STATE（96 B）, `x3`=F_LOCATE（100 B） | 参照数／`-ENOENT`・`-ENODEV`・`-EINVAL`・`-EFAULT`。`fil_sts` |
   | 150 | 開ファイル状態 | `x0`=記述子, `x1`〜`x3` は 149 と同じ | 参照数／`-EBADF`・`-ENOENT`・`-EINVAL`・`-EFAULT`。`ofl_sts` |
   | 152 | レコード移動 | `x0`=記述子, `x1`=offset, `x2`=mode（0=現在から相対, 正=offset が番号, 負=終端から相対）, `x3`=recnum の書き先（NULL 可） | 0／`-EBADF`・`-ENOEXEC`（ER_REC）・`-EFAULT`。`see_rec`。W の引数は下位 32 ビットが効く |
   | 153 | レコード検索 | `x0`=記述子, `x1`=mode（0=F_FWD, 1=F_NFWD）, `x2`=typemask, `x3`=subtype, `x4`=recnum の書き先 | 0／`-EBADF`・`-ENOEXEC`・`-EINVAL`・`-EFAULT`。`fnd_rec` |
@@ -239,14 +239,14 @@
   | 159 | レコード切詰 | `x0`=記述子, `x1`=size | 0／`-EBADF`・`-ENODATA`・`-ETXTBSY`・`-ENOEXEC`（リンク）・`-EINVAL`。`trc_rec` |
   | 160 | レコードロック | `x0`=記述子, `x1`=mode（0=解除, 1=F_LOCK, 2=F_TSLOCK, 3=F_CKLOCK） | 0／`-EBADF`・`-ENODATA`・`-ETXTBSY`・`-EMFILE`（別のレコードを既にロック）・`-EINVAL`。`loc_rec`。F_LOCK は待たない |
   | 161 | ファイル交換 | `x0`=記述子 1, `x1`=記述子 2 | 0／`-EBADF`・`-EINVAL`（同じファイル）・`-EXDEV`（ER_XFS）・`-ETXTBSY`。`xch_fil` |
-  | 163 | ファイル検査 | `x0`=LINK, `x1`=mode（0=F_EXIST, 1=E, 2=W, 4=R, 8=F_PASWD）, `x2`=パスワード（NULL 可） | mode=0 は情報の欄（ビット 0〜2=呼出側の E・W・R, 3=パスワード有り, 4〜7=O・P・A・B）、それ以外は 0／`-EACCES`・`-ENOKEY`（ER_PWD）・`-EROFS`・`-ENOENT`・`-EINVAL`・`-EFAULT`。`chk_fil` |
+  | 163 | ファイル検査 | `x0`=LINK, `x1`=mode（0=F_EXIST, 1=E, 2=W, 4=R の組み合わせ。F_PASWD(8) は戻り値の欄で、指定すると `-EINVAL`）, `x2`=パスワード（NULL 可） | mode=0 は情報の欄（ビット 0〜2=呼出側の E・W・R, 3=パスワード有り, 4〜7=O・P・A・B）、それ以外は 0／`-EACCES`・`-ENOKEY`（ER_PWD）・`-EROFS`・`-ENOENT`・`-EINVAL`・`-EFAULT`。`chk_fil` |
   | 164 | アクセス変更 | `x0`=LINK, `x1`=A_MODE（8 B: 所有者, グループ番号, グループ, 公開。各欄 0x8000 は変更なし） | 0／`-EACCES`・`-EROFS`・`-EINVAL`・`-EFAULT`。`chg_fmd` |
   | 165 | 属性変更 | `x0`=LINK, `x1`=1〜8（SETRONLY, RSTRONLY, SETPERM, RSTPERM, SETA1, RSTA1, SETA2, RSTA2） | 0／`-EACCES`・`-EROFS`・`-EINVAL`。`chg_fat` |
   | 166 | パスワード変更 | `x0`=記述子, `x1`=パスワード（TC, 20 文字まで。NULL で解除） | 0／`-EBADF`・`-EACCES`・`-EROFS`・`-EINVAL`・`-EFAULT`。`chg_fpw` |
   | 167 | 名前変更 | `x0`=LINK, `x1`=名前（TC） | 0／`-EACCES`（空・不正な名前も）・`-EPERM`（削除禁止）・`-EROFS`・`-ENOENT`。`chg_fnm` |
   | 168 | 時刻変更 | `x0`=LINK, `x1`=F_TIME（12 B: 保存期限, 参照, 更新。NULL は全て現在, 0 は変更なし） | 0／`-EACCES`・`-EROFS`・`-EFAULT`。`chg_ftm` |
-  | 169 | 既定モード取得 | `x0`=DA_MODE の書き先（12 B） | 0／`-EFAULT`。`get_dfm` |
-  | 170 | 既定モード設定 | `x0`=DA_MODE（12 B: 所有者, グループ×4, 公開） | 0／`-EINVAL`・`-EFAULT`。`set_dfm` |
+  | 169 | 既定モード取得 | `x0`=DA_MODE の書き先（16 B） | 0／`-EFAULT`。`get_dfm` |
+  | 170 | 既定モード設定 | `x0`=DA_MODE（16 B: 所有者, グループ, 公開, グループ番号, f_gacc×4） | 0／`-EINVAL`・`-EFAULT`。`set_dfm` |
   | 176 | 時刻取 | `x0`=STIME の書き先（窓内の書込可能な 4 B）, `x1`=TIMEZONE の書き先（12 B） | 0／`-EFAULT`。QEMU virt の PL031 RTC を 1985-01-01 起点の秒数に換算。`get_tim` |
   | 177 | 複写出 | `x0`=宛（書込可能な窓内）, `x1`=元（窓内）, `x2`=長（`令長限` 以下） | 0／`-EFAULT`（何も書かない）。構造体を民へ返すときの複製検査の共通部品（互換層が作業域で組み立てて呼ぶ） |
   | 178 | 時刻設 | `x0`=STIME（0 なら変えない）, `x1`=TIMEZONE（0 なら変えない。12 B） | 0／`-EACCES`（利用者レベルが 0 でない）・`-EINVAL`（adjust が ±43200、dst_adj が ±720 の外）・`-EFAULT`。検査を終えてから書く。`set_tim` |

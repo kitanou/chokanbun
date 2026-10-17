@@ -281,9 +281,10 @@ if [ -f "$OUT/kernel.elf" ]; then
           for _ in $(seq 1 60); do grep -q "甲得" "$KLOG" 2>/dev/null && break; sleep 0.25; done
           printf '響 天下太平\n讀 史記\n怪\n讀 無題\n目\n書 筆記 天地玄黄\n讀 筆記\n書 一二三四五六七八九十壱 x\n書 筆記\n目\n削 筆記\n讀 筆記\n目\n削 筆記\n書 新稿 草\n目\n問安 日月\n數 一 二 三\n識試\n名試\n時試\n信試\n利試\n強試\n同試\n緩試\n録試\n篇試\n章 天地/家/殻章\n移 天地/家/殻章\n在\n書 甲 一二\n改 甲 乙\n讀 乙\n改 甲\n移 ..\n在\n移 天地/典/史記\n移 天地/典\n在\n存在せず 子\n助\n終\n' > "$PIPE.in" ) &
         FEEDPID=$!
-        # Wait up to ~15s for the final marker, then stop QEMU.  The generic
-        # timer fires five times (5 × CNTFRQ/40 ≈ 125 ms), so this is ample.
-        for _ in $(seq 1 30); do
+        # Wait up to ~30s for the final marker, then stop QEMU.  The generic
+        # timer fires five times (5 × CNTFRQ/40 ≈ 125 ms); the long part is the
+        # BTRON3 file-management test (録試), which grows with every stage.
+        for _ in $(seq 1 60); do
             grep -q "殻終" "$KLOG" 2>/dev/null && grep -q "民務終了 行程=0x0000000000000000" "$KLOG" 2>/dev/null && break
             sleep 0.5
         done
@@ -634,10 +635,10 @@ if [ -f "$OUT/kernel.elf" ]; then
         # --- #42 1.6 B1: ファイル管理の接続とパス解決 ----------------------------------
         FL_N="$(grep -ac '^録試 ' "$KLOG" 2>/dev/null)"
         FL_BAD="$(grep -a '^録試 ' "$KLOG" 2>/dev/null | grep -vc '0x0000000000000001$')"
-        if [ "${FL_N:-0}" -eq 83 ] && [ "${FL_BAD:-1}" -eq 0 ]; then
+        if [ "${FL_N:-0}" -eq 86 ] && [ "${FL_BAD:-1}" -eq 0 ]; then
             pass "kernel qemu: BTRON3 互換層 ファイル管理 B1・B2 (接続・get_lnk・chg_wrk・作成・削除・開閉・状態の ${FL_N} 項目)"
         else
-            fail "kernel qemu: BTRON3 互換層 ファイル管理 B1 (項目=${FL_N:-0}/83、失敗=${FL_BAD:-?})"
+            fail "kernel qemu: BTRON3 互換層 ファイル管理 B1 (項目=${FL_N:-0}/86、失敗=${FL_BAD:-?})"
             grep -a '^録試 ' "$KLOG" 2>/dev/null | sed 's/^/      /'
         fi
         # --- #42 G6b: メッセージバッファとランデブポート (1.3) ------------------------

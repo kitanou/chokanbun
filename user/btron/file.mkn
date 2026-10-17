@@ -101,7 +101,7 @@
     歸 呼「錯換」以(呼「奏令」以(148, 記述 位與 0xFFFFFFFF, 0, 0, 0, 0, 0))
 終術
 
-註 fil_sts(LINK* lnk, TC* name, F_STATE* stat, F_LOCATE* locat): 成功は参照数。stat は 68 B、name は 40 B。
+註 fil_sts(LINK* lnk, TC* name, F_STATE* stat, F_LOCATE* locat): 成功は参照数。stat は 96 B、locat は 100 B、name は 42 B (20 文字 + TNULL)。
 公開 記號「fil_sts」 術曰「BTRON状」 受「鎖」之無符六四 受「名」之無符六四 受「状」之無符六四 受「場」之無符六四 返 無符六四
     歸 呼「錯換」以(呼「奏令」以(149, 鎖, 名, 状, 場, 0, 0))
 終術
@@ -164,16 +164,16 @@
 終術
 
 註 ---- B4: 属性・アクセス制御・パスワード (漢令 163〜170)。----
-註 A_MODE = {UH f_ownacc; UH f_grpno; UH f_grpacc; UH f_pubacc} (8 B)、DA_MODE = {UH f_ownacc; UH f_gacc[4]; UH f_pubacc} (12 B)。
+註 A_MODE = {UH f_ownacc; UH f_grpacc; UH f_pubacc; H f_grpno} (8 B)、DA_MODE = A_MODE + {UH f_gacc[4]} (16 B。f_gacc は参照用)。
 註 (どちらも原文の欠落のため暫定。設計書 §12)
 
 註 chk_fil(LINK* lnk, W mode, TC* pwd): mode=F_EXIST (0) は情報の欄を返す (ビット 0〜2 が呼出側の E・W・R、3 がパスワード有り、4〜7 が O・P・A・B)。
-註   それ以外は F_READ・F_WRITE・F_EXCUTE の要求が満たされれば 0、F_PASWD を足すとパスワードも照合する。
+註   それ以外は F_READ・F_WRITE・F_EXCUTE の要求が満たされれば 0。パスワードは F_READ/F_WRITE のときだけ照合する (F_PASWD は戻り値の欄で、mode に指定すると ER_PAR)。
 公開 記號「chk_fil」 術曰「BTRON検」 受「鎖」之無符六四 受「態」之無符六四 受「鍵」之無符六四 返 無符六四
     歸 呼「錯換」以(呼「奏令」以(163, 鎖, 態 位與 0xFFFFFFFF, 鍵, 0, 0, 0))
 終術
 
-註 chg_fmd(LINK* lnk, A_MODE* mode): 各欄の F_NOCHG (0x8000) はその欄を変えない。所有者かレベル 0 だけ。
+註 chg_fmd(LINK* lnk, A_MODE* mode): 各欄の F_NOCHG (0x8000) はその欄を変えない。FS のレベルが 0 なら誰でも、そうでなければ所有者だけ (所有者の無いファイルはレベル 0 のユーザも)。
 公開 記號「chg_fmd」 術曰「BTRON様変」 受「鎖」之無符六四 受「様」之無符六四 返 無符六四
     歸 呼「錯換」以(呼「奏令」以(164, 鎖, 様, 0, 0, 0, 0))
 終術
