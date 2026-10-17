@@ -2,7 +2,7 @@
 //
 // This is the only place the kernel crosses the EL1/EL0 boundary.  As with the
 // other entry points it is provisional assembly (language spec §7); the 漢令
-// dispatch and the user task itself are machine-kanbun (kernel/kernel.txt).
+// dispatch and the user task itself are machine-kanbun (kernel/kernel.mkn).
 //
 //   * user_entry_addr()  – address of the machine-kanbun EL0 task entry,
 //   * enter_el0()        – eret to EL0 at an address with a given stack,
@@ -176,7 +176,7 @@ el0_resume:
 
     eret
 
-// No runnable 行程 is left: idle at EL1.  idle_poll (閑巡, kernel/proc/sync.txt) polls
+// No runnable 行程 is left: idle at EL1.  idle_poll (閑巡, kernel/proc/sync.mkn) polls
 // the GIC (IRQs stay masked; WFI still wakes on a pending timer interrupt), runs the
 // timeout wake-ups and returns a frame to resume when a 行程 became runnable, else 0.
 el0_park:

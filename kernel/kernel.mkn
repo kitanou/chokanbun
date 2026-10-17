@@ -22,8 +22,8 @@
 常「誤範囲」之無符六四 為 18446744073709551602 註 -EFAULT(14) 引数の範囲が不正
 常「誤未知」之無符六四 為 18446744073709551578 註 -ENOSYS(38) 未知の漢令番号
 常「令長限」之無符六四 為 4096        註 漢令バッファ長の上限 (4 KiB)
-註 @取込 vfs/const.txt
-註 @取込 proc/const.txt
+註 @取込 vfs/const.mkn
+註 @取込 proc/const.mkn
 常「框幅」之無符六四 為 288          註 保存フレーム (x0..x30, NZCV, ELR, SPSR, SP_EL0)
 常「程限」之無符六四 為 8            註 行程表の項数 (最大行程数)
 常「程表址」之無符六四 為 1076887552 註 0x40300000 行程表 (EL1 のみ)。1 項 128 B × 程限
@@ -614,17 +614,17 @@
     歸 0
 終術
 
-註 @取込 vfs/pian.txt
-註 @取込 vfs/handle.txt
-註 @取込 proc/spawn.txt
-註 @取込 proc/gname.txt
-註 @取込 proc/clk.txt
-註 @取込 proc/msg.txt
-註 @取込 proc/user.txt
-註 @取込 proc/term.txt
-註 @取込 proc/sync.txt
-註 @取込 proc/sync2.txt
-註 @取込 file/btron.txt
+註 @取込 vfs/pian.mkn
+註 @取込 vfs/handle.mkn
+註 @取込 proc/spawn.mkn
+註 @取込 proc/gname.mkn
+註 @取込 proc/clk.mkn
+註 @取込 proc/msg.mkn
+註 @取込 proc/user.mkn
+註 @取込 proc/term.mkn
+註 @取込 proc/sync.mkn
+註 @取込 proc/sync2.mkn
+註 @取込 file/btron.mkn
 註 コンソール (UART) から今ある分だけ 宛 へ読み、読んだ数を返す (非阻塞)。
 術曰「核読宛」 受「宛」之無符六四 受「長」之無符六四 返 無符六四
     設「読数」之無符六四 為 0

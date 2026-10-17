@@ -9,7 +9,7 @@
 //   4. transfer control to 核主 (ELF symbol `main`).
 //
 // Hand-written assembly here is provisional and confined to the boot entry
-// (language spec §7); the kernel proper lives in kernel/kernel.txt.
+// (language spec §7); the kernel proper lives in kernel/kernel.mkn.
 
     .section .text.boot, "ax"
     .globl _start

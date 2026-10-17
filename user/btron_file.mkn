@@ -5,11 +5,11 @@
 註 パスは ASCII で書き、'/' を TC_FDLM、'#' を TC_FSEP、'.' を TC_FOWN に置き換えて TC にする。
 註 引数付きで起動されたときは子として動く。引数の先頭が e・x・k なら B2 の子 (子排他・子書排他・子開放)、y・l なら B3 の子 (子錠検・子錠取)、a なら B4 の子 (子権検)、それ以外は
 註 作業ファイル (TC_FOWN) の ID を終了コードにして終わる。
-註 @取込 lib.txt
-註 @取込 btron/types.txt
-註 @取込 btron/er.txt
-註 @取込 btron/file.txt
-註 @取込 btron/proc.txt
+註 @取込 lib.mkn
+註 @取込 btron/types.mkn
+註 @取込 btron/er.mkn
+註 @取込 btron/file.mkn
+註 @取込 btron/proc.mkn
 
 常「緩路」之無符六四 為 0x40700000    註 パス (TC、最大 300 文字)
 常「緩鎖」之無符六四 為 0x40700400    註 LINK (52 B)

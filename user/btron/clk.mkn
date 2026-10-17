@@ -1,4 +1,4 @@
-註 BTRON3 互換層 1.9 時計管理 の取得系 (docs/compat/btron3-os.md §1.9)。要: lib.txt、btron/types.txt、btron/er.txt を先に取込む。
+註 BTRON3 互換層 1.9 時計管理 の取得系 (docs/compat/btron3-os.md §1.9)。要: lib.mkn、btron/types.mkn、btron/er.mkn を先に取込む。
 註 set_tim / set_tod は利用者レベル (1.1) が無いと ER_ACCES を規定どおりに返せないため、未実装。
 註
 註 STIME = 1985-01-01 00:00 GMT からの秒数 (W)。TIMEZONE = {W adjust; W dst_flg; W dst_adj} (12 B)。

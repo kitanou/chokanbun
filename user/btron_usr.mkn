@@ -1,11 +1,11 @@
 註 外部命令「利試」。BTRON3 互換層 G4 の試験: 利用者情報 get_usr / chg_usr と、利用者レベルによる set_tim / set_tod の権限。
 註 各行は「利試 <項目> 」の後に 1 (成功) か 0 (失敗) を 16 進で出す。終了コードは失敗数。
 註 引数付き (argc>1) で起動されたときは子として働く: 終了コード = 自分の level × 16 + (set_tim が ER_ACCES なら 1)。
-註 @取込 lib.txt
-註 @取込 btron/types.txt
-註 @取込 btron/er.txt
-註 @取込 btron/proc.txt
-註 @取込 btron/clk.txt
+註 @取込 lib.mkn
+註 @取込 btron/types.mkn
+註 @取込 btron/er.mkn
+註 @取込 btron/proc.mkn
+註 @取込 btron/clk.mkn
 
 常「緩利」之無符六四 為 0x40700000    註 P_USER (148 B)
 常「緩帯」之無符六四 為 0x40700100    註 TIMEZONE (12 B)

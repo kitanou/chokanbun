@@ -81,10 +81,10 @@
 ## 3. 全体構成
 
 ```
- BTRON3 アプリ ── opn_fil / rea_rec / get_lnk … ─▶ EL0 互換層 user/btron/file.txt
+ BTRON3 アプリ ── opn_fil / rea_rec / get_lnk … ─▶ EL0 互換層 user/btron/file.mkn
                                                        │ 漢令 128〜159（LINK・F_STATE を検査付きで複製）
  ┌─────────────────────────────────────────────────────▼───────────┐
- │ 録層（kernel/file/btron.txt）  接続・ファイル ID・リンク・レコード・ロック・アクセス判定 │
+ │ 録層（kernel/file/btron.mkn）  接続・ファイル ID・リンク・レコード・ロック・アクセス判定 │
  ├──────────────────────────────────────────────────────────────┤
  │ 篇藏（kernel/vfs/）  篇の確保・本文・メタデータ・頁。型 `録` の篇として保持               │
  ├──────────────────────────────────────────────────────────────┤
@@ -225,7 +225,7 @@
 - `opn_fil`: モードは `F_READ`(4)・`F_WRITE`(2)・`F_UPDATE`(6)・`F_EXCL`(0x100)・`F_WEXCL`(0x200) の組み合わせだけ（読み書きのどちらも無い、または他のビットは `ER_PAR`）。衝突の判定は §5 の暫定規則どおり、**別の行程**との間だけで見る。同じ行程の二重オープンは許す。パスワードは B4 まで検査しない（アドレスだけ確かめる）。
 - `fil_sts`/`ofl_sts`: `F_STATE` は自然な整列で 68 B（`f_type`@0 `f_group`@2 `f_grpacc`@30 `f_pubacc`@32 `f_nlink`@34 `f_index`@36 `f_size`@40 `f_nblk`@44 `f_nrec`@48 `f_ltime`@52 `f_atime`@56 `f_mtime`@60 `f_ctime`@64）。名前は、そのファイルを指す最初のリンクの名前を 20 文字（40 B）で書く（ルートは空）。`F_LOCATE` は書式が読めなかったので NULL のみ。
 - `det_fls` は、その FS を開いている記述子があると `ER_BUSY`。
-- `ER_*` の対応に `-EPERM`→`ER_PERM`、`-EROFS`→`ER_RONLY`、`-ENOLINK`→`ER_NOLNK` を足した（`user/btron/er.txt`）。
+- `ER_*` の対応に `-EPERM`→`ER_PERM`、`-EROFS`→`ER_RONLY`、`-ENOLINK`→`ER_NOLNK` を足した（`user/btron/er.mkn`）。
 
 ### §12 への追加（B2 の後に残る要確認）
 
@@ -251,7 +251,7 @@
 - `ins_rec`/`apd_rec` のリンクは、先が存在し、FS が接続されていること（`ER_NOEXS`/`ER_NOFS`）、参照数が 255 未満（`ER_LIMIT`）。LINK に名前が無いので、リンクレコードの名前は先を指す最初のリンクの名前を写す。
 - `xch_fil` は本文・レコード数を入れ替え、時刻は入れ替えない。両方が `F_UPDATE` で開かれている必要（原文の `ER_FD` の条件は「更新または排他モード」と読めたが、確定できず「書ける記述子」と解釈した）。他の記述子のロックがあれば `ER_LOCK`。別の FS は `ER_XFS`（RAM と書込可能な別 FS が無く、試験できない）。
 - 漢令の帯を広げた: ファイルは 128〜175、イベント／デバイスは 192〜207 に移した（互換層の設計書）。
-- errno の対応を追加: `-ENODATA`→`ER_ENDR`、`-ETXTBSY`→`ER_LOCK`、`-EXDEV`→`ER_XFS`（`user/btron/er.txt`）。
+- errno の対応を追加: `-ENODATA`→`ER_ENDR`、`-ETXTBSY`→`ER_LOCK`、`-EXDEV`→`ER_XFS`（`user/btron/er.mkn`）。
 
 ### §12 への追加（B3 の後に残る要確認）
 

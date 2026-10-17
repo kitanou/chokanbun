@@ -1,5 +1,5 @@
 註 BTRON3 互換層 1.3 同期通信管理のうちセマフォとイベントフラグ (docs/compat/btron3-os.md §1.3)。
-註 要: lib.txt、btron/types.txt、btron/er.txt を先に取込む。待ち時間 tmo は ms (T_NOWAIT=0、T_FOREVER=-1)。
+註 要: lib.mkn、btron/types.mkn、btron/er.mkn を先に取込む。待ち時間 tmo は ms (T_NOWAIT=0、T_FOREVER=-1)。
 註 W の引数は下位 32 ビットだけを核へ渡す。時間は 25 ms 刻みへ切り上げて待つ。
 
 常「SEM_SYNC」之無符六四 為 0x0000

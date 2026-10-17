@@ -42,7 +42,7 @@ run() {
 echo "=== ChoKanbun compiler tests ==="
 
 # --- hello: minimum function, IR -> AArch64 object ------------------------
-"$BIN" tests/hello.txt -ir -o "$OUT/hello.ll" 2>"$OUT/hello.gen.log" \
+"$BIN" tests/hello.mkn -ir -o "$OUT/hello.ll" 2>"$OUT/hello.gen.log" \
     && pass "hello: IR generation" || fail "hello: IR generation"
 "$LLC" -march=aarch64 -filetype=obj "$OUT/hello.ll" -o "$OUT/hello.o" \
     >"$OUT/hello.llc.log" 2>&1 \
@@ -51,7 +51,7 @@ echo "=== ChoKanbun compiler tests ==="
     && pass "hello: disassembly" || fail "hello: disassembly"
 
 # --- uart: 核外輸出 call + 取址/長度 builtins -> ELF ----------------------
-"$BIN" tests/uart.txt -ir -o "$OUT/uart.ll" 2>"$OUT/uart.gen.log" \
+"$BIN" tests/uart.mkn -ir -o "$OUT/uart.ll" 2>"$OUT/uart.gen.log" \
     && pass "uart: IR generation" || fail "uart: IR generation"
 "$LLC" -march=aarch64 -filetype=obj "$OUT/uart.ll" -o "$OUT/uart.o" \
     >"$OUT/uart.llc.log" 2>&1 \
@@ -76,7 +76,7 @@ if [ -f "$OUT/uart.o" ] && [ -f "$OUT/uart_c.o" ] && [ -f "$OUT/boot.o" ]; then
 fi
 
 # --- uart_mmio: 機械漢文のみの PL011 ドライバ (volatile MMIO + 項) -> ELF ---
-"$BIN" tests/uart_mmio.txt -ir -o "$OUT/uart_mmio.ll" 2>"$OUT/uart_mmio.gen.log" \
+"$BIN" tests/uart_mmio.mkn -ir -o "$OUT/uart_mmio.ll" 2>"$OUT/uart_mmio.gen.log" \
     && pass "uart_mmio: IR generation" || fail "uart_mmio: IR generation"
 "$LLC" -march=aarch64 -filetype=obj "$OUT/uart_mmio.ll" -o "$OUT/uart_mmio.o" \
     >"$OUT/uart_mmio.llc.log" 2>&1 \
@@ -92,21 +92,21 @@ if [ -f "$OUT/uart_mmio.o" ] && [ -f "$OUT/boot.o" ]; then
 fi
 
 # --- kernel: 漢極 (exception vectors + MMU + memory) -> ELF -> QEMU ---------
-# kernel/kernel.txt の「註 @取込」(kernel/vfs/*.txt) を展開してからコンパイルする。
-sh tools/kernel-expand.sh kernel/kernel.txt "$OUT/kernel_all.txt" \
+# kernel/kernel.mkn の「註 @取込」(kernel/vfs/*.mkn) を展開してからコンパイルする。
+sh tools/kernel-expand.sh kernel/kernel.mkn "$OUT/kernel_all.mkn" \
     && pass "kernel: 取込の展開 (kernel/vfs/)" || fail "kernel: 取込の展開 (kernel/vfs/)"
 # 展開後の行番号を元のファイル:行へ戻せること (診断の位置合わせ)
-KLINE="$(grep -n '術曰「籍削」' "$OUT/kernel_all.txt" | head -1 | cut -d: -f1)"
-if [ -n "$KLINE" ] && [ "$(sh tools/kernel-line.sh "$OUT/kernel_all.txt.map" "$KLINE")" = \
-     "kernel/vfs/pian.txt:$(grep -n '術曰「籍削」' kernel/vfs/pian.txt | head -1 | cut -d: -f1)" ]; then
-    pass "kernel: 展開後の行番号を元のファイル:行へ戻せる (籍削 → kernel/vfs/pian.txt)"
+KLINE="$(grep -n '術曰「籍削」' "$OUT/kernel_all.mkn" | head -1 | cut -d: -f1)"
+if [ -n "$KLINE" ] && [ "$(sh tools/kernel-line.sh "$OUT/kernel_all.mkn.map" "$KLINE")" = \
+     "kernel/vfs/pian.mkn:$(grep -n '術曰「籍削」' kernel/vfs/pian.mkn | head -1 | cut -d: -f1)" ]; then
+    pass "kernel: 展開後の行番号を元のファイル:行へ戻せる (籍削 → kernel/vfs/pian.mkn)"
 else
     fail "kernel: 展開後の行番号を元のファイル:行へ戻せる"
 fi
-"$BIN" "$OUT/kernel_all.txt" -ir -o "$OUT/kernel.ll" 2>"$OUT/kernel.gen.log" \
+"$BIN" "$OUT/kernel_all.mkn" -ir -o "$OUT/kernel.ll" 2>"$OUT/kernel.gen.log" \
     && pass "kernel: IR generation" || fail "kernel: IR generation"
 if [ -s "$OUT/kernel.gen.log" ] && grep -q '錯' "$OUT/kernel.gen.log"; then
-    echo "      (診断の行は展開後のもの。元の位置は: sh tools/kernel-line.sh $OUT/kernel_all.txt.map <行>)"
+    echo "      (診断の行は展開後のもの。元の位置は: sh tools/kernel-line.sh $OUT/kernel_all.mkn.map <行>)"
     sed 's/^/      /' "$OUT/kernel.gen.log" | head -10
 fi
 # Regression: locals declared in loops must not alloca outside the entry block
@@ -131,12 +131,12 @@ awk '/^define /{e=1} /^[A-Za-z0-9_.]+:$/{ if ($0!="entry:") e=0 } /alloca/{ if(!
 
 # 外部命令 (漢像 KBN1) をビルドし、カーネルイメージへ埋め込む (行程の設計 P1)。
 export BIN LLVM_BIN LLD_BIN
-sh tools/mkimage.sh user/hello.txt "$OUT/hello.zo" "$OUT" 2>"$OUT/user_hello.build.log" \
+sh tools/mkimage.sh user/hello.mkn "$OUT/hello.zo" "$OUT" 2>"$OUT/user_hello.build.log" \
     && pass "user: 外部命令 問安 を漢像にビルド" || {
         fail "user: 外部命令 問安 を漢像にビルド"
         sed 's/^/      /' "$OUT/user_hello.build.log" | head -10
     }
-sh tools/mkimage.sh user/count.txt "$OUT/count.zo" "$OUT" 2>"$OUT/user_count.build.log" \
+sh tools/mkimage.sh user/count.mkn "$OUT/count.zo" "$OUT" 2>"$OUT/user_count.build.log" \
     && pass "user: 外部命令 數 を漢像にビルド" || {
         fail "user: 外部命令 數 を漢像にビルド"
         sed 's/^/      /' "$OUT/user_count.build.log" | head -10
@@ -147,52 +147,52 @@ if [ -f "$OUT/hello.zo" ] && [ "$(head -c 4 "$OUT/hello.zo")" = "KBN1" ]; then
 else
     fail "user: 漢像のヘッダ"
 fi
-sh tools/mkimage.sh user/btron_gtid.txt "$OUT/btron_gtid.zo" "$OUT" 2>"$OUT/user_btron_gtid.build.log" \
+sh tools/mkimage.sh user/btron_gtid.mkn "$OUT/btron_gtid.zo" "$OUT" 2>"$OUT/user_btron_gtid.build.log" \
     && pass "user: BTRON3 互換層の試験 識試 (get_tid・ER_*) を漢像にビルド" || {
         fail "user: BTRON3 互換層の試験 識試 を漢像にビルド"
         sed 's/^/      /' "$OUT/user_btron_gtid.build.log" | head -10
     }
-sh tools/mkimage.sh user/btron_gname.txt "$OUT/btron_gname.zo" "$OUT" 2>"$OUT/user_btron_gname.build.log" \
+sh tools/mkimage.sh user/btron_gname.mkn "$OUT/btron_gname.zo" "$OUT" 2>"$OUT/user_btron_gname.build.log" \
     && pass "user: BTRON3 互換層の試験 名試 (グローバル名) を漢像にビルド" || {
         fail "user: BTRON3 互換層の試験 名試 を漢像にビルド"
         sed 's/^/      /' "$OUT/user_btron_gname.build.log" | head -10
     }
-sh tools/mkimage.sh user/btron_clk.txt "$OUT/btron_clk.zo" "$OUT" 2>"$OUT/user_btron_clk.build.log" \
+sh tools/mkimage.sh user/btron_clk.mkn "$OUT/btron_clk.zo" "$OUT" 2>"$OUT/user_btron_clk.build.log" \
     && pass "user: BTRON3 互換層の試験 時試 (get_tim・get_tod) を漢像にビルド" || {
         fail "user: BTRON3 互換層の試験 時試 を漢像にビルド"
         sed 's/^/      /' "$OUT/user_btron_clk.build.log" | head -10
     }
-sh tools/mkimage.sh user/btron_msg.txt "$OUT/btron_msg.zo" "$OUT" 2>"$OUT/user_btron_msg.build.log" \
+sh tools/mkimage.sh user/btron_msg.mkn "$OUT/btron_msg.zo" "$OUT" 2>"$OUT/user_btron_msg.build.log" \
     && pass "user: BTRON3 互換層の試験 信試 (メッセージ) を漢像にビルド" || {
         fail "user: BTRON3 互換層の試験 信試 を漢像にビルド"
         sed 's/^/      /' "$OUT/user_btron_msg.build.log" | head -10
     }
-sh tools/mkimage.sh user/btron_usr.txt "$OUT/btron_usr.zo" "$OUT" 2>"$OUT/user_btron_usr.build.log" \
+sh tools/mkimage.sh user/btron_usr.mkn "$OUT/btron_usr.zo" "$OUT" 2>"$OUT/user_btron_usr.build.log" \
     && pass "user: BTRON3 互換層の試験 利試 (利用者情報・時刻の権限) を漢像にビルド" || {
         fail "user: BTRON3 互換層の試験 利試 を漢像にビルド"
         sed 's/^/      /' "$OUT/user_btron_usr.build.log" | head -10
     }
-sh tools/mkimage.sh user/btron_term.txt "$OUT/btron_term.zo" "$OUT" 2>"$OUT/user_btron_term.build.log" \
+sh tools/mkimage.sh user/btron_term.mkn "$OUT/btron_term.zo" "$OUT" 2>"$OUT/user_btron_term.build.log" \
     && pass "user: BTRON3 互換層の試験 強試 (ter_prc・prc_sts) を漢像にビルド" || {
         fail "user: BTRON3 互換層の試験 強試 を漢像にビルド"
         sed 's/^/      /' "$OUT/user_btron_term.build.log" | head -10
     }
-sh tools/mkimage.sh user/btron_sync.txt "$OUT/btron_sync.zo" "$OUT" 2>"$OUT/user_btron_sync.build.log" \
+sh tools/mkimage.sh user/btron_sync.mkn "$OUT/btron_sync.zo" "$OUT" 2>"$OUT/user_btron_sync.build.log" \
     && pass "user: BTRON3 互換層の試験 同試 (セマフォ・イベントフラグ) を漢像にビルド" || {
         fail "user: BTRON3 互換層の試験 同試 を漢像にビルド"
         sed 's/^/      /' "$OUT/user_btron_sync.build.log" | head -10
     }
-sh tools/mkimage.sh user/btron_comm.txt "$OUT/btron_comm.zo" "$OUT" 2>"$OUT/user_btron_comm.build.log" \
+sh tools/mkimage.sh user/btron_comm.mkn "$OUT/btron_comm.zo" "$OUT" 2>"$OUT/user_btron_comm.build.log" \
     && pass "user: BTRON3 互換層の試験 緩試 (メッセージバッファ・ランデブ) を漢像にビルド" || {
         fail "user: BTRON3 互換層の試験 緩試 を漢像にビルド"
         sed 's/^/      /' "$OUT/user_btron_comm.build.log" | head -10
     }
-sh tools/mkimage.sh user/btron_file.txt "$OUT/btron_file.zo" "$OUT" 2>"$OUT/user_btron_file.build.log" \
+sh tools/mkimage.sh user/btron_file.mkn "$OUT/btron_file.zo" "$OUT" 2>"$OUT/user_btron_file.build.log" \
     && pass "user: BTRON3 互換層の試験 録試 (ファイル管理 B1: 接続・パス解決) を漢像にビルド" || {
         fail "user: BTRON3 互換層の試験 録試 を漢像にビルド"
         sed 's/^/      /' "$OUT/user_btron_file.build.log" | head -10
     }
-sh tools/mkimage.sh user/pian_test.txt "$OUT/pian_test.zo" "$OUT" 2>"$OUT/user_pian_test.build.log" \
+sh tools/mkimage.sh user/pian_test.mkn "$OUT/pian_test.zo" "$OUT" 2>"$OUT/user_pian_test.build.log" \
     && pass "user: 篇藏の試験 篇試 (F1〜F3) を漢像にビルド" || {
         fail "user: 篇藏の試験 篇試 を漢像にビルド"
         sed 's/^/      /' "$OUT/user_pian_test.build.log" | head -10
@@ -223,7 +223,7 @@ if [ -f "$OUT/kernel.o" ] && [ -f "$OUT/kernel_boot.o" ] && \
 fi
 
 # --- type_error: 錯 E00xx must be reported --------------------------------
-"$BIN" tests/type_error.txt -ir -o /dev/null >"$OUT/type_error.log" 2>&1 \
+"$BIN" tests/type_error.mkn -ir -o /dev/null >"$OUT/type_error.log" 2>&1 \
     && fail "type_error: unexpected success" || pass "type_error: rejected"
 if grep -q "E00" "$OUT/type_error.log"; then
     pass "type_error: diagnostic E00xx"
@@ -809,14 +809,22 @@ else
 fi
 
 # --- 言語適合テスト (言語仕様 §10 M0 受入条件 1・2) ---------------------------
-# tests/lang/ok/*.txt  : 構文解析の golden (-ast を *.ast と比較) と 型検査+IR 生成の成功
-# tests/lang/err/*.txt : 1 行目の「註 期待: E00xx ...」の診断コードが全て出て、クラッシュせず失敗すること
+# 機械漢文のソースの拡張子は .mkn (README「開発上の約束」)。.txt のソースが残っていないこと。
+STRAY="$(find kernel user tests src -name '*.txt' -not -path 'tests/output/*' 2>/dev/null)"
+if [ -z "$STRAY" ]; then
+    pass "規則: 機械漢文のソースの拡張子は .mkn (.txt のソースが無い)"
+else
+    fail "規則: .txt のソースが残っている ($(echo "$STRAY" | head -3 | tr '\n' ' '))"
+fi
+
+# tests/lang/ok/*.mkn  : 構文解析の golden (-ast を *.ast と比較) と 型検査+IR 生成の成功
+# tests/lang/err/*.mkn : 1 行目の「註 期待: E00xx ...」の診断コードが全て出て、クラッシュせず失敗すること
 # golden を更新するには UPDATE_GOLDEN=1 make test
 echo "=== Language conformance tests ==="
 LANG_OK=0; LANG_ERR=0
-for f in tests/lang/ok/*.txt; do
+for f in tests/lang/ok/*.mkn; do
     [ -f "$f" ] || continue
-    name="$(basename "$f" .txt)"
+    name="$(basename "$f" .mkn)"
     LANG_OK=$((LANG_OK + 1))
     "$BIN" "$f" -ast >"$OUT/lang_$name.ast" 2>"$OUT/lang_$name.ast.log"
     if [ "${UPDATE_GOLDEN:-0}" = "1" ]; then
@@ -834,9 +842,9 @@ for f in tests/lang/ok/*.txt; do
             sed 's/^/      /' "$OUT/lang_$name.ir.log" | head -5
         }
 done
-for f in tests/lang/err/*.txt; do
+for f in tests/lang/err/*.mkn; do
     [ -f "$f" ] || continue
-    name="$(basename "$f" .txt)"
+    name="$(basename "$f" .mkn)"
     LANG_ERR=$((LANG_ERR + 1))
     expect="$(head -1 "$f" | grep -oE 'E00[0-9][0-9]' | tr '\n' ' ')"
     "$BIN" "$f" -ir -o /dev/null >"$OUT/lang_err_$name.log" 2>&1
@@ -856,7 +864,7 @@ for f in tests/lang/err/*.txt; do
 done
 # 全キーワードが golden テストのどこかで実際に使われていること (言語仕様 §10 条件 1)
 : >"$OUT/lang_tokens.txt"
-for f in tests/lang/ok/*.txt; do "$BIN" "$f" -tokens 2>/dev/null | awk '{print $2}' >>"$OUT/lang_tokens.txt"; done
+for f in tests/lang/ok/*.mkn; do "$BIN" "$f" -tokens 2>/dev/null | awk '{print $2}' >>"$OUT/lang_tokens.txt"; done
 sort -u "$OUT/lang_tokens.txt" >"$OUT/lang_tokens.sorted"
 KW_MISSING=""
 for kw in $(grep -oE '\{"[^"]+", TokKind::[A-Za-z0-9]+\}' src/lexer.cpp | sed -E 's/\{"([^"]+)".*/\1/'); do

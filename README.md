@@ -90,11 +90,11 @@ qemu-system-aarch64 -M virt,gic-version=2 -cpu cortex-a57 -nographic \
 | パス | 内容 |
 |---|---|
 | `src/` | 機械漢文コンパイラ（字句解析・構文解析・型検査・LLVM IR 生成） |
-| `kernel/` | 漢極（カーネル）。本体 `kernel.txt` は機械漢文。起動・例外処理などに暫定アセンブリを含む |
+| `kernel/` | 漢極（カーネル）。本体 `kernel.mkn` は機械漢文。起動・例外処理などに暫定アセンブリを含む |
 | `kernel/vfs/` | 篇藏（ファイル体系。旧称 典籍） |
 | `kernel/file/` | BTRON3 ファイル管理の録層（1.6） |
 | `kernel/proc/` | 行程の生成・終了、メッセージ、同期、グローバル名、時計、利用者情報 |
-| `user/btron/` | BTRON3 互換層（EL0 の C 風 API → 漢令）。`user/btron_*.txt` は QEMU 上の適合試験 |
+| `user/btron/` | BTRON3 互換層（EL0 の C 風 API → 漢令）。`user/btron_*.mkn` は QEMU 上の適合試験 |
 | `user/` | 行程として起動する機械漢文製の外部命令と起動補助コード |
 | `tools/` | ビルド補助スクリプト |
 | `boot/` | 初期段階の起動スタブや参照用コード |
@@ -128,6 +128,7 @@ qemu-system-aarch64 -M virt,gic-version=2 -cpu cortex-a57 -nographic \
 3. OS の基本機能と篇藏は LLM に依存させず、決定的なコードと明示的な仕様で実装する。
 4. 暫定アセンブリや既存言語によるブートストラップは移行対象として記録し、最終目標と現状を混同しない。
 5. `machine-kanbun` とは独立して仕様・実装・Issue を管理する。
+6. **機械漢文のソースの拡張子は `.mkn`** とする（カーネル、ユーザー命令、テスト、`@取込` で取り込む部品のすべて）。`.txt` は使わない。生成物（展開後のソース `*_all.mkn` など）も同じ。`make test` が `.txt` のソースの混入を検査する。
 
 ## 主な計画
 

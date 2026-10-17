@@ -4,13 +4,13 @@
 註   R=緩 MB を無期限に受ける → 終了コード = 大きさ×16 + 先頭バイト   S=MB へ 1 バイト目 1,2,3 の 3 通を WAIT で送る
 註   D=MB を待ち ER_DLT なら 1   V=ポート PA の窓口 (パターン 1) で 2 件処理する (返答 = 各バイト+1)
 註   F=ポート PA で受け付けて PB へ転送   W=ポート PB の窓口で 1 件処理   C=ポート PX を無期限に呼び ER_DLT なら 1
-註 @取込 lib.txt
-註 @取込 btron/types.txt
-註 @取込 btron/er.txt
-註 @取込 btron/proc.txt
-註 @取込 btron/msg.txt
-註 @取込 btron/gname.txt
-註 @取込 btron/sync.txt
+註 @取込 lib.mkn
+註 @取込 btron/types.mkn
+註 @取込 btron/er.mkn
+註 @取込 btron/proc.mkn
+註 @取込 btron/msg.mkn
+註 @取込 btron/gname.mkn
+註 @取込 btron/sync.mkn
 
 常「緩名」之無符六四 為 0x40700000    註 名前 (TC)
 常「緩値」之無符六四 為 0x40700040    註 get_nam の書き先

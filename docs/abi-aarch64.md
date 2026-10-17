@@ -9,14 +9,14 @@
 ## ブート
 1. QEMU virtの起動契約とデバイスツリーを確認する。
 2. スタックとBSSを初期化する。（実装: `kernel/boot.S`）
-3. UARTを初期化し、最初のログを出す。（実装: `kernel/kernel.txt` の PL011 ドライバ）
+3. UARTを初期化し、最初のログを出す。（実装: `kernel/kernel.mkn` の PL011 ドライバ）
 4. 例外ベクタを設定する。（実装: `kernel/boot.S` が `VBAR_EL1` に `_vectors` を設定）
 5. メモリ管理とタイマーを順次有効化する。（MMU: 実装済み。タイマー+GIC割込: 実装済み）
 
 ## 例外
 - `-kernel` 起動は EL1（SP_EL1）で始まる。`VBAR_EL1` に 2 KiB 整列した
   ベクタ表を設定し、同期例外は `kernel/vectors.S` の共通入口でレジスタを
-  保存してから機械漢文ハンドラ `exception_dispatch`（`kernel/kernel.txt`）を
+  保存してから機械漢文ハンドラ `exception_dispatch`（`kernel/kernel.mkn`）を
   呼ぶ。ハンドラは ESR_EL1 を復号して診断を出力し、復帰先 ELR_EL1 を返す。
 
 ## 割込（GICv2 + 汎用タイマー）
@@ -26,7 +26,7 @@
   `CNTFRQ_EL0`（QEMU virt では 62.5 MHz）から周期を求める。
 - IRQ はベクタ表の Current EL with SPx（+0x280）から `irq_handler`
   （`kernel/vectors.S`）に届く。`irq_handler` は x0–x30 と NZCV を保存して
-  機械漢文ハンドラ `irq_dispatch`（`kernel/kernel.txt`）を呼び、復帰時に
+  機械漢文ハンドラ `irq_dispatch`（`kernel/kernel.mkn`）を呼び、復帰時に
   すべて復元して `eret` する。
 - 例外入口は `PSTATE.DAIF` の I ビットを立てるため、ハンドラ実行中は割込が
   入れ子にならない。`開割込`（`local_irq_enable`）で明示的に I を落とし、
@@ -105,7 +105,7 @@
 - `svc #0` で EL0 から EL1 へ遷移する。下位EL同期ベクタ（オフセット `0x400`）
   の `lower_sync_handler`（`kernel/el0.S`）が 288 バイトの保存フレームを作る
   （`x0`–`x30`、NZCV、`ELR_EL1`、`SPSR_EL1`、`SP_EL0`）。`ESR_EL1` とフレームへの
-  ポインタを `svc_dispatch`（`kernel/kernel.txt`）に渡す。
+  ポインタを `svc_dispatch`（`kernel/kernel.mkn`）に渡す。
 - `svc_dispatch` は復歸先フレームへのポインタを返す。フレームは**行程ごとの核棧**
   （64 KiB、`核棧基` 0x40320000 から）上にあり、`el0.S` は返されたアドレスへ
   `SP_EL1`（EL1h の `sp`）を切り替えてから復歸する。これによりハンドラは別の行程の

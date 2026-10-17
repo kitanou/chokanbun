@@ -1,9 +1,9 @@
 註 外部命令「時試」。BTRON3 互換層 G2 の試験: 時計の取得系 get_tim / get_tod。
 註 各行は「時試 <項目> 」の後に 1 (成功) か 0 (失敗) を 16 進で出す。終了コードは失敗数。
-註 @取込 lib.txt
-註 @取込 btron/types.txt
-註 @取込 btron/er.txt
-註 @取込 btron/clk.txt
+註 @取込 lib.mkn
+註 @取込 btron/types.mkn
+註 @取込 btron/er.mkn
+註 @取込 btron/clk.mkn
 
 常「緩時」之無符六四 為 0x40700000    註 STIME (4 B) と TIMEZONE (12 B) の書き先
 常「緩日」之無符六四 為 0x40700100    註 DATE_TIM (36 B)
