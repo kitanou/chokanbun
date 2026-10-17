@@ -57,6 +57,7 @@
 - [ ] 基本ドライバの整理、init からの外部命令の起動
 
 ## M5: POSIX互換サブセット
+- [x] 設計: 行程の生成・外部命令・パイプ・exec/fork（[design-process-exec.md](design-process-exec.md)、実装は未着手）
 - [ ] read/write/open/close、exec/wait/pipe、forkなどを段階的に検証
 - [ ] 対応範囲・非対応範囲を明文化
 
