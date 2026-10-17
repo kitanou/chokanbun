@@ -4,6 +4,8 @@
 > 基準: BTRON3仕様書 Ver. 3.20.00 第1編 `shared_data/`（`data_type`・`tron_code`・`tad1`〜`tad3`・`fd_format`）
 > 作成: 2026-10-17。Phase 1 の最初の棚卸し。
 
+> **2026-10-18 の注記**: 本書の「要確認」「文字化け」の記述は、原文を ISO-2022-JP として復号して直接読んだ結果（[btron3-spec-verification.md](btron3-spec-verification.md)）で多くが確定または訂正された。食い違いの一覧はそちらを正とする。
+
 ## 読む前の注意
 
 - 要求は原文を独自に要約したもの。仕様書本文は転載しない。

@@ -119,7 +119,7 @@ qemu-system-aarch64 -M virt,gic-version=2 -cpu cortex-a57 -nographic \
 - [漢殻コマンド一覧](docs/shell-commands.md)
 - [実装メモ](docs/implementation-notes.md)
 - [開発ロードマップ](docs/roadmap.md)
-- BTRON3 適合性: [適合性マトリクス](docs/compat/btron3-conformance.md)・[互換層の設計](docs/compat/btron3-compat-layer.md)・[OS 仕様編の照合](docs/compat/btron3-os.md)・[共有データ編](docs/compat/btron3-shared-data.md)・[第2章・第3章の API 棚卸し](docs/compat/btron3-api-inventory.md)・[ファイル管理の設計](docs/compat/btron3-file-design.md)・[適合試験計画](docs/compat/btron3-test-plan.md)
+- BTRON3 適合性: [適合性マトリクス](docs/compat/btron3-conformance.md)・[互換層の設計](docs/compat/btron3-compat-layer.md)・[OS 仕様編の照合](docs/compat/btron3-os.md)・[共有データ編](docs/compat/btron3-shared-data.md)・[第2章・第3章の API 棚卸し](docs/compat/btron3-api-inventory.md)・[ファイル管理の設計](docs/compat/btron3-file-design.md)・[適合試験計画](docs/compat/btron3-test-plan.md)・[原文の直接確認と食い違い](docs/compat/btron3-spec-verification.md)
 
 ## 開発上の約束
 
