@@ -184,12 +184,15 @@ if [ -f "$OUT/kernel.elf" ]; then
             >"$OUT/kernel_qemu.console.log" 2>&1 &
         QPID=$!
         # Feed one console line for the 読込 (番10) test.
-        printf 'KANBUN\n' > "$PIPE.in" &
+        # Then feed 殻 (shell) commands once 甲 has read that line (M4).
+        ( printf 'KANBUN\n' > "$PIPE.in"
+          for _ in $(seq 1 60); do grep -q "甲得" "$KLOG" 2>/dev/null && break; sleep 0.25; done
+          printf '響 天下太平\n讀 史記\n怪\n讀 無題\n終\n' > "$PIPE.in" ) &
         FEEDPID=$!
         # Wait up to ~15s for the final marker, then stop QEMU.  The generic
         # timer fires five times (5 × CNTFRQ/40 ≈ 125 ms), so this is ample.
         for _ in $(seq 1 30); do
-            grep -q "民務終了" "$KLOG" 2>/dev/null && break
+            grep -q "殻終" "$KLOG" 2>/dev/null && grep -q "民務終了 行程=0x0000000000000000" "$KLOG" 2>/dev/null && break
             sleep 0.5
         done
         kill "$QPID" 2>/dev/null
@@ -366,6 +369,25 @@ if [ -f "$OUT/kernel.elf" ]; then
         else
             fail "kernel qemu: 典籍の誤り経路 (再='${K_FB:-none}' 無='${K_FN:-none}')"
             sed 's/^/      /' "$KLOG" 2>/dev/null | head -30
+        fi
+        # --- M4: 漢文シェル (殻) ---
+        if grep -q "殻起動" "$KLOG" 2>/dev/null && grep -q "殻響:天下太平" "$KLOG" 2>/dev/null; then
+            pass "kernel qemu: 殻 起動と 響 (UART 入力を解析して出力)"
+        else
+            fail "kernel qemu: 殻 起動と 響"
+            sed 's/^/      /' "$KLOG" 2>/dev/null | head -40
+        fi
+        if grep -q "殻讀:鴻門之会、沛公危うし" "$KLOG" 2>/dev/null && grep -q "殻無" "$KLOG" 2>/dev/null; then
+            pass "kernel qemu: 殻 讀 (典籍を開いて表示、無い名前は 殻無)"
+        else
+            fail "kernel qemu: 殻 讀"
+            sed 's/^/      /' "$KLOG" 2>/dev/null | head -40
+        fi
+        if grep -q "殻不明" "$KLOG" 2>/dev/null && grep -q "殻終" "$KLOG" 2>/dev/null; then
+            pass "kernel qemu: 殻 未知の命令と 終"
+        else
+            fail "kernel qemu: 殻 未知の命令と 終"
+            sed 's/^/      /' "$KLOG" 2>/dev/null | head -40
         fi
         KSEQ="$(grep -oE '甲書|乙書|甲讀|乙讀' "$KLOG" 2>/dev/null | paste -sd' ' -)"
         if [ "$KSEQ" = "甲書 乙書 甲讀 乙讀" ]; then
