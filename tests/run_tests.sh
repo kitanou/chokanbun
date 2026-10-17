@@ -341,6 +341,32 @@ if [ -f "$OUT/kernel.elf" ]; then
             fail "kernel qemu: UART 入力の 読込 (甲得='${K_AG:-none}' 入力='${K_RX:-none}')"
             sed 's/^/      /' "$KLOG" 2>/dev/null | head -30
         fi
+        # --- M4: 典籍 (RAMFS/VFS) ---
+        K_FO="$(grep -oE '籍開 0x[0-9a-f]{16}' "$KLOG" 2>/dev/null | grep -oE '0x[0-9a-f]{16}')"
+        K_FR="$(grep -oE '籍読 0x[0-9a-f]{16}' "$KLOG" 2>/dev/null | grep -oE '0x[0-9a-f]{16}')"
+        K_FC="$(grep -c '鴻門之会、沛公危うし' "$KLOG" 2>/dev/null)"
+        K_FW="$(grep -oE '籍書 0x[0-9a-f]{16}' "$KLOG" 2>/dev/null | grep -oE '0x[0-9a-f]{16}')"
+        K_FX="$(grep -oE '籍閉 0x[0-9a-f]{16}' "$KLOG" 2>/dev/null | grep -oE '0x[0-9a-f]{16}')"
+        K_FB="$(grep -oE '籍再 0x[0-9a-f]{16}' "$KLOG" 2>/dev/null | grep -oE '0x[0-9a-f]{16}')"
+        K_FN="$(grep -oE '籍無 0x[0-9a-f]{16}' "$KLOG" 2>/dev/null | grep -oE '0x[0-9a-f]{16}')"
+        if [ "$K_FO" = "0x0000000000000003" ] && [ "$K_FR" = "0x000000000000001e" ] && [ "${K_FC:-0}" -ge 1 ]; then
+            pass "kernel qemu: 典籍 開→讀入 (史記 を 30 バイト読む)"
+        else
+            fail "kernel qemu: 典籍 開→讀入 (開='${K_FO:-none}' 読='${K_FR:-none}' 内容=${K_FC:-0})"
+            sed 's/^/      /' "$KLOG" 2>/dev/null | head -30
+        fi
+        if [ "$K_FW" = "0x0000000000000006" ] && [ "$K_FX" = "0x0000000000000000" ]; then
+            pass "kernel qemu: 典籍 柄書→閉"
+        else
+            fail "kernel qemu: 典籍 柄書→閉 (書='${K_FW:-none}' 閉='${K_FX:-none}')"
+            sed 's/^/      /' "$KLOG" 2>/dev/null | head -30
+        fi
+        if [ "$K_FB" = "0xfffffffffffffff7" ] && [ "$K_FN" = "0xfffffffffffffffe" ]; then
+            pass "kernel qemu: 典籍の誤り経路 (閉後→-EBADF, 無い名前→-ENOENT)"
+        else
+            fail "kernel qemu: 典籍の誤り経路 (再='${K_FB:-none}' 無='${K_FN:-none}')"
+            sed 's/^/      /' "$KLOG" 2>/dev/null | head -30
+        fi
         KSEQ="$(grep -oE '甲書|乙書|甲讀|乙讀' "$KLOG" 2>/dev/null | paste -sd' ' -)"
         if [ "$KSEQ" = "甲書 乙書 甲讀 乙讀" ]; then
             pass "kernel qemu: 譲渡によるラウンドロビン切替"
