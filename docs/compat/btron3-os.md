@@ -35,7 +35,7 @@
 
 | API | 要点 | 既存実装との対応 | 状態 |
 |---|---|---|---|
-| `cre_prc` | 子行程の生成（ファイル・優先度・メッセージ） | `user/btron/msg.mkn` の `BTRON生行程`（暫定）→ 漢令 64。`LINK` の代わりに典籍名と引数文字列。優先度・初期メッセージは未対応 | 部分適合（`LINK`・優先度・初期メッセージ未対応） |
+| `cre_prc` | 子行程の生成（ファイル・優先度・メッセージ） | `user/btron/msg.mkn` の `cre_prc`（`BTRON行程作成`）→ 漢令 70（`kernel/file/btron.mkn`）。`LINK` は SYS FS の像ファイル（`att_fls` で接続し `get_lnk` で引く）、`pri` は 0〜255 の検査だけ（スケジューラへは反映しない）、`msg` は型 0 なら本体の NUL 区切りが `argv[1]` 以降。`ER_PPRI`/`ER_SZOVR`/`ER_ADR`/`ER_REC`/`ER_NOEXS`/`ER_NOFS`/`ER_ACCES`/`ER_BUSY`。試験 `録試` | 部分適合（優先度の反映・型 0 以外のメッセージの配送が未実装。旧形の `BTRON生行程`（漢令 64）は試験と殻の補助として残す） |
 | `ext_prc` | 通常終了＋終了コード通知 | `ext_prc` → 漢令 終行程。BTRON3 流の子は親へ `MS_EXIT {pid, code}` が届き、枠が即解放される（試験 `信試`） | 部分適合（終了時の資源解放は柄・名前・キューのみ。`DELEXIT` 無しの共有メモリ等は未対応） |
 | `ter_prc` | 他行程の強制終了（`TERM_NRM`/`TERM_ALL`） | `user/btron/proc.mkn` → 漢令 強終 68（`kernel/proc/term.mkn`）。`ER_SELF`/`ER_NOPRC`/`ER_LEVEL`/`ER_PAR`、MS_TERM は対象の分だけ、TERM_ALL は子孫を深い順に終える | 実装済・未検証 |
 | `chg_pri` | 優先度変更（`P_ABS`/`P_REL`/`P_TASK`） | 優先度の概念なし（ラウンドロビン） | 未実装 |

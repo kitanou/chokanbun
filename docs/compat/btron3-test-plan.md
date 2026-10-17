@@ -51,12 +51,12 @@
 | 強試 | `user/btron_term.mkn` | 16 | OS 1.1 強制終了・状態 | `ter_prc`（`TERM_NRM`/`TERM_ALL`）、`prc_sts`、`MS_TERM` | 正・異・相 | `ER_SELF`/`ER_NOPRC`/`ER_LEVEL`/`ER_PAR`、子孫の終了順、枠の回収 |
 | 同試 | `user/btron_sync.mkn` | 21 | OS 1.3 セマフォ・イベントフラグ | `cre_sem`、`del_sem`、`sig_sem`、`wai_sem`、`cre_flg`、`del_flg`、`set_flg`、`clr_flg`、`wai_flg` | 正・異・境・相 | FIFO、時間切れ、`ER_DLT`、`DELEXIT`、排他の自動返却。待ち順は解釈 |
 | 緩試 | `user/btron_comm.mkn` | 24 | OS 1.3 メッセージバッファ・ランデブ | `cre_mbf`、`del_mbf`、`snd_mbf`、`rcv_mbf`、`cre_por`、`del_por`、`cal_por`、`acp_por`、`fwd_por`、`rpl_rdv` | 正・異・境・相 | 環の折り返し、満杯・空、転送、削除。`bufsz`=0 は未対応 |
-| 録試 | `user/btron_file.mkn` | 74 | OS 1.6 ファイル管理 B1〜B4 | `get_lnk`、`chg_wrk`、`att_fls`、`det_fls`、`lst_fls`、`fls_sts`、`cre_fil`、`cre_lnk`、`del_fil`、`opn_fil`、`cls_fil`、`fil_sts`、`ofl_sts`、`see_rec`、`fnd_rec`、`rea_rec`、`wri_rec`、`ins_rec`、`apd_rec`、`del_rec`、`trc_rec`、`loc_rec`、`xch_fil`、`chk_fil`、`chg_fmd`、`chg_fat`、`chg_fpw`、`chg_fnm`、`chg_ftm`、`get_dfm`、`set_dfm` | 正・異・境・相 | B1: 出現番号、`F_BASED`/`F_DIRECT`、作業ファイル継承。B2: 記述子の世代、ファイル数の上限と頁の返却、親レコードの満杯（`ER_SZOVR`）、参照数の増減、`F_EXCL`/`F_WEXCL` の行程間試験（子行程を使う）、行程終了での自動クローズ、読取専用 FS。B3: レコードの追記・挿入・書き足し（後ろが壊れない）・切り詰め・削除、リンクレコード、本文の容量、記述子間と行程間のロック、挿入・削除でのロック番号のずれ、`xch_fil`。B4: 属性の設定・解除、パスワード（20 文字・21 文字の境界を含む）、名前・時刻の変更、既定のアクセスモード、`A_MODE`、別の利用者・グループ・レベルになる子行程でのアクセス判定 |
+| 録試 | `user/btron_file.mkn` | 79 | OS 1.6 ファイル管理 B1〜B5、1.1 の `cre_prc` | `get_lnk`、`chg_wrk`、`att_fls`、`det_fls`、`lst_fls`、`fls_sts`、`cre_fil`、`cre_lnk`、`del_fil`、`opn_fil`、`cls_fil`、`fil_sts`、`ofl_sts`、`see_rec`、`fnd_rec`、`rea_rec`、`wri_rec`、`ins_rec`、`apd_rec`、`del_rec`、`trc_rec`、`loc_rec`、`xch_fil`、`chk_fil`、`chg_fmd`、`chg_fat`、`chg_fpw`、`chg_fnm`、`chg_ftm`、`get_dfm`、`set_dfm`、`cre_prc` | 正・異・境・相 | B1: 出現番号、`F_BASED`/`F_DIRECT`、作業ファイル継承。B2: 記述子の世代、ファイル数の上限と頁の返却、親レコードの満杯（`ER_SZOVR`）、参照数の増減、`F_EXCL`/`F_WEXCL` の行程間試験（子行程を使う）、行程終了での自動クローズ、読取専用 FS。B3: レコードの追記・挿入・書き足し（後ろが壊れない）・切り詰め・削除、リンクレコード、本文の容量、記述子間と行程間のロック、挿入・削除でのロック番号のずれ、`xch_fil`。B4: 属性の設定・解除、パスワード（20 文字・21 文字の境界を含む）、名前・時刻の変更、既定のアクセスモード、`A_MODE`、別の利用者・グループ・レベルになる子行程でのアクセス判定 |
 | 篇試 | `user/pian_test.mkn` | 28 | 篇藏（内部設計。BTRON3 の規範ではない） | 篇ID、章、パス、名替、予約章、深さ・名前長の上限 | 正・異・境 | 内部ストレージの試験。BTRON3 適合の根拠にはしない |
 | 言語 | `tests/lang/ok`・`err` | ok 7・err 37 | （BTRON3 とは無関係） | 言語仕様の黄金・診断試験 | — | 互換層を書く言語の健全性 |
 | 起動時 | `tests/run_tests.sh` | — | 核の基本動作 | argv 受け渡し、終了コード、EL0 行程、メモリ保護など | — | BTRON3 の項目には紐付けない |
 
-**集計**: BTRON3 互換層の QEMU 試験は 9 種・計 230 項目（識試 13、名試 21、時試 11、信試 31、利試 19、強試 16、同試 21、緩試 24、録試 74）。ほかに篇藏 28 項目。
+**集計**: BTRON3 互換層の QEMU 試験は 9 種・計 235 項目（識試 13、名試 21、時試 11、信試 31、利試 19、強試 16、同試 21、緩試 24、録試 79）。ほかに篇藏 28 項目。
 
 ## 5. API 単位の試験の有無（第2編 第1章）
 
@@ -65,7 +65,8 @@
 | API | 試験 | 足りない区分・不足 |
 |---|---|---|
 | `get_tid` | 識試 | 副タスク・エラー規定（要確認） |
-| `cre_prc`（暫定 `BTRON生行程`） | 信試 | `LINK` 引数・優先度・初期メッセージ未対応のため試験も無い |
+| `cre_prc`（LINK 版） | 録試 | 子の生成・作業ファイルの継承・`MS_EXIT`・引数（argc）・各エラーは確認済み。優先度の反映、型 0 以外のメッセージ、`ER_BUSY`/`ER_ACCES` は未検証 |
+| `cre_prc`（旧形 `BTRON生行程`） | 信試 | 試験と殻の補助。BTRON3 の規範には使わない |
 | `ext_prc` | 信試（`MS_EXIT`） | 資源解放の網羅（共有メモリ等は未実装） |
 | `ter_prc`、`prc_sts` | 強試 | `ER_LEVEL` の向きは解釈。優先度の返り値は固定値 |
 | `get_usr`、`chg_usr` | 利試 | 利用者名の接尾部、グループ名の検証は未実装 |
@@ -102,7 +103,7 @@
 | 1 | `ER_*` の網羅表 | 全体 | 原文のエラー名を API ごとに列挙し、各試験の異常系との対応を表にする（欠けた `ER_*` を可視化） |
 | 2 | 同期系の上限・OR 待ち | 1.3 | `ER_LIMIT`、カウント上限、`TWF_ORW` を同試に追加 |
 | 3 | 型の残り | 共有データ §1 | `ErrCode` の二定義、`MSEC`/`STIME` の幅、浮動小数点の方針が決まってから |
-| 4 | 録層 B5 以降 | 1.6 | `SYS` FS と `cre_prc` の `LINK` 版、写像・永続化。実装と同時に正常・異常・境界を足す。B4 の未検証項目（アクセス管理レベル 0 の FS、`chk_fil` の全ビット、複数ユーザーの公開経路）、`xch_fil` の `ER_LOCK` も併せて足す |
+| 4 | 録層 B6 以降 | 1.6 | 写像・永続化・大きなファイルの本文。実装と同時に正常・異常・境界を足す。B4 の未検証項目（アクセス管理レベル 0 の FS、`chk_fil` の全ビット、複数ユーザーの公開経路）、`xch_fil` の `ER_LOCK` も併せて足す |
 | 5 | メッセージのハンドラ・タイムアウト | 1.2 | `def_msg`/`ret_msg`/`brk_msg`、`req_tmg`。EL0 への非同期上りの実装後 |
 | 6 | 文字コード・TAD の往復試験 | 共有データ §2・§3 | 符号表と TAD の ID／配置を原文で確定してから。テストベクトルの入手経路を決める |
 | 7 | 描画・HMI の統合試験 | 第2編 第2章・第3章 | 表示装置の実装後。QEMU の framebuffer 出力の比較方法（スクリーンショットの画素比較）を決める |
