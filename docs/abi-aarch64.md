@@ -221,6 +221,13 @@
   | 131 | FS 状態 | `x0`=装置名, `x1`=FS_STATE の書き先（104 B） | 書込可能なら 0、読取専用なら 1／`-ENOENT`・`-ENODEV`・`-EFAULT`。`fls_sts` |
   | 136 | リンク取 | `x0`=パス（TC、256 文字まで）, `x1`=LINK（52 B、F_BASED では入力も）, `x2`=方式（0=F_NORM, 1=F_BASED, 2=F_DIRECT） | 0／`-ENOENT`・`-ENODEV`・`-ENAMETOOLONG`（パス・名前が不正）・`-EINVAL`・`-EFAULT`。`get_lnk` |
   | 137 | 作業変 | `x0`=LINK（52 B） | 0／`-ENODEV`・`-ENOENT`・`-EFAULT`。`chg_wrk`。作業ファイルは子が継ぐ |
+  | 144 | ファイル作成 | `x0`=親 LINK（成功で新しい LINK に置き換わる）, `x1`=名前（TC）, `x2`=A_MODE（NULL のみ）, `x3`=atype, `x4`=opt（0=F_FLOAT, 1=F_FIX） | 記述子（正）／`-ENOENT`・`-ENODEV`・`-EROFS`・`-ENAMETOOLONG`・`-EINVAL`・`-EFAULT`・`-EMFILE`・`-ENOSPC`・`-E2BIG`。`cre_fil` |
+  | 145 | リンク作成 | `x0`=親 LINK, `x1`=F_LINK（132 B）, `x2`=opt | 0／`-ENOENT`・`-ENODEV`・`-EROFS`・`-ENAMETOOLONG`・`-EINVAL`・`-EFAULT`・`-E2BIG`。`cre_lnk` |
+  | 146 | ファイル削除 | `x0`=親 LINK（NULL 可）, `x1`=LINK, `x2`=force | 参照数が 0 になった先の数／`-EPERM`・`-ENOENT`・`-EBUSY`・`-ENOEXEC`（ER_REC）・`-EROFS`・`-EFAULT`・`-EINVAL`。`del_fil` |
+  | 147 | ファイル開 | `x0`=LINK, `x1`=モード（4=READ, 2=WRITE, 6=UPDATE, 0x100=EXCL, 0x200=WEXCL）, `x2`=パスワード（NULL 可） | 記述子（正）／`-ENOENT`・`-ENODEV`・`-EBUSY`・`-EROFS`・`-EINVAL`・`-EFAULT`・`-EMFILE`。`opn_fil` |
+  | 148 | ファイル閉 | `x0`=記述子 | 0／`-EBADF`。`cls_fil`。行程の終了で自動的に閉じる |
+  | 149 | ファイル状態 | `x0`=LINK, `x1`=名前の書き先（40 B）, `x2`=F_STATE（68 B）, `x3`=F_LOCATE（NULL のみ） | 参照数／`-ENOENT`・`-ENODEV`・`-EINVAL`・`-EFAULT`。`fil_sts` |
+  | 150 | 開ファイル状態 | `x0`=記述子, `x1`〜`x3` は 149 と同じ | 参照数／`-EBADF`・`-ENOENT`・`-EINVAL`・`-EFAULT`。`ofl_sts` |
   | 176 | 時刻取 | `x0`=STIME の書き先（窓内の書込可能な 4 B）, `x1`=TIMEZONE の書き先（12 B） | 0／`-EFAULT`。QEMU virt の PL031 RTC を 1985-01-01 起点の秒数に換算。`get_tim` |
   | 177 | 複写出 | `x0`=宛（書込可能な窓内）, `x1`=元（窓内）, `x2`=長（`令長限` 以下） | 0／`-EFAULT`（何も書かない）。構造体を民へ返すときの複製検査の共通部品（互換層が作業域で組み立てて呼ぶ） |
   | 178 | 時刻設 | `x0`=STIME（0 なら変えない）, `x1`=TIMEZONE（0 なら変えない。12 B） | 0／`-EACCES`（利用者レベルが 0 でない）・`-EINVAL`（adjust が ±43200、dst_adj が ±720 の外）・`-EFAULT`。検査を終えてから書く。`set_tim` |
