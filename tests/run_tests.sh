@@ -191,7 +191,7 @@ if [ -f "$OUT/kernel.elf" ]; then
         # Then feed 殻 (shell) commands once 甲 has read that line (M4).
         ( printf 'KANBUN\n' > "$PIPE.in"
           for _ in $(seq 1 60); do grep -q "甲得" "$KLOG" 2>/dev/null && break; sleep 0.25; done
-          printf '響 天下太平\n讀 史記\n怪\n讀 無題\n終\n' > "$PIPE.in" ) &
+          printf '響 天下太平\n讀 史記\n怪\n讀 無題\n目\n書 筆記 天地玄黄\n讀 筆記\n書 一二三四五六 x\n書 筆記\n目\n終\n' > "$PIPE.in" ) &
         FEEDPID=$!
         # Wait up to ~15s for the final marker, then stop QEMU.  The generic
         # timer fires five times (5 × CNTFRQ/40 ≈ 125 ms), so this is ample.
@@ -386,6 +386,29 @@ if [ -f "$OUT/kernel.elf" ]; then
         else
             fail "kernel qemu: 殻 讀"
             sed 's/^/      /' "$KLOG" 2>/dev/null | head -40
+        fi
+        # --- M4: 殻の命令拡充 (目 = 一覧、書 = 作成/書込) ---
+        K_LS1="$(grep -c '殻目:史記' "$KLOG" 2>/dev/null)"
+        K_LS2="$(grep -c '殻目:詩経' "$KLOG" 2>/dev/null)"
+        K_LS3="$(grep -c '殻目:筆記' "$KLOG" 2>/dev/null)"
+        if [ "${K_LS1:-0}" -ge 2 ] && [ "${K_LS2:-0}" -ge 2 ] && [ "${K_LS3:-0}" -eq 1 ]; then
+            pass "kernel qemu: 殻 目 (一覧。書の前は 2 件、後は 筆記 が加わる)"
+        else
+            fail "kernel qemu: 殻 目 (史記=${K_LS1:-0} 詩経=${K_LS2:-0} 筆記=${K_LS3:-0})"
+            sed 's/^/      /' "$KLOG" 2>/dev/null | head -60
+        fi
+        K_WR="$(grep -oE '殻書 0x[0-9a-f]{16}' "$KLOG" 2>/dev/null | head -1 | grep -oE '0x[0-9a-f]{16}')"
+        if [ "$K_WR" = "0x000000000000000c" ] && grep -q '殻讀:天地玄黄' "$KLOG" 2>/dev/null; then
+            pass "kernel qemu: 殻 書→讀 (筆記 を作って 12 バイト書き、読み戻す)"
+        else
+            fail "kernel qemu: 殻 書→讀 (書='${K_WR:-none}')"
+            sed 's/^/      /' "$KLOG" 2>/dev/null | head -60
+        fi
+        if grep -q '殻誤 0xfffffffffffffff2' "$KLOG" 2>/dev/null && grep -q '殻用法' "$KLOG" 2>/dev/null; then
+            pass "kernel qemu: 殻 書 の誤り経路 (長すぎる名前→-EFAULT、引数不足→用法)"
+        else
+            fail "kernel qemu: 殻 書 の誤り経路"
+            sed 's/^/      /' "$KLOG" 2>/dev/null | head -60
         fi
         if grep -q "殻不明" "$KLOG" 2>/dev/null && grep -q "殻終" "$KLOG" 2>/dev/null; then
             pass "kernel qemu: 殻 未知の命令と 終"
