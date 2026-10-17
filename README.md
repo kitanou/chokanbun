@@ -22,7 +22,7 @@ QEMU `virt` / AArch64 で動く研究用 OS。カーネルも、その上で動�
 | M6 | 機械漢文製ブートローダー | 未着手 |
 | M7 | セルフホスティング | 未着手 |
 
-`make test` は 130 ケースすべて PASS（IR 生成 → AArch64 オブジェクト → ELF リンク → QEMU 実行まで）。
+`make test` は 134 ケースすべて PASS（IR 生成 → AArch64 オブジェクト → ELF リンク → QEMU 実行まで）。
 詳しい進捗と次の一手は [ロードマップ](docs/roadmap.md)、実装の中身は [実装メモ](docs/implementation-notes.md)。
 
 ## クイックスタート
@@ -71,7 +71,7 @@ qemu-system-aarch64 -M virt,gic-version=2 -cpu cortex-a57 -nographic \
 殻> 助
 ```
 
-殻の命令は `響`・`讀`・`目`・`書`・`削`・`助`・`終`。書式とエラーの読み方は
+殻の命令は `響`・`讀`・`目`・`書`・`削`・`助`・`終` と、外部命令（`問安`・`數`。`user/` の漢像）。書式とエラーの読み方は
 [殻のコマンド一覧](docs/shell-commands.md)。ファイルは RAM 上だけで、再起動すると消える。
 
 ## ソース構成
@@ -80,7 +80,7 @@ qemu-system-aarch64 -M virt,gic-version=2 -cpu cortex-a57 -nographic \
 |---|---|
 | `src/` | コンパイラ（字句解析・構文解析・型検査・LLVM IR 生成） |
 | `kernel/` | 漢極（カーネル）。本体 `kernel.txt` は機械漢文、入口は暫定アセンブリ（`boot.S`・`vectors.S`・`sysreg.S`・`el0.S`）。典籍（VFS/RAMFS）は `kernel/vfs/` |
-| `user/` | 外部命令（行程として起動される機械漢文のプログラム）。`hello.txt`（問安）、`lib.txt`（漢令のラッパ）、`crt0.S`・`user.lds`（漢像のヘッダと入口） |
+| `user/` | 外部命令（行程として起動される機械漢文のプログラム）。`hello.txt`（問安）、`count.txt`（數）、`lib.txt`（漢令のラッパ）、`crt0.S`・`user.lds`（漢像のヘッダと入口） |
 | `tools/` | ビルド補助。`kernel-expand.sh`（`註 @取込` の展開）、`mkimage.sh`（外部命令を漢像にする）、`gen-images.sh`（漢像をカーネルへ埋め込む） |
 | `boot/` | Phase 0 の起動スタブと C 版 UART ドライバ（参照用） |
 | `tests/` | テスト（`run_tests.sh`）と機械漢文のサンプル |
