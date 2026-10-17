@@ -16,21 +16,21 @@ Lexer::Lexer(std::string source)
         else if ((c & 0xF0) == 0xE0) len = 3;
         else if ((c & 0xF8) == 0xF0) len = 4;
         else {
-            error(1, 1, "E0001", "invalid UTF-8 byte");
+            error(1, 1, "E0009", "invalid UTF-8 byte");
             failed_ = true;
             return;
         }
         // Check continuation bytes
         if (len > 1) {
             if (i + len > src_.size()) {
-                error(1, 1, "E0001", "truncated UTF-8 sequence");
+                error(1, 1, "E0009", "truncated UTF-8 sequence");
                 failed_ = true;
                 return;
             }
             for (size_t j = 1; j < len; j++) {
                 uint8_t cb = static_cast<uint8_t>(src_[i + j]);
                 if ((cb & 0xC0) != 0x80) {
-                    error(1, 1, "E0001", "invalid UTF-8 continuation byte");
+                    error(1, 1, "E0009", "invalid UTF-8 continuation byte");
                     failed_ = true;
                     return;
                 }
@@ -120,13 +120,14 @@ bool Lexer::isIdentStart(char32_t cp) const {
 }
 
 bool Lexer::isIdentPart(char32_t cp) const {
-    // Inside 「」 identifiers may hold CJK, ASCII letters, digits and '_'.
+    // Inside 「」 identifiers may hold CJK, ASCII letters, digits, '_' and '.'.
     // ASCII is required so that 記號「ascii_symbol」 (spec §7) can name linker
     // symbols, and so identifiers stay usable from hand-written assembly.
     if (cp >= 0x0030 && cp <= 0x0039) return true; // 0-9
     if (cp >= 0x0041 && cp <= 0x005A) return true; // A-Z
     if (cp >= 0x0061 && cp <= 0x007A) return true; // a-z
     if (cp == 0x005F) return true;                 // _
+    if (cp == 0x002E) return true;                 // . (節「.text.boot」 のセクション名用)
     return isIdentStart(cp);
 }
 
@@ -288,7 +289,7 @@ Token Lexer::readWord() {
     std::string fullWord = src_.substr(start, endOfWord - start);
 
     if (fullWord.empty()) {
-        error(startLine, startCol, "E0001", "empty word");
+        error(startLine, startCol, "E0009", "empty word");
         failed_ = true;
         advance();
         return {TokKind::Eof, "", "", startLine, startCol, startByte};
@@ -337,7 +338,7 @@ Token Lexer::readIdent() {
 
     // Expect 「
     if (!matchBytes("\xE3\x80\x8C")) { // 「
-        error(startLine, startCol, "E0001", "expected 「");
+        error(startLine, startCol, "E0009", "expected 「");
         failed_ = true;
         return {TokKind::Eof, "", "", startLine, startCol, startByte};
     }
@@ -347,7 +348,7 @@ Token Lexer::readIdent() {
     while (!atEnd()) {
         uint8_t c = peek();
         if (c == '\n') {
-            error(line_, col_, "E0001", "newline in identifier");
+            error(line_, col_, "E0009", "newline in identifier");
             failed_ = true;
             break;
         }
@@ -359,7 +360,7 @@ Token Lexer::readIdent() {
         size_t i = pos_;
         char32_t cp = decodeUTF8At(i);
         if (cp == 0xFFFD || !isIdentPart(cp)) {
-            error(line_, col_, "E0001", "invalid character in identifier");
+            error(line_, col_, "E0009", "invalid character in identifier");
             failed_ = true;
             advance();
             continue;
@@ -370,7 +371,7 @@ Token Lexer::readIdent() {
     }
 
     if (!closed) {
-        error(startLine, startCol, "E0001", "unterminated identifier");
+        error(startLine, startCol, "E0009", "unterminated identifier");
         failed_ = true;
     }
 
@@ -385,7 +386,7 @@ Token Lexer::readString() {
 
     // Expect 『
     if (!matchBytes("\xE3\x80\x8E")) { // 『
-        error(startLine, startCol, "E0001", "expected 『");
+        error(startLine, startCol, "E0009", "expected 『");
         failed_ = true;
         return {TokKind::Eof, "", "", startLine, startCol, startByte};
     }
@@ -413,14 +414,14 @@ Token Lexer::readString() {
                         advance(); advance(); // consume 』
                         content.append("\xE3\x80\x8F", 3);
                     } else {
-                        error(line_, col_, "E0001", "invalid escape sequence");
+                        error(line_, col_, "E0009", "invalid escape sequence");
                         failed_ = true;
                     }
                     break;
                 }
                 case 'u': {
                     if (!match('{')) {
-                        error(line_, col_, "E0001", "expected { after \\u");
+                        error(line_, col_, "E0009", "expected { after \\u");
                         failed_ = true;
                     }
                     std::string hex;
@@ -428,7 +429,7 @@ Token Lexer::readString() {
                         hex += static_cast<char>(advance());
                     }
                     if (!match('}')) {
-                        error(line_, col_, "E0001", "expected } in \\u{...}");
+                        error(line_, col_, "E0009", "expected } in \\u{...}");
                         failed_ = true;
                     }
                     unsigned long cp = 0;
@@ -457,19 +458,19 @@ Token Lexer::readString() {
                     break;
                 }
                 default:
-                    error(line_ - 1, col_, "E0001", "invalid escape character");
+                    error(line_ - 1, col_, "E0009", "invalid escape character");
                     failed_ = true;
                     break;
             }
         } else if (c == '\n') {
-            error(line_, col_, "E0001", "newline in string literal");
+            error(line_, col_, "E0009", "newline in string literal");
             failed_ = true;
             advance();
         } else {
             size_t i = pos_;
             char32_t cp = decodeUTF8At(i);
             if (cp == 0xFFFD) {
-                error(line_, col_, "E0001", "invalid UTF-8 in string");
+                error(line_, col_, "E0009", "invalid UTF-8 in string");
                 failed_ = true;
                 advance();
             } else {
@@ -481,7 +482,7 @@ Token Lexer::readString() {
     }
 
     if (!closed) {
-        error(startLine, startCol, "E0001", "unterminated string literal");
+        error(startLine, startCol, "E0009", "unterminated string literal");
         failed_ = true;
     }
 
@@ -536,7 +537,7 @@ Token Lexer::readPunct() {
             break;
     }
 
-    error(startLine, startCol, "E0001", "unexpected character");
+    error(startLine, startCol, "E0009", "unexpected character");
     failed_ = true;
     return {TokKind::Eof, "", "", startLine, startCol, startByte};
 }
@@ -572,7 +573,7 @@ std::vector<Token> Lexer::tokenize() {
             // CJK Compatibility or Extension B
             tok = readWord();
         } else {
-            error(line_, col_, "E0001", "unexpected character");
+            error(line_, col_, "E0009", "unexpected character");
             failed_ = true;
             advance();
             continue;

@@ -20,13 +20,13 @@ ifeq ($(origin LD),default)
 LD := $(LLD_BIN)/ld.lld
 endif
 
-CXXFLAGS ?= -std=c++17 -Wall -Wextra -g -O2
+CXXFLAGS ?= -std=c++17 -Wall -Wextra -g -O2 -MMD -MP
 
 SRC_DIR := src
 OBJ_DIR := build
 BIN := chokanbun
 
-SRCS := $(SRC_DIR)/lexer.cpp $(SRC_DIR)/ast.cpp $(SRC_DIR)/parser.cpp $(SRC_DIR)/typecheck.cpp $(SRC_DIR)/llvmir.cpp $(SRC_DIR)/main.cpp
+SRCS := $(SRC_DIR)/lexer.cpp $(SRC_DIR)/ast.cpp $(SRC_DIR)/parser.cpp $(SRC_DIR)/typecheck.cpp $(SRC_DIR)/llvmir.cpp $(SRC_DIR)/astdump.cpp $(SRC_DIR)/main.cpp
 OBJS := $(SRCS:$(SRC_DIR)/%.cpp=$(OBJ_DIR)/%.o)
 
 .PHONY: all test run clean
@@ -41,6 +41,9 @@ $(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp | $(OBJ_DIR)
 
 $(OBJ_DIR):
 	mkdir -p $(OBJ_DIR)
+
+# ヘッダの変更でも再コンパイルする (オブジェクト間のクラス配置の食い違いを防ぐ)
+-include $(OBJS:.o=.d)
 
 test: $(BIN)
 	BIN=./$(BIN) LLVM_BIN="$(LLVM_BIN)" LLD_BIN="$(LLD_BIN)" \

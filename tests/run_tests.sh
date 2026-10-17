@@ -464,5 +464,66 @@ else
     echo "SKIP: kernel qemu (kernel.elf not built)"
 fi
 
+# --- 言語適合テスト (言語仕様 §10 M0 受入条件 1・2) ---------------------------
+# tests/lang/ok/*.txt  : 構文解析の golden (-ast を *.ast と比較) と 型検査+IR 生成の成功
+# tests/lang/err/*.txt : 1 行目の「註 期待: E00xx ...」の診断コードが全て出て、クラッシュせず失敗すること
+# golden を更新するには UPDATE_GOLDEN=1 make test
+echo "=== Language conformance tests ==="
+LANG_OK=0; LANG_ERR=0
+for f in tests/lang/ok/*.txt; do
+    [ -f "$f" ] || continue
+    name="$(basename "$f" .txt)"
+    LANG_OK=$((LANG_OK + 1))
+    "$BIN" "$f" -ast >"$OUT/lang_$name.ast" 2>"$OUT/lang_$name.ast.log"
+    if [ "${UPDATE_GOLDEN:-0}" = "1" ]; then
+        cp "$OUT/lang_$name.ast" "tests/lang/ok/$name.ast"
+    fi
+    if diff -u "tests/lang/ok/$name.ast" "$OUT/lang_$name.ast" >"$OUT/lang_$name.ast.diff" 2>&1; then
+        pass "lang ok: $name (parser golden)"
+    else
+        fail "lang ok: $name (parser golden)"
+        sed 's/^/      /' "$OUT/lang_$name.ast.diff" | head -20
+    fi
+    "$BIN" "$f" -ir -o "$OUT/lang_$name.ll" >"$OUT/lang_$name.ir.log" 2>&1 \
+        && pass "lang ok: $name (typecheck + IR)" || {
+            fail "lang ok: $name (typecheck + IR)"
+            sed 's/^/      /' "$OUT/lang_$name.ir.log" | head -5
+        }
+done
+for f in tests/lang/err/*.txt; do
+    [ -f "$f" ] || continue
+    name="$(basename "$f" .txt)"
+    LANG_ERR=$((LANG_ERR + 1))
+    expect="$(head -1 "$f" | grep -oE 'E00[0-9][0-9]' | tr '\n' ' ')"
+    "$BIN" "$f" -ir -o /dev/null >"$OUT/lang_err_$name.log" 2>&1
+    rc=$?
+    good=1
+    [ "$rc" -ge 1 ] && [ "$rc" -lt 128 ] || good=0
+    for code in $expect; do
+        grep -q "錯 $code:" "$OUT/lang_err_$name.log" || good=0
+    done
+    [ -n "$expect" ] || good=0
+    if [ "$good" = "1" ]; then
+        pass "lang err: $name ($expect)"
+    else
+        fail "lang err: $name (expected '$expect', rc=$rc)"
+        sed 's/^/      /' "$OUT/lang_err_$name.log" | head -5
+    fi
+done
+# 全キーワードが golden テストのどこかで実際に使われていること (言語仕様 §10 条件 1)
+: >"$OUT/lang_tokens.txt"
+for f in tests/lang/ok/*.txt; do "$BIN" "$f" -tokens 2>/dev/null | awk '{print $2}' >>"$OUT/lang_tokens.txt"; done
+sort -u "$OUT/lang_tokens.txt" >"$OUT/lang_tokens.sorted"
+KW_MISSING=""
+for kw in $(grep -oE '\{"[^"]+", TokKind::[A-Za-z0-9]+\}' src/lexer.cpp | sed -E 's/\{"([^"]+)".*/\1/'); do
+    grep -qxF "$kw" "$OUT/lang_tokens.sorted" || KW_MISSING="$KW_MISSING $kw"
+done
+if [ -z "$KW_MISSING" ]; then
+    pass "lang ok: 全キーワードが golden テストで使われている"
+else
+    fail "lang ok: golden テストで未使用のキーワード:$KW_MISSING"
+fi
+echo "language cases: ok=$LANG_OK err=$LANG_ERR"
+
 echo "=== Tests complete (rc=$RC) ==="
 exit "$RC"

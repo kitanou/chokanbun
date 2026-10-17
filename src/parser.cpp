@@ -42,17 +42,19 @@ bool Parser::matchAny(std::initializer_list<TokKind> kinds) {
 
 Token Parser::expect(TokKind kind, const std::string& what) {
     if (check(kind)) return advance();
-    error(current(), "E0002", "expected " + what + ", got " + current().text);
+    error(current(), "E0008", "expected " + what + ", got " + current().text);
     hasErrors_ = true;
     return current();
 }
 
 void Parser::error(const Token& tok, const std::string& code, const std::string& msg) {
     diags_.emplace_back(Diagnostic::Level::Error, tok.line, tok.col, code, msg);
+    hasErrors_ = true;
 }
 
 void Parser::errorAt(uint32_t line, uint32_t col, const std::string& code, const std::string& msg) {
     diags_.emplace_back(Diagnostic::Level::Error, line, col, code, msg);
+    hasErrors_ = true;
 }
 
 Module Parser::parseModule() {
@@ -90,7 +92,7 @@ Decl Parser::parseDeclaration() {
                     section = current().value;
                     advance();
                 } else {
-                    error(current(), "E0002", "expected section name after 節");
+                    error(current(), "E0008", "expected section name after 節");
                     hasErrors_ = true;
                     advance();
                 }
@@ -100,7 +102,7 @@ Decl Parser::parseDeclaration() {
                     symbol = current().value;
                     advance();
                 } else {
-                    error(current(), "E0002", "expected symbol name after 記號");
+                    error(current(), "E0008", "expected symbol name after 記號");
                     hasErrors_ = true;
                     advance();
                 }
@@ -114,7 +116,7 @@ Decl Parser::parseDeclaration() {
         } else if (match(TokKind::WaiShuJie)) {
             isExt = true;
         } else {
-            error(current(), "E0002", "expected 術曰 or 外術曰 after attributes");
+            error(current(), "E0008", "expected 術曰 or 外術曰 after attributes");
             hasErrors_ = true;
             Decl bad;
             bad.kind = Decl::Kind::Function;
@@ -167,7 +169,7 @@ Decl Parser::parseDeclaration() {
         return d;
     }
 
-    error(tok, "E0002", "expected declaration, got " + tok.text);
+    error(tok, "E0008", "expected declaration, got " + tok.text);
     hasErrors_ = true;
     advance(); // skip to avoid infinite loop
     return d;
@@ -185,7 +187,7 @@ std::shared_ptr<FunctionDecl> Parser::parseFunctionAfterKeyword(bool isExternal)
         fn->name = current().value;
         advance();
     } else {
-        error(current(), "E0002", "expected function name");
+        error(current(), "E0008", "expected function name");
         hasErrors_ = true;
         advance();
     }
@@ -197,7 +199,7 @@ std::shared_ptr<FunctionDecl> Parser::parseFunctionAfterKeyword(bool isExternal)
             p.name = current().value;
             advance();
         } else {
-            error(current(), "E0002", "expected parameter name");
+            error(current(), "E0008", "expected parameter name");
             hasErrors_ = true;
             advance();
         }
@@ -225,7 +227,7 @@ std::shared_ptr<FunctionDecl> Parser::parseFunctionAfterKeyword(bool isExternal)
                 fn->symbolName = current().value;
                 advance();
             } else {
-                error(current(), "E0002", "expected symbol name");
+                error(current(), "E0008", "expected symbol name");
                 hasErrors_ = true;
                 advance();
             }
@@ -258,7 +260,7 @@ std::shared_ptr<AliasDecl> Parser::parseAlias() {
         a->name = current().value;
         advance();
     } else {
-        error(current(), "E0002", "expected alias name");
+        error(current(), "E0008", "expected alias name");
         hasErrors_ = true;
         advance();
     }
@@ -278,7 +280,7 @@ std::shared_ptr<ConstantDecl> Parser::parseConstant() {
         c->name = current().value;
         advance();
     } else {
-        error(current(), "E0002", "expected constant name");
+        error(current(), "E0008", "expected constant name");
         hasErrors_ = true;
         advance();
     }
@@ -300,7 +302,7 @@ std::shared_ptr<StructDecl> Parser::parseStruct() {
         s->name = current().value;
         advance();
     } else {
-        error(current(), "E0002", "expected struct name");
+        error(current(), "E0008", "expected struct name");
         hasErrors_ = true;
         advance();
     }
@@ -312,7 +314,7 @@ std::shared_ptr<StructDecl> Parser::parseStruct() {
             f.name = current().value;
             advance();
         } else {
-            error(current(), "E0002", "expected field name");
+            error(current(), "E0008", "expected field name");
             hasErrors_ = true;
             advance();
             break;
@@ -358,7 +360,7 @@ TypePtr Parser::parseType() {
             expect(TokKind::RightAngle, "〉");
             return Type::Array(elem, len);
         } else {
-            error(current(), "E0002", "expected array length");
+            error(current(), "E0008", "expected array length");
             hasErrors_ = true;
             expect(TokKind::RightAngle, "〉");
             return Type::Array(elem, 0);
@@ -372,7 +374,7 @@ TypePtr Parser::parseType() {
         return Type::Struct(name);
     }
 
-    error(current(), "E0002", "expected type");
+    error(current(), "E0008", "expected type");
     hasErrors_ = true;
     advance();
     return Type::Void();
@@ -405,7 +407,7 @@ StmtPtr Parser::parseStatement() {
             s->varName = current().value;
             advance();
         } else {
-            error(current(), "E0002", "expected variable name");
+            error(current(), "E0008", "expected variable name");
             hasErrors_ = true;
             advance();
         }
@@ -432,7 +434,7 @@ StmtPtr Parser::parseStatement() {
             s->callee = current().value;
             advance();
         } else {
-            error(current(), "E0002", "expected function name");
+            error(current(), "E0008", "expected function name");
             hasErrors_ = true;
             advance();
         }
@@ -440,7 +442,7 @@ StmtPtr Parser::parseStatement() {
         if (check(TokKind::Ident) && current().value == "以") {
             advance();
         } else {
-            error(current(), "E0002", "expected 以 after function name");
+            error(current(), "E0008", "expected 以 after function name");
             hasErrors_ = true;
         }
         expect(TokKind::LeftParen, "(");
@@ -586,7 +588,7 @@ ExprPtr Parser::parseBitAndExpr() {
 
 ExprPtr Parser::parseEqualityExpr() {
     ExprPtr left = parseRelationalExpr();
-    while (check(TokKind::DengYu) || check(TokKind::BuDeng)) {
+    if (check(TokKind::DengYu) || check(TokKind::BuDeng)) {
         std::string op = current().text;
         advance();
         auto e = std::make_shared<Expr>();
@@ -597,14 +599,18 @@ ExprPtr Parser::parseEqualityExpr() {
         e->line = left->line;
         e->col = left->col;
         left = e;
+        // 比較演算子は連鎖不可 (言語仕様 §4)
+        if (check(TokKind::DengYu) || check(TokKind::BuDeng)) {
+            error(current(), "E0008", "comparison operators cannot be chained: " + current().text);
+        }
     }
     return left;
 }
 
 ExprPtr Parser::parseRelationalExpr() {
     ExprPtr left = parseShiftExpr();
-    while (check(TokKind::XiaoYu) || check(TokKind::XiaoDeng) ||
-           check(TokKind::DaYu) || check(TokKind::DaDeng)) {
+    if (check(TokKind::XiaoYu) || check(TokKind::XiaoDeng) ||
+        check(TokKind::DaYu) || check(TokKind::DaDeng)) {
         std::string op = current().text;
         advance();
         auto e = std::make_shared<Expr>();
@@ -615,6 +621,11 @@ ExprPtr Parser::parseRelationalExpr() {
         e->line = left->line;
         e->col = left->col;
         left = e;
+        // 比較演算子は連鎖不可 (言語仕様 §4)
+        if (check(TokKind::XiaoYu) || check(TokKind::XiaoDeng) ||
+            check(TokKind::DaYu) || check(TokKind::DaDeng)) {
+            error(current(), "E0008", "comparison operators cannot be chained: " + current().text);
+        }
     }
     return left;
 }
@@ -694,7 +705,15 @@ ExprPtr Parser::parsePrimary() {
     // Integer literal
     if (match(TokKind::IntegerLit)) {
         e->kind = Expr::Kind::IntegerLit;
-        e->intValue = std::stoull(tok.value);
+        // 10進、または 0x + 16進 (言語仕様 §2)。u64 を超える値は E0010。
+        const std::string& lit = tok.value;
+        bool hex = lit.size() > 2 && lit[0] == '0' && (lit[1] == 'x' || lit[1] == 'X');
+        try {
+            e->intValue = std::stoull(lit, nullptr, hex ? 16 : 10);
+        } catch (const std::exception&) {
+            error(tok, "E0010", "integer literal " + lit + " does not fit in 64 bits");
+            e->intValue = 0;
+        }
         e->isNegative = false;
         return e;
     }
@@ -776,7 +795,7 @@ ExprPtr Parser::parsePrimary() {
             e->callee = current().value;
             advance();
         } else {
-            error(current(), "E0002", "expected function name after 呼");
+            error(current(), "E0008", "expected function name after 呼");
             hasErrors_ = true;
             advance();
         }
@@ -784,7 +803,7 @@ ExprPtr Parser::parsePrimary() {
         if (check(TokKind::Ident) && current().value == "以") {
             advance();
         } else {
-            error(current(), "E0002", "expected 以 after function name");
+            error(current(), "E0008", "expected 以 after function name");
             hasErrors_ = true;
         }
         expect(TokKind::LeftParen, "(");
@@ -869,7 +888,7 @@ ExprPtr Parser::parsePrimary() {
             e->fieldName = current().value;
             advance();
         } else {
-            error(current(), "E0002", "expected field name");
+            error(current(), "E0008", "expected field name");
             hasErrors_ = true;
             advance();
         }
@@ -888,7 +907,7 @@ ExprPtr Parser::parsePrimary() {
         return e;
     }
 
-    error(tok, "E0002", "unexpected token in expression: " + tok.text);
+    error(tok, "E0008", "unexpected token in expression: " + tok.text);
     hasErrors_ = true;
     advance();
     return e;
@@ -927,7 +946,7 @@ ExprPtr Parser::parseLvalue() {
             e->fieldName = current().value;
             advance();
         } else {
-            error(current(), "E0002", "expected field name");
+            error(current(), "E0008", "expected field name");
             hasErrors_ = true;
             advance();
         }
@@ -946,7 +965,7 @@ ExprPtr Parser::parseLvalue() {
         return e;
     }
 
-    error(tok, "E0002", "expected lvalue, got " + tok.text);
+    error(tok, "E0008", "expected lvalue, got " + tok.text);
     hasErrors_ = true;
     advance();
     return e;
