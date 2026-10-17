@@ -54,6 +54,7 @@ private:
 
     // Declaration checking
     void checkFunction(const FunctionDecl& fn);
+    bool alwaysReturns(const std::vector<StmtPtr>& block) const;
     void checkExternal(const FunctionDecl& fn);
     void checkConstant(const ConstantDecl& c);
     void checkStruct(const StructDecl& s);
@@ -66,6 +67,9 @@ private:
     // Literal coercion: an untyped integer literal adopts the expected integer
     // type, and 空 adopts the expected pointer type. Returns true if applied.
     bool coerceLiteral(const ExprPtr& value, const TypePtr& target);
+
+    // 初期化式を検査中の変数名 (自己参照による未初期化読み出しの検出用)
+    std::string initializingName_;
 
     // Scope management
     struct Scope {

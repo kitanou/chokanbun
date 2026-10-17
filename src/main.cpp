@@ -1,5 +1,6 @@
 #include "lexer.h"
 #include "parser.h"
+#include "astdump.h"
 #include "typecheck.h"
 #include "llvmir.h"
 #include <iostream>
@@ -102,26 +103,7 @@ int main(int argc, char* argv[]) {
     }
 
     if (emitAST) {
-        std::cout << "Module: " << mod.name << "\n";
-        for (auto& d : mod.decls) {
-            switch (d.kind) {
-                case Decl::Kind::Function:
-                    std::cout << "  Function: " << d.function->name << "\n";
-                    break;
-                case Decl::Kind::External:
-                    std::cout << "  External: " << d.function->name << "\n";
-                    break;
-                case Decl::Kind::Struct:
-                    std::cout << "  Struct: " << d.structDecl->name << "\n";
-                    break;
-                case Decl::Kind::Alias:
-                    std::cout << "  Alias: " << d.alias->name << "\n";
-                    break;
-                case Decl::Kind::Constant:
-                    std::cout << "  Constant: " << d.constant->name << "\n";
-                    break;
-            }
-        }
+        std::cout << dumpModule(mod);
         return 0;
     }
 

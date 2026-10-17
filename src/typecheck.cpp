@@ -47,6 +47,16 @@ void TypeChecker::errorAt(const Stmt& s, const std::string& code, const std::str
 bool TypeChecker::coerceLiteral(const ExprPtr& value, const TypePtr& target) {
     if (!value || !target) return false;
     if (value->kind == Expr::Kind::IntegerLit && target->isInteger()) {
+        // 数値リテラルは使用文脈の整数型に適合しなければエラー (言語仕様 §2)
+        uint64_t bits = target->sizeBytes() * 8;
+        uint64_t maxv = target->isSigned()
+            ? ((uint64_t(1) << (bits - 1)) - 1)
+            : (bits >= 64 ? UINT64_MAX : ((uint64_t(1) << bits) - 1));
+        if (value->intValue > maxv) {
+            error(value->line, value->col, "E0010",
+                "integer literal " + std::to_string(value->intValue) +
+                " is out of range for " + target->toString());
+        }
         exprTypes_[value.get()] = target;
         return true;
     }
@@ -261,7 +271,13 @@ TypePtr TypeChecker::checkIdent(const Expr& e) {
         return t;
     }
 
-    errorAt(e, "E0003", "undeclared identifier " + e.identName);
+    if (!initializingName_.empty() && e.identName == initializingName_) {
+        // 設は必ず初期値を持つので、未初期化の読み出しは自己参照でのみ生じる
+        errorAt(e, "E0005", "uninitialized read of variable " + e.identName +
+            " in its own initializer");
+    } else {
+        errorAt(e, "E0003", "undeclared identifier " + e.identName);
+    }
     auto t = Type::Void();
     exprTypes_[&e] = t;
     return t;
@@ -783,7 +799,10 @@ void TypeChecker::checkStmt(const Stmt& s) {
 void TypeChecker::checkLocalDecl(const Stmt& s) {
     // Check initializer
     if (s.init) {
+        std::string savedInit = initializingName_;
+        initializingName_ = s.varName;
         TypePtr it = checkExpr(*s.init);
+        initializingName_ = savedInit;
         if (s.varType && it && !it->isSameAs(*s.varType)) {
             if (coerceLiteral(s.init, s.varType)) {
                 it = s.varType;
@@ -936,7 +955,35 @@ void TypeChecker::checkFunction(const FunctionDecl& fn) {
     }
     currentReturnType_ = savedReturn;
 
+    // 無 以外の関数は全経路で値を返すこと (言語仕様 §5)。不返 は対象外。
+    if (fn.returnType && fn.returnType->kind != Type::Kind::Void && !fn.isNoreturn &&
+        !alwaysReturns(fn.body)) {
+        error(fn.line, fn.col, "E0011",
+            "function " + fn.name + " does not return a value on every path");
+    }
+
     exitScope();
+}
+
+// 文の列が必ず 歸 に到達して戻るか。当 (while) は 0 回かもしれないので数えない。
+bool TypeChecker::alwaysReturns(const std::vector<StmtPtr>& block) const {
+    for (auto& st : block) {
+        if (!st) continue;
+        switch (st->kind) {
+            case Stmt::Kind::ReturnStmt:
+                return true;
+            case Stmt::Kind::IfStmt:
+                if (st->hasElse && alwaysReturns(st->thenBlock) && alwaysReturns(st->elseBlock))
+                    return true;
+                break;
+            case Stmt::Kind::UnsafeBlock:
+                if (alwaysReturns(st->unsafeBody)) return true;
+                break;
+            default:
+                break;
+        }
+    }
+    return false;
 }
 
 void TypeChecker::checkExternal(const FunctionDecl& fn) {
