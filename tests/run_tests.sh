@@ -233,6 +233,16 @@ if [ -f "$OUT/kernel.elf" ]; then
             fail "kernel qemu: EL0 行程を投入 (民籍投入)"
             sed 's/^/      /' "$KLOG" 2>/dev/null | head -20
         fi
+        K_AK="$(grep -oE '甲棧 0x[0-9a-f]{16}' "$KLOG" 2>/dev/null | grep -oE '0x[0-9a-f]{16}')"
+        K_BK="$(grep -oE '乙棧 0x[0-9a-f]{16}' "$KLOG" 2>/dev/null | grep -oE '0x[0-9a-f]{16}')"
+        if [ -n "$K_AK" ] && [ -n "$K_BK" ] && [ "$K_AK" != "$K_BK" ] && \
+           [ $((K_AK)) -ge $((0x40320000)) ] && [ $((K_AK)) -lt $((0x40340000)) ] && \
+           [ $((K_BK)) -ge $((0x40320000)) ] && [ $((K_BK)) -lt $((0x40340000)) ]; then
+            pass "kernel qemu: 行程ごとの核棧 (甲='${K_AK}' 乙='${K_BK}' が別アドレス)"
+        else
+            fail "kernel qemu: 行程ごとの核棧 (甲='${K_AK:-none}' 乙='${K_BK:-none}')"
+            sed 's/^/      /' "$KLOG" 2>/dev/null | head -20
+        fi
         K_AW="$(grep -oE '甲書 0x[0-9a-f]{16}' "$KLOG" 2>/dev/null | grep -oE '0x[0-9a-f]{16}')"
         K_BW="$(grep -oE '乙書 0x[0-9a-f]{16}' "$KLOG" 2>/dev/null | grep -oE '0x[0-9a-f]{16}')"
         if [ "$K_AW" = "0x000000000000000a" ] && [ "$K_BW" = "0x000000000000000b" ]; then
