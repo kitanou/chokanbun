@@ -22,7 +22,7 @@ QEMU `virt` / AArch64 で動く研究用 OS。カーネルも、その上で動�
 | M6 | 機械漢文製ブートローダー | 未着手 |
 | M7 | セルフホスティング | 未着手 |
 
-`make test` は 119 ケースすべて PASS（IR 生成 → AArch64 オブジェクト → ELF リンク → QEMU 実行まで）。
+`make test` は 122 ケースすべて PASS（IR 生成 → AArch64 オブジェクト → ELF リンク → QEMU 実行まで）。
 詳しい進捗と次の一手は [ロードマップ](docs/roadmap.md)、実装の中身は [実装メモ](docs/implementation-notes.md)。
 
 ## クイックスタート
