@@ -65,6 +65,10 @@ int main(int argc, char* argv[]) {
         }
     }
 
+    // LLVM IR is currently the only backend, so -ir is accepted but the
+    // default output is always textual IR.
+    (void)emitIR;
+
     // Read source
     std::string source;
     if (!readFile(sourcePath, source)) {

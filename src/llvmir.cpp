@@ -2,8 +2,50 @@
 #include <iostream>
 #include <sstream>
 #include <cstring>
+#include <cctype>
 
 namespace chokanbun {
+
+// LLVM unquoted identifiers are limited to [-a-zA-Z$._0-9]. Anything else
+// (e.g. CJK) must be emitted as @"..." . The ELF symbol keeps the raw bytes.
+static bool irNeedsQuote(const std::string& s) {
+    if (s.empty()) return true;
+    for (unsigned char c : s) {
+        if (!(std::isalnum(c) || c == '_' || c == '.' || c == '$')) return true;
+    }
+    return false;
+}
+
+static std::string irName(const std::string& s) {
+    if (irNeedsQuote(s)) return "@\"" + s + "\"";
+    return "@" + s;
+}
+
+// The ELF symbol for a function: 記號「...」 if present, else "main" for 核主,
+// otherwise the language-level name.
+static std::string fnSymbol(const FunctionDecl& fn) {
+    if (!fn.symbolName.empty()) return fn.symbolName;
+    if (fn.name == "核主") return "main";
+    return fn.name;
+}
+
+static std::string escapeIrBytes(const std::string& s) {
+    std::string out;
+    for (unsigned char c : s) {
+        if (c == '"' || c == '\\') {
+            out += '\\';
+            out += static_cast<char>(c);
+        } else if (c >= 0x20 && c < 0x7f) {
+            out += static_cast<char>(c);
+        } else {
+            static const char* hex = "0123456789ABCDEF";
+            out += '\\';
+            out += hex[(c >> 4) & 0xF];
+            out += hex[c & 0xF];
+        }
+    }
+    return out;
+}
 
 LLVMIRGen::LLVMIRGen() {
     ir_ = "; ModuleID = 'chokanbun'\n";
@@ -92,19 +134,16 @@ void LLVMIRGen::genFunction(const FunctionDecl& fn) {
         // We'll add section as a module-level attribute later
     }
 
-    std::string name = fn.name;
-    if (!fn.symbolName.empty()) {
-        name = fn.symbolName;
-    }
+    std::string name = fnSymbol(fn);
 
     // Linkage: public (external) for 公開/main, internal otherwise
     std::string linkage = "internal";
-    if (fn.isPublic || fn.name == "核主" || fn.symbolName == "main")
+    if (fn.isPublic || name == "main")
         linkage = "external";
 
     std::string define = "define ";
     if (fn.isNoreturn) define += "noreturn ";
-    define += linkage + " " + retType + " @" + name + "(";
+    define += linkage + " " + retType + " " + irName(name) + "(";
     emit(define);
     for (size_t i = 0; i < fn.params.size(); i++) {
         if (i > 0) ir_ += ", ";
@@ -229,12 +268,12 @@ void LLVMIRGen::genCallStmt(const StmtPtr& s) {
         callArgs += genExpr(s->args[i]);
     }
 
-    std::string symbol = fn->symbolName.empty() ? fn->name : fn->symbolName;
+    std::string symbol = fnSymbol(*fn);
     if (fn->returnType->kind == Type::Kind::Void) {
-        emit("call void @" + symbol + "(" + callArgs + ")");
+        emit("call void " + irName(symbol) + "(" + callArgs + ")");
     } else {
         std::string ret = freshName("r");
-        emit("%" + ret + " = call " + llvmType(fn->returnType) + " @" + symbol + "(" + callArgs + ")");
+        emit("%" + ret + " = call " + llvmType(fn->returnType) + " " + irName(symbol) + "(" + callArgs + ")");
     }
 }
 
@@ -487,13 +526,13 @@ std::string LLVMIRGen::genCall(const ExprPtr& e) {
         callArgs += genExpr(e->args[i]);
     }
 
-    std::string symbol = fn->symbolName.empty() ? fn->name : fn->symbolName;
+    std::string symbol = fnSymbol(*fn);
     std::string ret = freshName("call");
     if (fn->returnType->kind == Type::Kind::Void) {
-        emit("call void @" + symbol + "(" + callArgs + ")");
+        emit("call void " + irName(symbol) + "(" + callArgs + ")");
         return "void ";
     } else {
-        emit("%" + ret + " = call " + llvmType(fn->returnType) + " @" + symbol + "(" + callArgs + ")");
+        emit("%" + ret + " = call " + llvmType(fn->returnType) + " " + irName(symbol) + "(" + callArgs + ")");
         return llvmType(fn->returnType) + " %" + ret;
     }
 }
@@ -512,8 +551,7 @@ std::string LLVMIRGen::genAddrOf(const ExprPtr& e) {
     }
     // 取址(『...』) - address of string literal (spec §9)
     if (e->addend->kind == Expr::Kind::StringLit) {
-        std::string name = genStringLit(e->addend);
-        return "ptr @" + name;
+        return genStringLit(e->addend);
     }
     error(e->line, e->col, "E0006", "cannot take address of non-lvalue");
     return "ptr null";
@@ -625,42 +663,101 @@ std::string LLVMIRGen::genElemAccess(const ExprPtr& e) {
     return "i64 %" + result;
 }
 
+void LLVMIRGen::genExternal(const FunctionDecl& fn) {
+    std::string name = fnSymbol(fn);
+    std::string s = "declare " + llvmType(fn.returnType) + " " + irName(name) + "(";
+    for (size_t i = 0; i < fn.params.size(); i++) {
+        if (i > 0) s += ", ";
+        s += llvmType(fn.params[i].type);
+    }
+    s += ")";
+    emit(s);
+}
+
+void LLVMIRGen::genAlias(const AliasDecl& a) {
+    // 別名 is resolved during type checking; nothing to emit.
+    (void)a;
+}
+
+void LLVMIRGen::genConstant(const ConstantDecl& c) {
+    // Fold simple constant literals so 常 can be used in expressions.
+    std::string lit = "0";
+    if (c.value) {
+        if (c.value->kind == Expr::Kind::IntegerLit) {
+            lit = (c.value->isNegative ? "-" : "") + std::to_string(c.value->intValue);
+        } else if (c.value->kind == Expr::Kind::BoolLit) {
+            lit = c.value->boolValue ? "true" : "false";
+        }
+    }
+    constants_[c.name] = {c.type, lit};
+}
+
+void LLVMIRGen::genStruct(const StructDecl& s) {
+    // Struct types are emitted inline at each use site in v0.1.
+    (void)s;
+}
+
 std::string LLVMIRGen::generate(const Module& mod) {
-    // First pass: collect all declarations
+    // Pass 0: register declarations so calls/fields can be resolved.
     for (auto& d : mod.decls) {
         switch (d.kind) {
             case Decl::Kind::Function:
-                if (d.function) {
-                    bool isPublic = d.function->isPublic;
-                    bool isMain = (d.function->symbolName == "main" || d.function->name == "核主");
-                    if (isPublic || isMain) {
-                        // emit declaration
-                    }
-                }
+            case Decl::Kind::External:
+                if (d.function) functions_[d.function->name] = d.function;
+                break;
+            case Decl::Kind::Struct:
+                if (d.structDecl) structs_[d.structDecl->name] = d.structDecl;
+                break;
+            case Decl::Kind::Alias:
+                if (d.alias) aliases_[d.alias->name] = d.alias;
                 break;
             default:
                 break;
         }
     }
-    // Second pass: emit definitions
+
+    // Pass 1: fold constants (usable from any function).
+    for (auto& d : mod.decls) {
+        if (d.kind == Decl::Kind::Constant && d.constant) genConstant(*d.constant);
+    }
+
+    // Pass 2: emit external declarations first, then definitions.
+    bool anyDecl = false;
+    for (auto& d : mod.decls) {
+        if ((d.kind == Decl::Kind::Function || d.kind == Decl::Kind::External) &&
+            d.function && d.function->isExternal) {
+            genExternal(*d.function);
+            anyDecl = true;
+        }
+    }
+    if (anyDecl) emitBlank();
+
     for (auto& d : mod.decls) {
         switch (d.kind) {
             case Decl::Kind::Function:
-                // 外術曰 declarations are emitted as declare, not define
-                if (d.function && d.function->isExternal) genExternal(*d.function);
-                else if (d.function) genFunction(*d.function);
+                if (d.function && !d.function->isExternal) genFunction(*d.function);
                 break;
             case Decl::Kind::Alias:
                 if (d.alias) genAlias(*d.alias);
                 break;
-            case Decl::Kind::Constant:
-                if (d.constant) genConstant(*d.constant);
-                break;
             case Decl::Kind::Struct:
                 if (d.structDecl) genStruct(*d.structDecl);
                 break;
+            default:
+                break;
         }
     }
+
+    // Pass 3: emit collected string literal storage.
+    if (!stringData_.empty()) {
+        for (auto& sd : stringData_) {
+            emit("@" + sd.first + " = private unnamed_addr constant [" +
+                 std::to_string(sd.second.size()) + " x i8] c\"" +
+                 escapeIrBytes(sd.second) + "\", align 1");
+        }
+        emitBlank();
+    }
+
     return ir_;
 }
 

@@ -3,6 +3,7 @@
 
 # Build artifacts
 build/
+tests/output/
 
 # Executables
 /chokanbun

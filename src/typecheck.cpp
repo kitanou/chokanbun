@@ -77,6 +77,7 @@ void TypeChecker::markInitialized(const std::string& name) {
     // In v0.1, all declared variables are considered initialized
     // (the spec requires rejection of uninitialized reads, but for v0.1
     //  we treat all variables as initialized after declaration)
+    (void)name;
 }
 
 FunctionDecl* TypeChecker::findFunction(const std::string& name) const {
@@ -437,7 +438,15 @@ TypePtr TypeChecker::checkAddrOf(const Expr& e) {
     // 取址 of a local variable is a safe operation
     // 取址 of a dereference is a safe operation (re-obtaining the pointer)
 
-    auto t = Type::Pointer(base);
+    // A string literal is a byte array; its address is 指標〈無符八〉.
+    TypePtr pointeeType = base;
+    if (base->kind == Type::Kind::String) {
+        pointeeType = Type::U8();
+    } else if (base->kind == Type::Kind::Array && base->element) {
+        pointeeType = base->element;
+    }
+
+    auto t = Type::Pointer(pointeeType);
     exprTypes_[&e] = t;
     return t;
 }
@@ -610,10 +619,8 @@ TypePtr TypeChecker::checkFieldAccess(const Expr& e) {
 
     // The base must be a struct or a pointer to struct
     TypePtr structType = base;
-    bool isPtr = false;
     if (base->kind == Type::Kind::Pointer && base->pointee) {
         structType = base->pointee;
-        isPtr = true;
     }
 
     if (structType->kind != Type::Kind::Struct) {
@@ -667,10 +674,8 @@ TypePtr TypeChecker::checkElemAccess(const Expr& e) {
 
     // The base must be an array or pointer to array
     TypePtr arrType = base;
-    bool isPtr = false;
     if (base->kind == Type::Kind::Pointer && base->pointee) {
         arrType = base->pointee;
-        isPtr = false; // pointer to array: element access is safe
     }
 
     if (arrType->kind != Type::Kind::Array) {
