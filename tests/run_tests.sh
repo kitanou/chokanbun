@@ -152,7 +152,12 @@ sh tools/mkimage.sh user/btron_gtid.txt "$OUT/btron_gtid.zo" "$OUT" 2>"$OUT/user
         fail "user: BTRON3 互換層の試験 識試 を漢像にビルド"
         sed 's/^/      /' "$OUT/user_btron_gtid.build.log" | head -10
     }
-sh tools/gen-images.sh "$OUT/kernel_images.S" 問安="$OUT/hello.zo" 數="$OUT/count.zo" 識試="$OUT/btron_gtid.zo" \
+sh tools/mkimage.sh user/btron_gname.txt "$OUT/btron_gname.zo" "$OUT" 2>"$OUT/user_btron_gname.build.log" \
+    && pass "user: BTRON3 互換層の試験 名試 (グローバル名) を漢像にビルド" || {
+        fail "user: BTRON3 互換層の試験 名試 を漢像にビルド"
+        sed 's/^/      /' "$OUT/user_btron_gname.build.log" | head -10
+    }
+sh tools/gen-images.sh "$OUT/kernel_images.S" 問安="$OUT/hello.zo" 數="$OUT/count.zo" 識試="$OUT/btron_gtid.zo" 名試="$OUT/btron_gname.zo" \
     && "$CLANG" --target=aarch64-none-elf -c "$OUT/kernel_images.S" -o "$OUT/kernel_images.o" \
         >"$OUT/kernel_images.log" 2>&1 \
     && pass "kernel: 漢像の埋め込み (像表)" || fail "kernel: 漢像の埋め込み (像表)"
@@ -234,7 +239,7 @@ if [ -f "$OUT/kernel.elf" ]; then
         # Then feed 殻 (shell) commands once 甲 has read that line (M4).
         ( printf 'KANBUN\n' > "$PIPE.in"
           for _ in $(seq 1 60); do grep -q "甲得" "$KLOG" 2>/dev/null && break; sleep 0.25; done
-          printf '響 天下太平\n讀 史記\n怪\n讀 無題\n目\n書 筆記 天地玄黄\n讀 筆記\n書 一二三四五六 x\n書 筆記\n目\n削 筆記\n讀 筆記\n目\n削 筆記\n書 新稿 草\n目\n問安 日月\n數 一 二 三\n識試\n存在せず 子\n助\n終\n' > "$PIPE.in" ) &
+          printf '響 天下太平\n讀 史記\n怪\n讀 無題\n目\n書 筆記 天地玄黄\n讀 筆記\n書 一二三四五六 x\n書 筆記\n目\n削 筆記\n讀 筆記\n目\n削 筆記\n書 新稿 草\n目\n問安 日月\n數 一 二 三\n識試\n名試\n存在せず 子\n助\n終\n' > "$PIPE.in" ) &
         FEEDPID=$!
         # Wait up to ~15s for the final marker, then stop QEMU.  The generic
         # timer fires five times (5 × CNTFRQ/40 ≈ 125 ms), so this is ample.
@@ -560,6 +565,15 @@ if [ -f "$OUT/kernel.elf" ]; then
         else
             fail "kernel qemu: BTRON3 互換層 (不一致:$BTRON_BAD)"
             grep -a '識試' "$KLOG" 2>/dev/null | sed 's/^/      /'
+        fi
+        # --- #42 G1: グローバル名 (cre_nam / del_nam / get_nam) -------------------
+        GN_N="$(grep -ac '^名試 ' "$KLOG" 2>/dev/null)"
+        GN_BAD="$(grep -a '^名試 ' "$KLOG" 2>/dev/null | grep -vc '0x0000000000000001$')"
+        if [ "${GN_N:-0}" -eq 21 ] && [ "${GN_BAD:-1}" -eq 0 ]; then
+            pass "kernel qemu: BTRON3 互換層 グローバル名 (作成・取得・変更・強制・削除・ER_*・8文字・16件・DELEXIT の ${GN_N} 項目)"
+        else
+            fail "kernel qemu: BTRON3 互換層 グローバル名 (項目=${GN_N:-0}/21、失敗=${GN_BAD:-?})"
+            grep -a '^名試 ' "$KLOG" 2>/dev/null | sed 's/^/      /'
         fi
         K_UNK="$(grep -ac '殻不明' "$KLOG" 2>/dev/null)"
         if [ "${K_UNK:-0}" -ge 2 ]; then
