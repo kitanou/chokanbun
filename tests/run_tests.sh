@@ -98,8 +98,8 @@ sh tools/kernel-expand.sh kernel/kernel.txt "$OUT/kernel_all.txt" \
 # 展開後の行番号を元のファイル:行へ戻せること (診断の位置合わせ)
 KLINE="$(grep -n '術曰「籍削」' "$OUT/kernel_all.txt" | head -1 | cut -d: -f1)"
 if [ -n "$KLINE" ] && [ "$(sh tools/kernel-line.sh "$OUT/kernel_all.txt.map" "$KLINE")" = \
-     "kernel/vfs/ramfs.txt:$(grep -n '術曰「籍削」' kernel/vfs/ramfs.txt | head -1 | cut -d: -f1)" ]; then
-    pass "kernel: 展開後の行番号を元のファイル:行へ戻せる (籍削 → kernel/vfs/ramfs.txt)"
+     "kernel/vfs/pian.txt:$(grep -n '術曰「籍削」' kernel/vfs/pian.txt | head -1 | cut -d: -f1)" ]; then
+    pass "kernel: 展開後の行番号を元のファイル:行へ戻せる (籍削 → kernel/vfs/pian.txt)"
 else
     fail "kernel: 展開後の行番号を元のファイル:行へ戻せる"
 fi
@@ -187,7 +187,17 @@ sh tools/mkimage.sh user/btron_comm.txt "$OUT/btron_comm.zo" "$OUT" 2>"$OUT/user
         fail "user: BTRON3 互換層の試験 緩試 を漢像にビルド"
         sed 's/^/      /' "$OUT/user_btron_comm.build.log" | head -10
     }
-sh tools/gen-images.sh "$OUT/kernel_images.S" 問安="$OUT/hello.zo" 數="$OUT/count.zo" 識試="$OUT/btron_gtid.zo" 名試="$OUT/btron_gname.zo" 時試="$OUT/btron_clk.zo" 信試="$OUT/btron_msg.zo" 利試="$OUT/btron_usr.zo" 強試="$OUT/btron_term.zo" 同試="$OUT/btron_sync.zo" 緩試="$OUT/btron_comm.zo" \
+sh tools/mkimage.sh user/btron_file.txt "$OUT/btron_file.zo" "$OUT" 2>"$OUT/user_btron_file.build.log" \
+    && pass "user: BTRON3 互換層の試験 録試 (ファイル管理 B1: 接続・パス解決) を漢像にビルド" || {
+        fail "user: BTRON3 互換層の試験 録試 を漢像にビルド"
+        sed 's/^/      /' "$OUT/user_btron_file.build.log" | head -10
+    }
+sh tools/mkimage.sh user/pian_test.txt "$OUT/pian_test.zo" "$OUT" 2>"$OUT/user_pian_test.build.log" \
+    && pass "user: 篇藏の試験 篇試 (F1〜F3) を漢像にビルド" || {
+        fail "user: 篇藏の試験 篇試 を漢像にビルド"
+        sed 's/^/      /' "$OUT/user_pian_test.build.log" | head -10
+    }
+sh tools/gen-images.sh "$OUT/kernel_images.S" 問安="$OUT/hello.zo" 數="$OUT/count.zo" 識試="$OUT/btron_gtid.zo" 名試="$OUT/btron_gname.zo" 時試="$OUT/btron_clk.zo" 信試="$OUT/btron_msg.zo" 利試="$OUT/btron_usr.zo" 強試="$OUT/btron_term.zo" 同試="$OUT/btron_sync.zo" 緩試="$OUT/btron_comm.zo" 録試="$OUT/btron_file.zo" 篇試="$OUT/pian_test.zo" \
     && "$CLANG" --target=aarch64-none-elf -c "$OUT/kernel_images.S" -o "$OUT/kernel_images.o" \
         >"$OUT/kernel_images.log" 2>&1 \
     && pass "kernel: 漢像の埋め込み (像表)" || fail "kernel: 漢像の埋め込み (像表)"
@@ -269,7 +279,7 @@ if [ -f "$OUT/kernel.elf" ]; then
         # Then feed 殻 (shell) commands once 甲 has read that line (M4).
         ( printf 'KANBUN\n' > "$PIPE.in"
           for _ in $(seq 1 60); do grep -q "甲得" "$KLOG" 2>/dev/null && break; sleep 0.25; done
-          printf '響 天下太平\n讀 史記\n怪\n讀 無題\n目\n書 筆記 天地玄黄\n讀 筆記\n書 一二三四五六 x\n書 筆記\n目\n削 筆記\n讀 筆記\n目\n削 筆記\n書 新稿 草\n目\n問安 日月\n數 一 二 三\n識試\n名試\n時試\n信試\n利試\n強試\n同試\n緩試\n存在せず 子\n助\n終\n' > "$PIPE.in" ) &
+          printf '響 天下太平\n讀 史記\n怪\n讀 無題\n目\n書 筆記 天地玄黄\n讀 筆記\n書 一二三四五六七八九十壱 x\n書 筆記\n目\n削 筆記\n讀 筆記\n目\n削 筆記\n書 新稿 草\n目\n問安 日月\n數 一 二 三\n識試\n名試\n時試\n信試\n利試\n強試\n同試\n緩試\n録試\n篇試\n存在せず 子\n助\n終\n' > "$PIPE.in" ) &
         FEEDPID=$!
         # Wait up to ~15s for the final marker, then stop QEMU.  The generic
         # timer fires five times (5 × CNTFRQ/40 ≈ 125 ms), so this is ample.
@@ -496,8 +506,8 @@ if [ -f "$OUT/kernel.elf" ]; then
             fail "kernel qemu: 殻 書→讀 (書='${K_WR:-none}')"
             sed 's/^/      /' "$KLOG" 2>/dev/null | head -60
         fi
-        if grep -q '殻誤 0xfffffffffffffff2' "$KLOG" 2>/dev/null && grep -q '殻用法' "$KLOG" 2>/dev/null; then
-            pass "kernel qemu: 殻 書 の誤り経路 (長すぎる名前→-EFAULT、引数不足→用法)"
+        if grep -q '殻誤 0xffffffffffffffdc' "$KLOG" 2>/dev/null && grep -q '殻用法' "$KLOG" 2>/dev/null; then
+            pass "kernel qemu: 殻 書 の誤り経路 (32 バイトを超える名前→-ENAMETOOLONG、引数不足→用法)"
         else
             fail "kernel qemu: 殻 書 の誤り経路"
             sed 's/^/      /' "$KLOG" 2>/dev/null | head -60
@@ -561,10 +571,11 @@ if [ -f "$OUT/kernel.elf" ]; then
             grep -a '子行程\|異常' "$KLOG" 2>/dev/null | sed 's/^/      /' | head
         fi
         K_CH="$(grep -ac '子行程起動' "$KLOG" 2>/dev/null)"
-        if [ "${K_CH:-0}" -eq 22 ]; then
-            pass "kernel qemu: 起動・回収を 20 回繰り返しても頁が漏れず、毎回子が走る (子の出力 22 回 = 検証 21 + 殻 1)"
+        # 子の出力 = 検証 21 + 殻の 問安 1 + 篇試 が術のパスで起動する 問安 1
+        if [ "${K_CH:-0}" -eq 23 ]; then
+            pass "kernel qemu: 起動・回収を 20 回繰り返しても頁が漏れず、毎回子が走る (子の出力 23 回 = 検証 21 + 殻 1 + 篇試 1)"
         else
-            fail "kernel qemu: 起動・回収の繰り返し (子の出力=${K_CH:-0} 回、期待 22)"
+            fail "kernel qemu: 起動・回収の繰り返し (子の出力=${K_CH:-0} 回、期待 23)"
         fi
         # --- M5/P2: 殻が外部命令を起動する (引数 argc/argv と柄の継承) ----------------
         if grep -aq '^子行程起動 日月' "$KLOG" 2>/dev/null; then
@@ -595,6 +606,29 @@ if [ -f "$OUT/kernel.elf" ]; then
         else
             fail "kernel qemu: BTRON3 互換層 (不一致:$BTRON_BAD)"
             grep -a '識試' "$KLOG" 2>/dev/null | sed 's/^/      /'
+        fi
+        # --- 篇藏 F1〜F3 (#6): 篇ID・屬、章とパス、名替、權・志・器・術・法 ---------------
+        PF_N="$(grep -ac '^篇試 ' "$KLOG" 2>/dev/null)"
+        PF_BAD="$(grep -a '^篇試 ' "$KLOG" 2>/dev/null | grep -vc '0x0000000000000001$')"
+        if [ "${PF_N:-0}" -eq 28 ] && [ "${PF_BAD:-1}" -eq 0 ]; then
+            pass "kernel qemu: 篇藏 F1〜F3 (${PF_N} 項目)"
+        else
+            fail "kernel qemu: 篇藏 F1〜F3 (項目=${PF_N:-0}/28、失敗=${PF_BAD:-?})"
+            grep -a '^篇試 ' "$KLOG" 2>/dev/null | sed 's/^/      /'
+        fi
+        if grep -aq '^篇試器盤出力' "$KLOG" 2>/dev/null; then
+            pass "kernel qemu: 篇藏 器/盤 への書込が UART に出る"
+        else
+            fail "kernel qemu: 篇藏 器/盤 への書込が UART に出ない"
+        fi
+        # --- #42 1.6 B1: ファイル管理の接続とパス解決 ----------------------------------
+        FL_N="$(grep -ac '^録試 ' "$KLOG" 2>/dev/null)"
+        FL_BAD="$(grep -a '^録試 ' "$KLOG" 2>/dev/null | grep -vc '0x0000000000000001$')"
+        if [ "${FL_N:-0}" -eq 20 ] && [ "${FL_BAD:-1}" -eq 0 ]; then
+            pass "kernel qemu: BTRON3 互換層 ファイル管理 B1 (接続・get_lnk・chg_wrk の ${FL_N} 項目)"
+        else
+            fail "kernel qemu: BTRON3 互換層 ファイル管理 B1 (項目=${FL_N:-0}/20、失敗=${FL_BAD:-?})"
+            grep -a '^録試 ' "$KLOG" 2>/dev/null | sed 's/^/      /'
         fi
         # --- #42 G6b: メッセージバッファとランデブポート (1.3) ------------------------
         CM_N="$(grep -ac '^緩試 ' "$KLOG" 2>/dev/null)"

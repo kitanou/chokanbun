@@ -162,13 +162,18 @@
 
 | API 群 | 含まれる API | 既存実装 | 状態 |
 |---|---|---|---|
-| 参照・作成・削除 | `get_lnk` `chg_wrk` `cre_fil` `cre_lnk` `gen_fil` `del_fil` | `開`/`創`/`削`（番11/16/24）が**平坦な名前**の典籍に対して同種の操作。ディレクトリ・リンク・ID なし | 部分適合（機能のみ） |
+| 参照 | `get_lnk` `chg_wrk` | `user/btron/file.txt` → 漢令 136・137（`kernel/file/btron.txt`）。接続名・相対・TC_FOWN・出現番号・F_BASED・F_DIRECT。試験 `録試` | 実装済・未検証 |
+| 作成・削除 | `cre_fil` `cre_lnk` `gen_fil` `del_fil` | 未実装（B2）。核の起動時に試験用のファイルを作るだけ | 未実装 |
 | 開閉 | `opn_fil` `cls_fil` | `開`/`閉`（番11/12）、行程ごとの柄表→開表。排他モードなし | 部分適合（機能のみ） |
 | レコード操作 | `see_rec` `fnd_rec` `fnd_lnk` `rea_rec` `wri_rec` `ins_rec` `apd_rec` `del_rec` `trc_rec` `xch_fil` `loc_rec` | `讀入`/`柄書`（番13/14）は**バイト列**の読み書き。レコード構造なし | 未実装（データモデルが異なる） |
 | 検査・属性 | `chk_fil` `chg_fmd` `chg_fat` `chg_fpw` `chg_fnm` `chg_ftm` `get_dfm` `set_dfm` | なし | 未実装 |
 | 状態・リンク | `fil_sts` `ofl_sts` `lnk_sts` `syn_lnk` `get_nlk` | `目録`（番15）が名前の列挙のみ | 未実装 |
-| ファイルシステム | `att_fls` `det_fls` `syn_fls` `fls_sts` `chg_fls` `chg_fsm` `lst_fls` | なし（RAMFS 固定） | 未実装 |
+| ファイルシステム | `att_fls` `det_fls` `lst_fls` `fls_sts`（実装）、`syn_fls` `chg_fls` `chg_fsm`（未実装） | 漢令 128〜131。装置は RAM（起動時に接続）と SYS（読取専用、未接続） | 部分適合 |
 | 写像 | `map_rec` `ump_rec` | なし | 未実装 |
+
+**B0 の確認結果**: 原文 1.6 の末尾まで確認した（アクセス権の配置、アクセス管理レベル、レコードの制限が無いこと、`TC_FSEP` が出現番号の区切りであること、各 API の戻り値の細部）。残る要確認は [btron3-file-design.md](btron3-file-design.md) §12。
+
+**設計**: [btron3-file-design.md](btron3-file-design.md)（篇藏の上に「録」層を置き、型 `録` の篇をレコード列のファイルとして扱う。段階 B0〜B6）。
 
 **主な差分**: BTRON3 の「レコード列＋リンク＋ファイル ID」モデルと、現在の「名前→バイト列（最大 256 B、8 件）」は構造が異なる。Issue の Phase 4 に従い、**篇藏（`design-pianfs.md`）を内部ストレージ、BTRON3 互換モデルを外部層**とする分離が必要。RAMFS の上限（8 件・256 B）は互換試験の障害になるため、拡張が前提。
 **要確認**: レコード番号の基準、パス区切り文字の具体、`ER_*` 割当、`map_rec` のモード。

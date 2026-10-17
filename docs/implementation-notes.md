@@ -154,12 +154,12 @@ Phase 0 の参照用。VFS は `kernel/vfs/` に分割済み（下記）。
 
 - `kernel/kernel.txt` の `註 @取込 相対パス` という**コメント行**を、`tools/kernel-expand.sh` が指定ファイルの内容で置き換える（入れ子可）。
   コンパイラはこの行を単なるコメントとして読むので、言語や仕様は変えていない。
-- 現在の分割: `kernel/vfs/const.txt`（典籍の定数）、`kernel/vfs/ramfs.txt`（典籍の関数。`籍入`〜`籍目`）。
+- 現在の分割: `kernel/vfs/const.txt`（篇藏と柄表の定数）、`kernel/vfs/pian.txt`（篇藏: 篇表・章・パス解決・`籍入`〜`籍目`・名替・屬・權・章移）、`kernel/vfs/handle.txt`（柄表・開表と読み書き）。
 - `make test` は展開結果 `tests/output/kernel_all.txt` をコンパイルする。**展開前の `kernel/kernel.txt` を直接コンパイルしても通らない**（関数が足りない）。
 - 診断の行番号は展開後のもの。元の位置へ戻すには:
 
 ```sh
-sh tools/kernel-line.sh tests/output/kernel_all.txt.map <展開後の行番号>   # 例: kernel/vfs/ramfs.txt:195
+sh tools/kernel-line.sh tests/output/kernel_all.txt.map <展開後の行番号>   # 例: kernel/vfs/pian.txt:195
 ```
 
 - 展開後のソースは分割前とバイト単位で同一であることを確認した（IR も同じ）。将来、言語に取込構文を入れるときは、この分割をそのまま移せる。
