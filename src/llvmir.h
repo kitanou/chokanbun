@@ -82,6 +82,9 @@ private:
     int counter_ = 0;
     const TypeChecker* tc_ = nullptr;
     TypePtr currentReturnType_;
+    // Local allocas are hoisted to the entry block so loops do not grow the stack.
+    size_t entryInsertPos_ = 0;
+    std::string entryAllocas_;
 
     // Current function context
     std::map<std::string, std::pair<TypePtr, std::string>> locals_; // name -> (type, ssa)

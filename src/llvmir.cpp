@@ -188,6 +188,9 @@ void LLVMIRGen::genFunction(const FunctionDecl& fn) {
         params_[p.name] = {p.type, alloca};
     }
 
+    entryInsertPos_ = ir_.size();
+    entryAllocas_.clear();
+
     // Generate body
     TypePtr savedReturn = currentReturnType_;
     currentReturnType_ = fn.returnType;
@@ -211,6 +214,8 @@ void LLVMIRGen::genFunction(const FunctionDecl& fn) {
         }
     }
     if (!ir_.empty()) ir_ += "\n";
+    ir_.insert(entryInsertPos_, entryAllocas_);
+    entryAllocas_.clear();
     emit("}");
     emitBlank();
 
@@ -246,7 +251,7 @@ void LLVMIRGen::genStmt(const StmtPtr& s) {
 
 void LLVMIRGen::genLocal(const StmtPtr& s) {
     std::string alloca = freshName("x");
-    emit("%" + alloca + " = alloca " + llvmType(s->varType) + ", align 8");
+    entryAllocas_ += "%" + alloca + " = alloca " + llvmType(s->varType) + ", align 8\n";
     // Initialize
     std::string val = genExpr(s->init);
     // `val` already carries its LLVM type (e.g. "i64 5").

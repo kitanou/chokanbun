@@ -94,6 +94,10 @@ fi
 # --- kernel: 漢極 (exception vectors + MMU + memory) -> ELF -> QEMU ---------
 "$BIN" kernel/kernel.txt -ir -o "$OUT/kernel.ll" 2>"$OUT/kernel.gen.log" \
     && pass "kernel: IR generation" || fail "kernel: IR generation"
+# Regression: locals declared in loops must not alloca outside the entry block
+# (otherwise a long-running loop exhausts the stack).
+awk '/^define /{e=1} /^[A-Za-z0-9_.]+:$/{ if ($0!="entry:") e=0 } /alloca/{ if(!e) bad=1 } END{exit bad}' "$OUT/kernel.ll" \
+    && pass "kernel: allocas hoisted to entry block" || fail "kernel: allocas hoisted to entry block"
 "$LLC" -march=aarch64 -filetype=obj "$OUT/kernel.ll" -o "$OUT/kernel.o" \
     >"$OUT/kernel.llc.log" 2>&1 \
     && pass "kernel: AArch64 object" || fail "kernel: AArch64 object"
