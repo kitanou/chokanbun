@@ -123,6 +123,18 @@
   | `-ENOENT` | 2 | 典籍（ファイル）が無い |
   | `-EBADF` | 9 | 不正な柄（ファイル記述子） |
   | `-EFAULT` | 14 | 引数のポインタ/範囲が不正 |
+  | `-EEXIST` | 17 | 名前が既にある（グローバル名） |
+  | `-EACCES` | 13 | 利用者レベルが足りない |
+  | `-EBADR` | 53 | 同期物の ID が不正（ER_ID） |
+  | `-EIDRM` | 43 | 待っている間に同期物が削除された（ER_DLT） |
+  | `-EPROTO` | 71 | 対象の状態に合わない操作（ER_OBJ） |
+  | `-ETIMEDOUT` | 110 | 待てない・時間切れ（ER_NONE） |
+  | `-ENOTCAPABLE` | 93 | 呼出側より上位の利用者レベルの行程は終了できない（ER_LEVEL） |
+  | `-EINVAL` | 22 | 引数が不正（空の名前・不正な指定） |
+  | `-ESRCH` | 3 | 宛先の行程が無い |
+  | `-E2BIG` | 7 | メッセージ本体の大きさが不正 |
+  | `-EDEADLK` | 35 | 自分自身への確認付き送信（予約。CONFM は未対応） |
+  | `-ENOMSG` | 42 | 該当するメッセージが無い（NOWAIT） |
   | `-EBUSY` | 16 | 開かれている典籍は削れない |
   | `-ENOEXEC` | 8 | 漢像として不正（魔・大きさ・入口） |
   | `-ECHILD` | 10 | 待てる子が無い |
@@ -161,6 +173,39 @@
   | 21 | 識別 | なし | 呼出側の識 |
   | 24 | 削 | `x0`=名前, `x1`=名前長 | 0／`-ENOENT`（無い名前）・`-EBUSY`（開かれている）・`-EFAULT`。削った枠は `創` が再利用する（番号 19〜20・22〜23 は [行程の設計](design-process-exec.md) で予約） |
   | 31 | 頁残 | なし | 頁池の空きページ数（診断） |
+  | 64 | 生BTRON | `x0`=名前, `x1`=名前長, `x2`=引数, `x3`=引数長（17 と同じ） | 子の識／17 と同じ誤り。子は BTRON3 流: 終了時（`終行程` など）に親のキューへ MS_EXIT `{pid, code}` を積み、僵にならず枠を即解放する（`待行程` では回収できず `-ECHILD`）。互換層の `cre_prc`（暫定形）が使う |
+  | 66 | 利用者取 | `x0`=pid（0 自分、-1 親、正 その行程）, `x1`=P_USER の書き先（窓内の書込可能な 148 B） | 0／`-ESRCH`・`-EFAULT`。`get_usr` |
+  | 67 | 利用者変 | `x0`=P_USER（窓内の 148 B） | 0／`-EINVAL`（level が 0〜15 外、net_level が 1〜15 外、level 0 以外の行程が level を小さくしようとした）・`-EFAULT`。`chg_usr` |
+  | 68 | 強終 | `x0`=pid（0 自分、-1 親、正）, `x1`=終了コード, `x2`=選（0=TERM_NRM、1=TERM_ALL） | 0／`-EDEADLK`（自分）・`-ESRCH`・`-EINVAL`（選が不正）・`-ENOTCAPABLE`（呼出側より上位の利用者レベルの行程）。TERM_ALL は子孫を深い順に終える。呼出側自身が終わるとき（親・祖先を対象にしたとき）は戻らない。BTRON3 流の対象の親へ MS_TERM `{pid, code}`（対象の分だけ）。`ter_prc` |
+  | 69 | 行程状 | `x0`=pid, `x1`=P_STATE の書き先（12 B、0 可）, `x2`=名前の書き先（0 可） | 0／`-ESRCH`・`-EFAULT`。state は実行中 0x8000・実行可能 0x4000・待ち 0x2000、優先度は 128 固定。`prc_sts` |
+  | 80 | 信送 | `x0`=宛先 pid（>0 その行程、0 自分、-1 親）, `x1`=MESSAGE（窓内）, `x2`=指定（WAIT=0 / NOWAIT=1。CONFM=2 は未対応） | 0／`-EINVAL`（型が 1〜31 外・不正な指定）・`-E2BIG`（本体が 1〜32 バイト外）・`-ESRCH`（宛先が無い・終了済み）・`-ENOSPC`（満杯で NOWAIT）・`-EFAULT`。満杯で WAIT なら眠り、空きができたら svc を再実行する。`snd_msg` |
+  | 81 | 信受 | `x0`=型マスク, `x1`=MESSAGE の書き先, `x2`=msgsz（8〜40）, `x3`=指定（NOWAIT=1、NOCLR=8。WAIEVT・CHECK は未対応） | 0／`-ENOMSG`（無くて NOWAIT）・`-EINVAL`・`-EFAULT`。無ければ眠り、届いたら svc を再実行する。`rcv_msg` |
+  | 82 | 信消 | `x0`=型マスク, `x1`=最後マスク | 0／`-EINVAL`。`clr_msg` |
+  | 96 | 作セマ | `x0`=初期カウント, `x1`=指定（SEM_SYNC=0 / SEM_EXCL=0x4000、+DELEXIT=0x8000） | ID（正）／`-EINVAL`（排他で cnt≠1・同期で cnt<0・不明なビット）・`-EMFILE`（16 個満杯）。`cre_sem` |
+  | 97 | 削セマ | `x0`=ID | 0／`-EBADR`（ID が不正）・`-ENOENT`（無い）。待っている行程は `-EIDRM` で起こす。`del_sem` |
+  | 98 | 返セマ | `x0`=ID | 0／`-EBADR`・`-ENOENT`・`-EPROTO`（排他を持っていない）・`-EMFILE`（上限）。待ちがあれば先頭へ手渡す。`sig_sem` |
+  | 99 | 待セマ | `x0`=ID, `x1`=時限（ms。0=待たない、-1=無期限） | 0／`-ETIMEDOUT`（待てない・時間切れ）・`-EPROTO`（排他を自分で既に持っている）・`-EBADR`・`-ENOENT`・`-EIDRM`（待っている間に削除）。待つときは眠り、起こされるとき x0 に結果を直接入れる。`wai_sem` |
+  | 100 | 作フラグ | `x0`=初期パターン, `x1`=指定（DELEXIT のみ） | ID／`-EINVAL`・`-EMFILE`。`cre_flg` |
+  | 101 | 削フラグ | `x0`=ID | 0／`-EBADR`・`-ENOENT`。`del_flg` |
+  | 102 | 立フラグ | `x0`=ID, `x1`=パターン | 0／`-EBADR`・`-ENOENT`。`set_flg`（OR して、条件を満たす待ちを FIFO で起こす） |
+  | 103 | 消フラグ | `x0`=ID, `x1`=残すビット | 0／`-EBADR`・`-ENOENT`。`clr_flg`（AND） |
+  | 104 | 待フラグ | `x0`=ID, `x1`=パターン（>0）, `x2`=様式（WF_AND=0 / WF_OR=2、+NOCLR=8）, `x3`=時限 | 条件を満たした時のパターン／`-EINVAL`（ptn=0・不明な様式）・`-ETIMEDOUT`・`-EIDRM`・`-EBADR`・`-ENOENT`。`wai_flg` |
+  | 105 | 作緩 | `x0`=bufsz（1〜512）, `x1`=max（1〜min(256, bufsz-4)）, `x2`=指定（DELEXIT のみ） | ID／`-EINVAL`（bufsz=0 は未対応）・`-EMFILE`（4 個満杯）。`cre_mbf` |
+  | 106 | 削緩 | `x0`=ID | 0／`-EBADR`・`-ENOENT`。待ちは `-EIDRM`。`del_mbf` |
+  | 107 | 送緩 | `x0`=ID, `x1`=メッセージ, `x2`=大きさ（1〜max）, `x3`=時限 | 0／`-EINVAL`・`-EFAULT`・`-ETIMEDOUT`・`-EIDRM`。総量に空きが無ければ眠り、受信で空くと起きて再実行する。`snd_mbf` |
+  | 108 | 受緩 | `x0`=ID, `x1`=書き先（max バイト以上の書込可能な窓内）, `x2`=時限 | 受け取った大きさ／`-ETIMEDOUT`・`-EFAULT`・`-EIDRM`。`rcv_mbf` |
+  | 109 | 作口 | `x0`=最大の呼出の大きさ, `x1`=最大の返答の大きさ（各 128 以下）, `x2`=指定（DELEXIT のみ） | ID／`-EINVAL`・`-EMFILE`（4 個満杯）。`cre_por` |
+  | 110 | 削口 | `x0`=ID | 0／`-EBADR`・`-ENOENT`。待っている呼出側・受付側は `-EIDRM`。`del_por` |
+  | 111 | 呼口 | `x0`=ID, `x1`=呼出パターン（≠0）, `x2`=メッセージ（入出力）, `x3`=呼出の大きさ, `x4`=時限 | 返答の大きさ／`-EINVAL`・`-EFAULT`・`-ETIMEDOUT`・`-EIDRM`・`-ENOSPC`（記録 8 件満杯）。呼出を記録に写して眠り、返答で起きて再実行し返答を受け取る。`cal_por` |
+  | 115 | 受付口 | `x0`=ID, `x1`=受付パターン, `x2`=ランデブ番号の書き先（4 B）, `x3`=メッセージの書き先, `x4`=時限 | 呼出の大きさ／`-ETIMEDOUT`・`-EFAULT`・`-EIDRM`。`acp_por` |
+  | 116 | 転送口 | `x0`=ID（転送先）, `x1`=呼出パターン, `x2`=ランデブ番号, `x3`=メッセージ, `x4`=呼出の大きさ | 0／`-EPROTO`（受け付けていないランデブ）・`-EINVAL`・`-EFAULT`・`-EBADR`。`fwd_por` |
+  | 117 | 返答 | `x0`=ランデブ番号, `x1`=メッセージ, `x2`=返答の大きさ | 0／`-EPROTO`・`-EINVAL`・`-EFAULT`。`rpl_rdv` |
+  | 112 | 名作 | `x0`=名前（TC 配列、TNULL 終端、先頭 8 文字）, `x1`=値（下位 32 ビット）, `x2`=指定（0=N_CREATE / 1=N_MODIFY / 2=N_FORCE、+0x8000=DELEXIT） | 0／`-EEXIST`（N_CREATE で既存）・`-ENOENT`（N_MODIFY で無い）・`-ENOSPC`（16 件満杯）・`-EINVAL`（空の名前・不正な指定）・`-EFAULT`。BTRON3 互換層 `cre_nam`（[btron3-compat-layer.md](compat/btron3-compat-layer.md)） |
+  | 113 | 名削 | `x0`=名前 | 0／`-ENOENT`・`-EINVAL`・`-EFAULT`。`del_nam` |
+  | 114 | 名取 | `x0`=名前, `x1`=値の書き先（窓内の書込可能な 4 バイト） | 0／`-ENOENT`・`-EINVAL`・`-EFAULT`。`get_nam` |
+  | 176 | 時刻取 | `x0`=STIME の書き先（窓内の書込可能な 4 B）, `x1`=TIMEZONE の書き先（12 B） | 0／`-EFAULT`。QEMU virt の PL031 RTC を 1985-01-01 起点の秒数に換算。`get_tim` |
+  | 177 | 複写出 | `x0`=宛（書込可能な窓内）, `x1`=元（窓内）, `x2`=長（`令長限` 以下） | 0／`-EFAULT`（何も書かない）。構造体を民へ返すときの複製検査の共通部品（互換層が作業域で組み立てて呼ぶ） |
+  | 178 | 時刻設 | `x0`=STIME（0 なら変えない）, `x1`=TIMEZONE（0 なら変えない。12 B） | 0／`-EACCES`（利用者レベルが 0 でない）・`-EINVAL`（adjust が ±43200、dst_adj が ±720 の外）・`-EFAULT`。検査を終えてから書く。`set_tim` |
 - `読込`（番10）は**書込系漢令**の最初の例で、UART 受信 FIFO（`UART_FR` の RXFE
   ビットで空きを判定し `UART_DR` を読む）から、今ある分だけを検証済みの民の窓
   バッファへ書く。殻（シェル）の入力経路になる。呼び出し側は改行まで繰り返し

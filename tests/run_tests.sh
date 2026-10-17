@@ -152,7 +152,42 @@ sh tools/mkimage.sh user/btron_gtid.txt "$OUT/btron_gtid.zo" "$OUT" 2>"$OUT/user
         fail "user: BTRON3 互換層の試験 識試 を漢像にビルド"
         sed 's/^/      /' "$OUT/user_btron_gtid.build.log" | head -10
     }
-sh tools/gen-images.sh "$OUT/kernel_images.S" 問安="$OUT/hello.zo" 數="$OUT/count.zo" 識試="$OUT/btron_gtid.zo" \
+sh tools/mkimage.sh user/btron_gname.txt "$OUT/btron_gname.zo" "$OUT" 2>"$OUT/user_btron_gname.build.log" \
+    && pass "user: BTRON3 互換層の試験 名試 (グローバル名) を漢像にビルド" || {
+        fail "user: BTRON3 互換層の試験 名試 を漢像にビルド"
+        sed 's/^/      /' "$OUT/user_btron_gname.build.log" | head -10
+    }
+sh tools/mkimage.sh user/btron_clk.txt "$OUT/btron_clk.zo" "$OUT" 2>"$OUT/user_btron_clk.build.log" \
+    && pass "user: BTRON3 互換層の試験 時試 (get_tim・get_tod) を漢像にビルド" || {
+        fail "user: BTRON3 互換層の試験 時試 を漢像にビルド"
+        sed 's/^/      /' "$OUT/user_btron_clk.build.log" | head -10
+    }
+sh tools/mkimage.sh user/btron_msg.txt "$OUT/btron_msg.zo" "$OUT" 2>"$OUT/user_btron_msg.build.log" \
+    && pass "user: BTRON3 互換層の試験 信試 (メッセージ) を漢像にビルド" || {
+        fail "user: BTRON3 互換層の試験 信試 を漢像にビルド"
+        sed 's/^/      /' "$OUT/user_btron_msg.build.log" | head -10
+    }
+sh tools/mkimage.sh user/btron_usr.txt "$OUT/btron_usr.zo" "$OUT" 2>"$OUT/user_btron_usr.build.log" \
+    && pass "user: BTRON3 互換層の試験 利試 (利用者情報・時刻の権限) を漢像にビルド" || {
+        fail "user: BTRON3 互換層の試験 利試 を漢像にビルド"
+        sed 's/^/      /' "$OUT/user_btron_usr.build.log" | head -10
+    }
+sh tools/mkimage.sh user/btron_term.txt "$OUT/btron_term.zo" "$OUT" 2>"$OUT/user_btron_term.build.log" \
+    && pass "user: BTRON3 互換層の試験 強試 (ter_prc・prc_sts) を漢像にビルド" || {
+        fail "user: BTRON3 互換層の試験 強試 を漢像にビルド"
+        sed 's/^/      /' "$OUT/user_btron_term.build.log" | head -10
+    }
+sh tools/mkimage.sh user/btron_sync.txt "$OUT/btron_sync.zo" "$OUT" 2>"$OUT/user_btron_sync.build.log" \
+    && pass "user: BTRON3 互換層の試験 同試 (セマフォ・イベントフラグ) を漢像にビルド" || {
+        fail "user: BTRON3 互換層の試験 同試 を漢像にビルド"
+        sed 's/^/      /' "$OUT/user_btron_sync.build.log" | head -10
+    }
+sh tools/mkimage.sh user/btron_comm.txt "$OUT/btron_comm.zo" "$OUT" 2>"$OUT/user_btron_comm.build.log" \
+    && pass "user: BTRON3 互換層の試験 緩試 (メッセージバッファ・ランデブ) を漢像にビルド" || {
+        fail "user: BTRON3 互換層の試験 緩試 を漢像にビルド"
+        sed 's/^/      /' "$OUT/user_btron_comm.build.log" | head -10
+    }
+sh tools/gen-images.sh "$OUT/kernel_images.S" 問安="$OUT/hello.zo" 數="$OUT/count.zo" 識試="$OUT/btron_gtid.zo" 名試="$OUT/btron_gname.zo" 時試="$OUT/btron_clk.zo" 信試="$OUT/btron_msg.zo" 利試="$OUT/btron_usr.zo" 強試="$OUT/btron_term.zo" 同試="$OUT/btron_sync.zo" 緩試="$OUT/btron_comm.zo" \
     && "$CLANG" --target=aarch64-none-elf -c "$OUT/kernel_images.S" -o "$OUT/kernel_images.o" \
         >"$OUT/kernel_images.log" 2>&1 \
     && pass "kernel: 漢像の埋め込み (像表)" || fail "kernel: 漢像の埋め込み (像表)"
@@ -234,7 +269,7 @@ if [ -f "$OUT/kernel.elf" ]; then
         # Then feed 殻 (shell) commands once 甲 has read that line (M4).
         ( printf 'KANBUN\n' > "$PIPE.in"
           for _ in $(seq 1 60); do grep -q "甲得" "$KLOG" 2>/dev/null && break; sleep 0.25; done
-          printf '響 天下太平\n讀 史記\n怪\n讀 無題\n目\n書 筆記 天地玄黄\n讀 筆記\n書 一二三四五六 x\n書 筆記\n目\n削 筆記\n讀 筆記\n目\n削 筆記\n書 新稿 草\n目\n問安 日月\n數 一 二 三\n識試\n存在せず 子\n助\n終\n' > "$PIPE.in" ) &
+          printf '響 天下太平\n讀 史記\n怪\n讀 無題\n目\n書 筆記 天地玄黄\n讀 筆記\n書 一二三四五六 x\n書 筆記\n目\n削 筆記\n讀 筆記\n目\n削 筆記\n書 新稿 草\n目\n問安 日月\n數 一 二 三\n識試\n名試\n時試\n信試\n利試\n強試\n同試\n緩試\n存在せず 子\n助\n終\n' > "$PIPE.in" ) &
         FEEDPID=$!
         # Wait up to ~15s for the final marker, then stop QEMU.  The generic
         # timer fires five times (5 × CNTFRQ/40 ≈ 125 ms), so this is ample.
@@ -560,6 +595,81 @@ if [ -f "$OUT/kernel.elf" ]; then
         else
             fail "kernel qemu: BTRON3 互換層 (不一致:$BTRON_BAD)"
             grep -a '識試' "$KLOG" 2>/dev/null | sed 's/^/      /'
+        fi
+        # --- #42 G6b: メッセージバッファとランデブポート (1.3) ------------------------
+        CM_N="$(grep -ac '^緩試 ' "$KLOG" 2>/dev/null)"
+        CM_BAD="$(grep -a '^緩試 ' "$KLOG" 2>/dev/null | grep -vc '0x0000000000000001$')"
+        if [ "${CM_N:-0}" -eq 24 ] && [ "${CM_BAD:-1}" -eq 0 ]; then
+            pass "kernel qemu: BTRON3 互換層 メッセージバッファ・ランデブ (環の折り返し・待ち・転送・削除の ${CM_N} 項目)"
+        else
+            fail "kernel qemu: BTRON3 互換層 メッセージバッファ・ランデブ (項目=${CM_N:-0}/24、失敗=${CM_BAD:-?})"
+            grep -a '^緩試 ' "$KLOG" 2>/dev/null | sed 's/^/      /'
+        fi
+        # --- #42 G6a: セマフォとイベントフラグ (1.3) -------------------------------------
+        SY_N="$(grep -ac '^同試 ' "$KLOG" 2>/dev/null)"
+        SY_BAD="$(grep -a '^同試 ' "$KLOG" 2>/dev/null | grep -vc '0x0000000000000001$')"
+        if [ "${SY_N:-0}" -eq 21 ] && [ "${SY_BAD:-1}" -eq 0 ]; then
+            pass "kernel qemu: BTRON3 互換層 セマフォ・イベントフラグ (待ちの FIFO・時間切れ・削除・DELEXIT・自動返却の ${SY_N} 項目)"
+        else
+            fail "kernel qemu: BTRON3 互換層 セマフォ・イベントフラグ (項目=${SY_N:-0}/21、失敗=${SY_BAD:-?})"
+            grep -a '^同試 ' "$KLOG" 2>/dev/null | sed 's/^/      /'
+        fi
+        # --- #42 G5: ter_prc (MS_TERM・TERM_ALL・ER_LEVEL・ER_SELF) と prc_sts ------------
+        TM_N="$(grep -ac '^強試 ' "$KLOG" 2>/dev/null)"
+        TM_BAD="$(grep -a '^強試 ' "$KLOG" 2>/dev/null | grep -vc '0x0000000000000001$')"
+        if [ "${TM_N:-0}" -eq 16 ] && [ "${TM_BAD:-1}" -eq 0 ]; then
+            pass "kernel qemu: BTRON3 互換層 強制終了・行程状態 (${TM_N} 項目)"
+        else
+            fail "kernel qemu: BTRON3 互換層 強制終了・行程状態 (項目=${TM_N:-0}/16、失敗=${TM_BAD:-?})"
+            grep -a '^強試 ' "$KLOG" 2>/dev/null | sed 's/^/      /'
+        fi
+        # --- #42 G4: 利用者情報 (get_usr / chg_usr) と set_tim / set_tod の権限 --------
+        US_N="$(grep -ac '^利試 ' "$KLOG" 2>/dev/null)"
+        US_BAD="$(grep -a '^利試 ' "$KLOG" 2>/dev/null | grep -vc '0x0000000000000001$')"
+        if [ "${US_N:-0}" -eq 19 ] && [ "${US_BAD:-1}" -eq 0 ]; then
+            pass "kernel qemu: BTRON3 互換層 利用者情報・時刻設定の権限 (${US_N} 項目)"
+        else
+            fail "kernel qemu: BTRON3 互換層 利用者情報・時刻設定の権限 (項目=${US_N:-0}/19、失敗=${US_BAD:-?})"
+            grep -a '^利試 ' "$KLOG" 2>/dev/null | sed 's/^/      /'
+        fi
+        # 暦差の検証: 時試が出す現在の日付が、ホストの UTC の日付 (前後 1 日まで許す) に一致する
+        CK_DATE="$(grep -a '^時試日付 ' "$KLOG" 2>/dev/null | head -1 | grep -oE '0x[0-9a-f]{16}')"
+        CK_GOT="$(printf '%d' "$CK_DATE" 2>/dev/null)"
+        CK_OK=0
+        for d in "$(date -u +%Y%m%d)" "$(date -u -v-1d +%Y%m%d 2>/dev/null)" "$(date -u -v+1d +%Y%m%d 2>/dev/null)"; do
+            [ -n "$d" ] && [ "$d" = "$CK_GOT" ] && CK_OK=1
+        done
+        if [ "$CK_OK" -eq 1 ]; then
+            pass "kernel qemu: get_tim/get_tod の日付がホストの UTC の日付と一致 (${CK_GOT})"
+        else
+            fail "kernel qemu: get_tim/get_tod の日付がホストの UTC と一致しない (ゲスト=${CK_GOT:-none} ホスト=$(date -u +%Y%m%d))"
+        fi
+        # --- #42 G3a: メッセージ (snd_msg / rcv_msg / clr_msg) ---------------------
+        MS_N="$(grep -ac '^信試 ' "$KLOG" 2>/dev/null)"
+        MS_BAD="$(grep -a '^信試 ' "$KLOG" 2>/dev/null | grep -vc '0x0000000000000001$')"
+        if [ "${MS_N:-0}" -eq 31 ] && [ "${MS_BAD:-1}" -eq 0 ]; then
+            pass "kernel qemu: BTRON3 互換層 メッセージ (FIFO・型選択・NOCLR・clr_msg・ER_*・行程間の待ち合わせ・子の終了通知 MS_EXIT の ${MS_N} 項目)"
+        else
+            fail "kernel qemu: BTRON3 互換層 メッセージ (項目=${MS_N:-0}/31、失敗=${MS_BAD:-?})"
+            grep -a '^信試 ' "$KLOG" 2>/dev/null | sed 's/^/      /'
+        fi
+        # --- #42 G2: 時計の取得系 (get_tim / get_tod) と構造体の複写出 ---------------
+        CK_N="$(grep -ac '^時試 ' "$KLOG" 2>/dev/null)"
+        CK_BAD="$(grep -a '^時試 ' "$KLOG" 2>/dev/null | grep -vc '0x0000000000000001$')"
+        if [ "${CK_N:-0}" -eq 11 ] && [ "${CK_BAD:-1}" -eq 0 ]; then
+            pass "kernel qemu: BTRON3 互換層 時計 (get_tim・get_tod・暦・閏年・ER_ADR の ${CK_N} 項目)"
+        else
+            fail "kernel qemu: BTRON3 互換層 時計 (項目=${CK_N:-0}/11、失敗=${CK_BAD:-?})"
+            grep -a '^時試 ' "$KLOG" 2>/dev/null | sed 's/^/      /'
+        fi
+        # --- #42 G1: グローバル名 (cre_nam / del_nam / get_nam) -------------------
+        GN_N="$(grep -ac '^名試 ' "$KLOG" 2>/dev/null)"
+        GN_BAD="$(grep -a '^名試 ' "$KLOG" 2>/dev/null | grep -vc '0x0000000000000001$')"
+        if [ "${GN_N:-0}" -eq 21 ] && [ "${GN_BAD:-1}" -eq 0 ]; then
+            pass "kernel qemu: BTRON3 互換層 グローバル名 (作成・取得・変更・強制・削除・ER_*・8文字・16件・DELEXIT の ${GN_N} 項目)"
+        else
+            fail "kernel qemu: BTRON3 互換層 グローバル名 (項目=${GN_N:-0}/21、失敗=${GN_BAD:-?})"
+            grep -a '^名試 ' "$KLOG" 2>/dev/null | sed 's/^/      /'
         fi
         K_UNK="$(grep -ac '殻不明' "$KLOG" 2>/dev/null)"
         if [ "${K_UNK:-0}" -ge 2 ]; then
