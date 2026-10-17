@@ -28,7 +28,7 @@
 | カーネル | QEMU/AArch64 起動、例外処理、MMU、ページ管理、タイマー・割込の基礎を実装 |
 | 行程・漢令 | EL0 実行、SVC ABI、スケジューラ、アドレス空間、プリエンプション等の基礎を実装 |
 | 篇藏・漢殻 | 篇藏（篇ID・章とパス・権限）と機械漢文製の最小シェルを実装。ファイルは RAM 上にあり、再起動すると消える |
-| BTRON3 適合 | 互換層（`user/btron/` → 漢令）で第2編 第1章の一部を実装し、QEMU 試験 235 項目で検証中。1.6 ファイル管理は作成・削除・開閉・レコード操作・ロック・属性・アクセス制御、`cre_prc`（SYS の像ファイル）まで。適合確認済みの項目は 0 で、完全準拠ではない（[適合性マトリクス](docs/compat/btron3-conformance.md)） |
+| BTRON3 適合 | 互換層（`user/btron/` → 漢令）で第2編 第1章の一部を実装し、QEMU 試験 239 項目で検証中。1.6 ファイル管理は作成・削除・開閉・レコード操作・ロック・属性・アクセス制御、`cre_prc`（SYS の像ファイル）まで。適合確認済みの項目は 0 で、完全準拠ではない（[適合性マトリクス](docs/compat/btron3-conformance.md)） |
 | 実身・仮身／篇藏 | 設計・統合を進める段階。永続化や GUI 統合は未完了 |
 | GUI・実機対応 | 今後の段階 |
 | 機械漢文ブートローダー・セルフホスティング | 未完了 |
@@ -119,7 +119,7 @@ qemu-system-aarch64 -M virt,gic-version=2 -cpu cortex-a57 -nographic \
 - [漢殻コマンド一覧](docs/shell-commands.md)
 - [実装メモ](docs/implementation-notes.md)
 - [開発ロードマップ](docs/roadmap.md)
-- BTRON3 適合性: [適合性マトリクス](docs/compat/btron3-conformance.md)・[互換層の設計](docs/compat/btron3-compat-layer.md)・[OS 仕様編の照合](docs/compat/btron3-os.md)・[共有データ編](docs/compat/btron3-shared-data.md)・[第2章・第3章の API 棚卸し](docs/compat/btron3-api-inventory.md)・[ファイル管理の設計](docs/compat/btron3-file-design.md)・[適合試験計画](docs/compat/btron3-test-plan.md)
+- BTRON3 適合性: [適合性マトリクス](docs/compat/btron3-conformance.md)・[互換層の設計](docs/compat/btron3-compat-layer.md)・[OS 仕様編の照合](docs/compat/btron3-os.md)・[共有データ編](docs/compat/btron3-shared-data.md)・[第2章・第3章の API 棚卸し](docs/compat/btron3-api-inventory.md)・[ファイル管理の設計](docs/compat/btron3-file-design.md)・[適合試験計画](docs/compat/btron3-test-plan.md)・[原文の直接確認と食い違い](docs/compat/btron3-spec-verification.md)
 
 ## 開発上の約束
 
