@@ -249,6 +249,21 @@ if [ -f "$OUT/kernel.elf" ]; then
             fail "kernel qemu: 行程ごとのアドレス空間 (甲讀='${K_AR:-none}' 乙讀='${K_BR:-none}')"
             sed 's/^/      /' "$KLOG" 2>/dev/null | head -20
         fi
+        K_AE="$(grep -oE '甲禁 0x[0-9a-f]{16}' "$KLOG" 2>/dev/null | grep -oE '0x[0-9a-f]{16}')"
+        K_BE="$(grep -oE '乙禁 0x[0-9a-f]{16}' "$KLOG" 2>/dev/null | grep -oE '0x[0-9a-f]{16}')"
+        if [ "$K_AE" = "0xfffffffffffffff2" ] && [ "$K_BE" = "0xfffffffffffffff2" ]; then
+            pass "kernel qemu: 核専用域への 書出 を -EFAULT で拒否"
+        else
+            fail "kernel qemu: 核専用域への 書出 を -EFAULT で拒否 (甲='${K_AE:-none}' 乙='${K_BE:-none}')"
+            sed 's/^/      /' "$KLOG" 2>/dev/null | head -20
+        fi
+        K_ERR="$(grep -oE '0xfffffffffffffff2|0xffffffffffffffda' "$KLOG" 2>/dev/null | paste -sd' ' -)"
+        if [ "$K_ERR" = "0xfffffffffffffff2 0xffffffffffffffda 0xfffffffffffffff2 0xffffffffffffffda" ]; then
+            pass "kernel qemu: 未知の漢令番号を -ENOSYS で拒否"
+        else
+            fail "kernel qemu: 未知の漢令番号を -ENOSYS で拒否 (got '${K_ERR:-none}')"
+            sed 's/^/      /' "$KLOG" 2>/dev/null | head -20
+        fi
         KSEQ="$(grep -oE '甲書|乙書|甲讀|乙讀' "$KLOG" 2>/dev/null | paste -sd' ' -)"
         if [ "$KSEQ" = "甲書 乙書 甲讀 乙讀" ]; then
             pass "kernel qemu: 譲渡によるラウンドロビン切替"
