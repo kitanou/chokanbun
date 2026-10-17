@@ -1,0 +1,47 @@
+註 BTRON3 互換層 1.6 ファイル管理 (段階 B1: 接続とリンク)。設計は docs/compat/btron3-file-design.md。
+註 要: lib.txt、btron/types.txt、btron/er.txt を先に取込む。文字列は TC (16 ビット)、LINK は 52 B
+註 (fs_name TC[20], f_id UH, atr1〜atr5 UH)。
+
+常「F_NORM」之無符六四 為 0x0000
+常「F_BASED」之無符六四 為 0x0001
+常「F_DIRECT」之無符六四 為 0x0002
+常「FS_SYNC」之無符六四 為 0x0000
+常「FS_RONLY」之無符六四 為 0x0001
+常「FS_ASYN」之無符六四 為 0x0002
+常「TC_FDLM」之無符六四 為 0xFF21
+常「TC_FSEP」之無符六四 為 0xFF22
+常「TC_FOWN」之無符六四 為 0xFF23
+常「L_FSNM」之無符六四 為 20
+常「L_FNM」之無符六四 為 20
+常「L_CONNM」之無符六四 為 8
+常「L_PATHNM」之無符六四 為 256
+
+註 att_fls(TC* dev, TC* name, LINK* lnk, UW mode)
+公開 記號「att_fls」 術曰「BTRON接続」 受「装置」之無符六四 受「名」之無符六四 受「鎖」之無符六四 受「様」之無符六四 返 無符六四
+    歸 呼「錯換」以(呼「奏令」以(128, 装置, 名, 鎖, 様 位與 0xFFFFFFFF, 0, 0))
+終術
+
+註 det_fls(TC* dev, W eject)
+公開 記號「det_fls」 術曰「BTRON切断」 受「装置」之無符六四 受「出」之無符六四 返 無符六四
+    歸 呼「錯換」以(呼「奏令」以(129, 装置, 出 位與 0xFFFFFFFF, 0, 0, 0, 0))
+終術
+
+註 lst_fls(F_ATTACH* buff, W cnt): F_ATTACH = {TC a_name[8]; TC dev[8]} (32 B)。接続中の数を返す。
+公開 記號「lst_fls」 術曰「BTRON接続一覧」 受「書先」之無符六四 受「個」之無符六四 返 無符六四
+    歸 呼「錯換」以(呼「奏令」以(130, 書先, 個 位與 0xFFFFFFFF, 0, 0, 0, 0))
+終術
+
+註 fls_sts(TC* dev, FS_STATE* buff): 書込可能なら 0、書込禁止なら 1。
+公開 記號「fls_sts」 術曰「BTRON系状」 受「装置」之無符六四 受「書先」之無符六四 返 無符六四
+    歸 呼「錯換」以(呼「奏令」以(131, 装置, 書先, 0, 0, 0, 0))
+終術
+
+註 get_lnk(TC* path, LINK* lnk, W mode)
+公開 記號「get_lnk」 術曰「BTRONリンク取」 受「路」之無符六四 受「鎖」之無符六四 受「様」之無符六四 返 無符六四
+    歸 呼「錯換」以(呼「奏令」以(136, 路, 鎖, 様 位與 0xFFFFFFFF, 0, 0, 0))
+終術
+
+註 chg_wrk(LINK* lnk)
+公開 記號「chg_wrk」 術曰「BTRON作業変」 受「鎖」之無符六四 返 無符六四
+    歸 呼「錯換」以(呼「奏令」以(137, 鎖, 0, 0, 0, 0, 0))
+終術

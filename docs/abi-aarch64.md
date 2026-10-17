@@ -124,7 +124,10 @@
   | `-EBADF` | 9 | 不正な柄（ファイル記述子） |
   | `-EFAULT` | 14 | 引数のポインタ/範囲が不正 |
   | `-EEXIST` | 17 | 名前が既にある（グローバル名） |
+  | `-ENXIO` | 6 | その装置が無い（ER_NODEV） |
   | `-EACCES` | 13 | 利用者レベルが足りない |
+  | `-ENODEV` | 19 | ファイルシステムが接続されていない（ER_NOFS） |
+  | `-ENAMETOOLONG` | 36 | パス・名前が不正（ER_FNAME） |
   | `-EBADR` | 53 | 同期物の ID が不正（ER_ID） |
   | `-EIDRM` | 43 | 待っている間に同期物が削除された（ER_DLT） |
   | `-EPROTO` | 71 | 対象の状態に合わない操作（ER_OBJ） |
@@ -203,6 +206,12 @@
   | 112 | 名作 | `x0`=名前（TC 配列、TNULL 終端、先頭 8 文字）, `x1`=値（下位 32 ビット）, `x2`=指定（0=N_CREATE / 1=N_MODIFY / 2=N_FORCE、+0x8000=DELEXIT） | 0／`-EEXIST`（N_CREATE で既存）・`-ENOENT`（N_MODIFY で無い）・`-ENOSPC`（16 件満杯）・`-EINVAL`（空の名前・不正な指定）・`-EFAULT`。BTRON3 互換層 `cre_nam`（[btron3-compat-layer.md](compat/btron3-compat-layer.md)） |
   | 113 | 名削 | `x0`=名前 | 0／`-ENOENT`・`-EINVAL`・`-EFAULT`。`del_nam` |
   | 114 | 名取 | `x0`=名前, `x1`=値の書き先（窓内の書込可能な 4 バイト） | 0／`-ENOENT`・`-EINVAL`・`-EFAULT`。`get_nam` |
+  | 128 | 接続 | `x0`=装置名（TC、8 文字まで）, `x1`=接続名（TC、8 文字まで）, `x2`=LINK の書き先（52 B）, `x3`=モード（0=SYNC, 1=RONLY, 2=ASYN） | 0／`-ENXIO`（装置が無い）・`-EBUSY`（接続済み）・`-EEXIST`（接続名が使用中）・`-ENAMETOOLONG`（空の名前）・`-EINVAL`・`-EFAULT`。`att_fls`（[btron3-file-design.md](compat/btron3-file-design.md)） |
+  | 129 | 切断 | `x0`=装置名, `x1`=取り出し（無視） | 0／`-ENOENT`・`-ENODEV`（接続されていない）・`-EBUSY`（作業ファイルとして使用中）。`det_fls` |
+  | 130 | 接続一覧 | `x0`=F_ATTACH の配列（32 B ずつ）, `x1`=個数 | 接続中の数／`-EINVAL`（個数が負）・`-EFAULT`。`lst_fls` |
+  | 131 | FS 状態 | `x0`=装置名, `x1`=FS_STATE の書き先（104 B） | 書込可能なら 0、読取専用なら 1／`-ENOENT`・`-ENODEV`・`-EFAULT`。`fls_sts` |
+  | 136 | リンク取 | `x0`=パス（TC、256 文字まで）, `x1`=LINK（52 B、F_BASED では入力も）, `x2`=方式（0=F_NORM, 1=F_BASED, 2=F_DIRECT） | 0／`-ENOENT`・`-ENODEV`・`-ENAMETOOLONG`（パス・名前が不正）・`-EINVAL`・`-EFAULT`。`get_lnk` |
+  | 137 | 作業変 | `x0`=LINK（52 B） | 0／`-ENODEV`・`-ENOENT`・`-EFAULT`。`chg_wrk`。作業ファイルは子が継ぐ |
   | 176 | 時刻取 | `x0`=STIME の書き先（窓内の書込可能な 4 B）, `x1`=TIMEZONE の書き先（12 B） | 0／`-EFAULT`。QEMU virt の PL031 RTC を 1985-01-01 起点の秒数に換算。`get_tim` |
   | 177 | 複写出 | `x0`=宛（書込可能な窓内）, `x1`=元（窓内）, `x2`=長（`令長限` 以下） | 0／`-EFAULT`（何も書かない）。構造体を民へ返すときの複製検査の共通部品（互換層が作業域で組み立てて呼ぶ） |
   | 178 | 時刻設 | `x0`=STIME（0 なら変えない）, `x1`=TIMEZONE（0 なら変えない。12 B） | 0／`-EACCES`（利用者レベルが 0 でない）・`-EINVAL`（adjust が ±43200、dst_adj が ±720 の外）・`-EFAULT`。検査を終えてから書く。`set_tim` |
