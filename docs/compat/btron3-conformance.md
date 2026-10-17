@@ -69,7 +69,7 @@
 | 1.6 | ファイル管理（構成、構造、アクセス制御、操作、詳細情報、システムコール） | kernel/file.html | `kernel/vfs/`、篇藏設計 | 部分適合（機能のみ・API不一致、[詳細](btron3-os.md)） |
 | 1.7 | イベント管理（イベント、キーボード、ポインティングデバイス） | kernel/event.html | UART RX のみ | 未実装（[詳細](btron3-os.md)） |
 | 1.8 | デバイス管理 | kernel/device.html | UART/タイマー/GIC の個別実装 | 未実装（[詳細](btron3-os.md)） |
-| 1.9 | 時計管理 | kernel/clk.html | 汎用タイマー | 未実装（[詳細](btron3-os.md)） |
+| 1.9 | 時計管理 | kernel/clk.html | 汎用タイマー | 部分適合（取得系のみ、[詳細](btron3-os.md)） |
 | 1.10 | システム管理 | kernel/system.html | なし | 未実装（[詳細](btron3-os.md)） |
 
 ### 第2章 ドローイングプリミティブ
