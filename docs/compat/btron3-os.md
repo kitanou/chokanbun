@@ -165,7 +165,8 @@
 | 参照 | `get_lnk` `chg_wrk` | `user/btron/file.txt` → 漢令 136・137（`kernel/file/btron.txt`）。接続名・相対・TC_FOWN・出現番号・F_BASED・F_DIRECT。試験 `録試` | 実装済・未検証 |
 | 作成・削除 | `cre_fil` `cre_lnk` `del_fil`（実装）、`gen_fil`（未実装） | 漢令 144・145・146。`lnk` は親、`cre_fil` は新しい LINK を返し F_UPDATE で開いた記述子を返す。`opt` は F_FLOAT・F_FIX のみ、`A_MODE` は NULL のみ。`del_fil` は開いている・作業ファイル・削除禁止・ルートを拒み、リンクを含む／他のリンクが残るファイルは force=0 で `ER_REC`。試験 `録試` | 部分適合（`gen_fil`・F_FILEID・A_MODE が未対応。解釈は設計書 §12） |
 | 開閉 | `opn_fil` `cls_fil` | 漢令 147・148。録層専用の開表（16 件）。F_READ/F_WRITE/F_UPDATE、F_EXCL・F_WEXCL は別の行程との衝突で `ER_BUSY`、読取専用の FS・属性は書込で `ER_RONLY`。行程の終了で自動的に閉じる。パスワードは検査しない（B4）。試験 `録試` | 実装済・未検証（既存の `開`/`閉` は典籍用で別） |
-| レコード操作 | `see_rec` `fnd_rec` `fnd_lnk` `rea_rec` `wri_rec` `ins_rec` `apd_rec` `del_rec` `trc_rec` `xch_fil` `loc_rec` | `讀入`/`柄書`（番13/14）は**バイト列**の読み書き。レコード構造なし | 未実装（データモデルが異なる） |
+| レコード操作 | `see_rec` `fnd_rec` `rea_rec` `wri_rec` `ins_rec` `apd_rec` `del_rec` `trc_rec`（実装）、`fnd_lnk`（未実装） | 漢令 152〜159。ファイル本文は頁 1 枚（4 KiB）にレコードを詰めたもの。現在レコードは記述子ごと、終端レコード（番号 = 数）あり。リンクレコードは LINK 全体を読み、属性（LINK の +42〜）だけ書ける。他の記述子の挿入・削除で番号がずれても現在レコード・ロックを直す。`F_FWD`・`F_NFWD` だけ。`units` は無視。試験 `録試` | 部分適合（`fnd_lnk`・`F_BWD` 系・`wri_rec` の `units` が未対応。現在レコードの扱いは設計書 §12） |
+| ロック・交換 | `loc_rec` `xch_fil` | 漢令 160・161。ロックは記述子ごとに 1 件、`F_LOCK` は待たない（`F_TSLOCK` と同じ）。`xch_fil` は本文とレコード数を入れ替え、時刻は入れ替えない。試験 `録試`（行程をまたぐロックを含む） | 部分適合（待ち・複数ロック・別 FS 間の `ER_XFS` の試験が無い） |
 | 検査・属性 | `chk_fil` `chg_fmd` `chg_fat` `chg_fpw` `chg_fnm` `chg_ftm` `get_dfm` `set_dfm` | なし | 未実装 |
 | 状態・リンク | `fil_sts` `ofl_sts`（実装）、`lnk_sts` `syn_lnk` `get_nlk`（未実装） | 漢令 149・150。F_STATE（68 B）と名前（40 B）を書き参照数を返す。F_LOCATE は NULL のみ。試験 `録試` | 部分適合（F_STATE の整列と F_LOCATE が要確認） |
 | ファイルシステム | `att_fls` `det_fls` `lst_fls` `fls_sts`（実装）、`syn_fls` `chg_fls` `chg_fsm`（未実装） | 漢令 128〜131。装置は RAM（起動時に接続）と SYS（読取専用、未接続） | 部分適合 |

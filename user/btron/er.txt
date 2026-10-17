@@ -59,6 +59,7 @@
 註   -EAGAIN(11) → ER_LIMIT  -ENOEXEC(8) → ER_REC  -EEXIST(17) → ER_EXS  -EINVAL(22) → ER_PAR
 註   -EACCES(13) → ER_ACCES  -ENAMETOOLONG(36) → ER_FNAME  -ENODEV(19) → ER_NOFS  -ENXIO(6) → ER_NODEV  -EBADR(53) → ER_ID  -EIDRM(43) → ER_DLT  -EPROTO(71) → ER_OBJ  -ETIMEDOUT(110) → ER_NONE  -ENOTCAPABLE(93) → ER_LEVEL  -ESRCH(3) → ER_NOPRC  -E2BIG(7) → ER_SZOVR  -ENOMSG(42) → ER_NONE  -EDEADLK(35) → ER_SELF
 註   -EPERM(1) → ER_PERM  -EROFS(30) → ER_RONLY  -ENOLINK(67) → ER_NOLNK
+註   -ENODATA(61) → ER_ENDR  -ETXTBSY(26) → ER_LOCK  -EXDEV(18) → ER_XFS
 註   その他 (-ENOSYS を含む) → ER_PAR
 術曰「錯換」 受「値」之無符六四 返 無符六四
     若 値 小於 18446744073709551488 則
@@ -145,6 +146,15 @@
     終若
     若 逆 等於 67 則
         歸 「ER_NOLNK」
+    終若
+    若 逆 等於 61 則
+        歸 「ER_ENDR」
+    終若
+    若 逆 等於 26 則
+        歸 「ER_LOCK」
+    終若
+    若 逆 等於 18 則
+        歸 「ER_XFS」
     終若
     歸 「ER_PAR」
 終術

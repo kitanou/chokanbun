@@ -228,6 +228,16 @@
   | 148 | ファイル閉 | `x0`=記述子 | 0／`-EBADF`。`cls_fil`。行程の終了で自動的に閉じる |
   | 149 | ファイル状態 | `x0`=LINK, `x1`=名前の書き先（40 B）, `x2`=F_STATE（68 B）, `x3`=F_LOCATE（NULL のみ） | 参照数／`-ENOENT`・`-ENODEV`・`-EINVAL`・`-EFAULT`。`fil_sts` |
   | 150 | 開ファイル状態 | `x0`=記述子, `x1`〜`x3` は 149 と同じ | 参照数／`-EBADF`・`-ENOENT`・`-EINVAL`・`-EFAULT`。`ofl_sts` |
+  | 152 | レコード移動 | `x0`=記述子, `x1`=offset, `x2`=mode（0=現在から相対, 正=offset が番号, 負=終端から相対）, `x3`=recnum の書き先（NULL 可） | 0／`-EBADF`・`-ENOEXEC`（ER_REC）・`-EFAULT`。`see_rec`。W の引数は下位 32 ビットが効く |
+  | 153 | レコード検索 | `x0`=記述子, `x1`=mode（0=F_FWD, 1=F_NFWD）, `x2`=typemask, `x3`=subtype, `x4`=recnum の書き先 | 0／`-EBADF`・`-ENOEXEC`・`-EINVAL`・`-EFAULT`。`fnd_rec` |
+  | 154 | レコード読み | `x0`=記述子, `x1`=offset, `x2`=buf, `x3`=size, `x4`=r_size の書き先, `x5`=subtype の書き先 | 型（0〜31）／`-EBADF`・`-ENODATA`（ER_ENDR）・`-ETXTBSY`（ER_LOCK）・`-EINVAL`・`-EFAULT`。`rea_rec` |
+  | 155 | レコード書き | 154 と同じ並び（offset=-1 は追記, subtype は読み先）。`units` は渡さない | 0／`-EBADF`・`-ENODATA`・`-ETXTBSY`・`-EINVAL`・`-E2BIG`（ER_SZOVR）・`-EFAULT`。`wri_rec` |
+  | 156 | レコード挿入 | `x0`=記述子, `x1`=buf, `x2`=size, `x3`=type（0=リンク, 1〜31）, `x4`=subtype, `x5`=units（無視） | 0／`-EBADF`・`-EINVAL`・`-E2BIG`・`-ENOENT`・`-ENODEV`・`-EMFILE`（ER_LIMIT）・`-EFAULT`。`ins_rec`。現在レコードの前 |
+  | 157 | レコード追加 | 156 と同じ引数 | 0／156 と同じ。`apd_rec`。末尾 |
+  | 158 | レコード削除 | `x0`=記述子 | 参照数が 0 になれば 1、そうでなければ 0／`-EBADF`・`-ENODATA`・`-ETXTBSY`。`del_rec` |
+  | 159 | レコード切詰 | `x0`=記述子, `x1`=size | 0／`-EBADF`・`-ENODATA`・`-ETXTBSY`・`-ENOEXEC`（リンク）・`-EINVAL`。`trc_rec` |
+  | 160 | レコードロック | `x0`=記述子, `x1`=mode（0=解除, 1=F_LOCK, 2=F_TSLOCK, 3=F_CKLOCK） | 0／`-EBADF`・`-ENODATA`・`-ETXTBSY`・`-EMFILE`（別のレコードを既にロック）・`-EINVAL`。`loc_rec`。F_LOCK は待たない |
+  | 161 | ファイル交換 | `x0`=記述子 1, `x1`=記述子 2 | 0／`-EBADF`・`-EINVAL`（同じファイル）・`-EXDEV`（ER_XFS）・`-ETXTBSY`。`xch_fil` |
   | 176 | 時刻取 | `x0`=STIME の書き先（窓内の書込可能な 4 B）, `x1`=TIMEZONE の書き先（12 B） | 0／`-EFAULT`。QEMU virt の PL031 RTC を 1985-01-01 起点の秒数に換算。`get_tim` |
   | 177 | 複写出 | `x0`=宛（書込可能な窓内）, `x1`=元（窓内）, `x2`=長（`令長限` 以下） | 0／`-EFAULT`（何も書かない）。構造体を民へ返すときの複製検査の共通部品（互換層が作業域で組み立てて呼ぶ） |
   | 178 | 時刻設 | `x0`=STIME（0 なら変えない）, `x1`=TIMEZONE（0 なら変えない。12 B） | 0／`-EACCES`（利用者レベルが 0 でない）・`-EINVAL`（adjust が ±43200、dst_adj が ±720 の外）・`-EFAULT`。検査を終えてから書く。`set_tim` |

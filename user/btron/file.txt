@@ -22,6 +22,12 @@
 常「F_FILE」之無符六四 為 0x1000
 常「F_RONLY」之無符六四 為 0x0010
 常「F_PERM」之無符六四 為 0x0020
+常「F_FWD」之無符六四 為 0x0000
+常「F_NFWD」之無符六四 為 0x0001
+常「F_UNLOCK」之無符六四 為 0x0000
+常「F_LOCK」之無符六四 為 0x0001
+常「F_TSLOCK」之無符六四 為 0x0002
+常「F_CKLOCK」之無符六四 為 0x0003
 常「L_FSNM」之無符六四 為 20
 常「L_FNM」之無符六四 為 20
 常「L_CONNM」之無符六四 為 8
@@ -91,4 +97,56 @@
 註 ofl_sts(W fd, TC* name, F_STATE* stat, F_LOCATE* locat)
 公開 記號「ofl_sts」 術曰「BTRON開状」 受「記述」之無符六四 受「名」之無符六四 受「状」之無符六四 受「場」之無符六四 返 無符六四
     歸 呼「錯換」以(呼「奏令」以(150, 記述 位與 0xFFFFFFFF, 名, 状, 場, 0, 0))
+終術
+
+註 ---- B3: レコード操作とロック (漢令 152〜161)。W の引数は下位 32 ビットだけが効く (負は 0xFFFFFFFF などで渡す)。----
+
+註 see_rec(W fd, W offset, W mode, W* recnum): mode 0=現在から相対、正=offset が番号、負=終端から相対。
+公開 記號「see_rec」 術曰「BTRON録移」 受「記述」之無符六四 受「差」之無符六四 受「態」之無符六四 受「書先」之無符六四 返 無符六四
+    歸 呼「錯換」以(呼「奏令」以(152, 記述 位與 0xFFFFFFFF, 差 位與 0xFFFFFFFF, 態 位與 0xFFFFFFFF, 書先, 0, 0))
+終術
+
+註 fnd_rec(W fd, W mode, UW typemask, UH subtype, W* recnum): mode は F_FWD・F_NFWD のみ。成功は 0。
+公開 記號「fnd_rec」 術曰「BTRON録探」 受「記述」之無符六四 受「態」之無符六四 受「型」之無符六四 受「副」之無符六四 受「書先」之無符六四 返 無符六四
+    歸 呼「錯換」以(呼「奏令」以(153, 記述 位與 0xFFFFFFFF, 態 位與 0xFFFFFFFF, 型 位與 0xFFFFFFFF, 副 位與 0xFFFF, 書先, 0))
+終術
+
+註 rea_rec(W fd, W offset, B* buf, W size, W* r_size, UH* subtype): 成功は現在レコードの型。
+公開 記號「rea_rec」 術曰「BTRON録読」 受「記述」之無符六四 受「差」之無符六四 受「緩」之無符六四 受「長」之無符六四 受「大書」之無符六四 受「副書」之無符六四 返 無符六四
+    歸 呼「錯換」以(呼「奏令」以(154, 記述 位與 0xFFFFFFFF, 差 位與 0xFFFFFFFF, 緩, 長 位與 0xFFFFFFFF, 大書, 副書))
+終術
+
+註 wri_rec(W fd, W offset, B* buf, W size, W* r_size, UH* subtype, UW units): offset=-1 で末尾に追記。units は漢令に渡さない。
+公開 記號「wri_rec」 術曰「BTRON録書」 受「記述」之無符六四 受「差」之無符六四 受「緩」之無符六四 受「長」之無符六四 受「大書」之無符六四 受「副書」之無符六四 受「単位」之無符六四 返 無符六四
+    歸 呼「錯換」以(呼「奏令」以(155, 記述 位與 0xFFFFFFFF, 差 位與 0xFFFFFFFF, 緩, 長 位與 0xFFFFFFFF, 大書, 副書))
+終術
+
+註 ins_rec(W fd, B* buf, W size, W type, UH subtype, UW units): 現在レコードの前に挿入。units は漢令に渡さない (無視)。
+公開 記號「ins_rec」 術曰「BTRON録挿」 受「記述」之無符六四 受「緩」之無符六四 受「長」之無符六四 受「型」之無符六四 受「副」之無符六四 受「単位」之無符六四 返 無符六四
+    歸 呼「錯換」以(呼「奏令」以(156, 記述 位與 0xFFFFFFFF, 緩, 長 位與 0xFFFFFFFF, 型 位與 0xFFFFFFFF, 副 位與 0xFFFF, 0))
+終術
+
+註 apd_rec(W fd, B* buf, W size, W type, UH subtype, UW units): 末尾に追加。
+公開 記號「apd_rec」 術曰「BTRON録追」 受「記述」之無符六四 受「緩」之無符六四 受「長」之無符六四 受「型」之無符六四 受「副」之無符六四 受「単位」之無符六四 返 無符六四
+    歸 呼「錯換」以(呼「奏令」以(157, 記述 位與 0xFFFFFFFF, 緩, 長 位與 0xFFFFFFFF, 型 位與 0xFFFFFFFF, 副 位與 0xFFFF, 0))
+終術
+
+註 del_rec(W fd): 現在レコードを消す。リンクの先の参照数が 0 になれば 1、そうでなければ 0。
+公開 記號「del_rec」 術曰「BTRON録消」 受「記述」之無符六四 返 無符六四
+    歸 呼「錯換」以(呼「奏令」以(158, 記述 位與 0xFFFFFFFF, 0, 0, 0, 0, 0))
+終術
+
+註 trc_rec(W fd, W size)
+公開 記號「trc_rec」 術曰「BTRON録切」 受「記述」之無符六四 受「長」之無符六四 返 無符六四
+    歸 呼「錯換」以(呼「奏令」以(159, 記述 位與 0xFFFFFFFF, 長 位與 0xFFFFFFFF, 0, 0, 0, 0))
+終術
+
+註 loc_rec(W fd, W mode): F_LOCK は待たない (F_TSLOCK と同じ)。
+公開 記號「loc_rec」 術曰「BTRON録錠」 受「記述」之無符六四 受「態」之無符六四 返 無符六四
+    歸 呼「錯換」以(呼「奏令」以(160, 記述 位與 0xFFFFFFFF, 態 位與 0xFFFFFFFF, 0, 0, 0, 0))
+終術
+
+註 xch_fil(W fd1, W fd2)
+公開 記號「xch_fil」 術曰「BTRON交換」 受「甲」之無符六四 受「乙」之無符六四 返 無符六四
+    歸 呼「錯換」以(呼「奏令」以(161, 甲 位與 0xFFFFFFFF, 乙 位與 0xFFFFFFFF, 0, 0, 0, 0))
 終術

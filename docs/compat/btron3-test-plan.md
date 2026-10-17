@@ -51,12 +51,12 @@
 | 強試 | `user/btron_term.txt` | 16 | OS 1.1 強制終了・状態 | `ter_prc`（`TERM_NRM`/`TERM_ALL`）、`prc_sts`、`MS_TERM` | 正・異・相 | `ER_SELF`/`ER_NOPRC`/`ER_LEVEL`/`ER_PAR`、子孫の終了順、枠の回収 |
 | 同試 | `user/btron_sync.txt` | 21 | OS 1.3 セマフォ・イベントフラグ | `cre_sem`、`del_sem`、`sig_sem`、`wai_sem`、`cre_flg`、`del_flg`、`set_flg`、`clr_flg`、`wai_flg` | 正・異・境・相 | FIFO、時間切れ、`ER_DLT`、`DELEXIT`、排他の自動返却。待ち順は解釈 |
 | 緩試 | `user/btron_comm.txt` | 24 | OS 1.3 メッセージバッファ・ランデブ | `cre_mbf`、`del_mbf`、`snd_mbf`、`rcv_mbf`、`cre_por`、`del_por`、`cal_por`、`acp_por`、`fwd_por`、`rpl_rdv` | 正・異・境・相 | 環の折り返し、満杯・空、転送、削除。`bufsz`=0 は未対応 |
-| 録試 | `user/btron_file.txt` | 45 | OS 1.6 ファイル管理 B1・B2 | `get_lnk`、`chg_wrk`、`att_fls`、`det_fls`、`lst_fls`、`fls_sts`、`cre_fil`、`cre_lnk`、`del_fil`、`opn_fil`、`cls_fil`、`fil_sts`、`ofl_sts` | 正・異・境・相 | B1: 出現番号、`F_BASED`/`F_DIRECT`、作業ファイル継承。B2: 記述子の世代、ファイル数の上限と頁の返却、親レコードの満杯（`ER_SZOVR`）、参照数の増減、`F_EXCL`/`F_WEXCL` の行程間試験（子行程を使う）、行程終了での自動クローズ、読取専用 FS |
+| 録試 | `user/btron_file.txt` | 64 | OS 1.6 ファイル管理 B1・B2・B3 | `get_lnk`、`chg_wrk`、`att_fls`、`det_fls`、`lst_fls`、`fls_sts`、`cre_fil`、`cre_lnk`、`del_fil`、`opn_fil`、`cls_fil`、`fil_sts`、`ofl_sts`、`see_rec`、`fnd_rec`、`rea_rec`、`wri_rec`、`ins_rec`、`apd_rec`、`del_rec`、`trc_rec`、`loc_rec`、`xch_fil` | 正・異・境・相 | B1: 出現番号、`F_BASED`/`F_DIRECT`、作業ファイル継承。B2: 記述子の世代、ファイル数の上限と頁の返却、親レコードの満杯（`ER_SZOVR`）、参照数の増減、`F_EXCL`/`F_WEXCL` の行程間試験（子行程を使う）、行程終了での自動クローズ、読取専用 FS。B3: レコードの追記・挿入・書き足し（後ろが壊れない）・切り詰め・削除、リンクレコード、本文の容量、記述子間と行程間のロック、挿入・削除でのロック番号のずれ、`xch_fil` |
 | 篇試 | `user/pian_test.txt` | 28 | 篇藏（内部設計。BTRON3 の規範ではない） | 篇ID、章、パス、名替、予約章、深さ・名前長の上限 | 正・異・境 | 内部ストレージの試験。BTRON3 適合の根拠にはしない |
 | 言語 | `tests/lang/ok`・`err` | ok 7・err 37 | （BTRON3 とは無関係） | 言語仕様の黄金・診断試験 | — | 互換層を書く言語の健全性 |
 | 起動時 | `tests/run_tests.sh` | — | 核の基本動作 | argv 受け渡し、終了コード、EL0 行程、メモリ保護など | — | BTRON3 の項目には紐付けない |
 
-**集計**: BTRON3 互換層の QEMU 試験は 9 種・計 201 項目（識試 13、名試 21、時試 11、信試 31、利試 19、強試 16、同試 21、緩試 24、録試 45）。ほかに篇藏 28 項目。
+**集計**: BTRON3 互換層の QEMU 試験は 9 種・計 220 項目（識試 13、名試 21、時試 11、信試 31、利試 19、強試 16、同試 21、緩試 24、録試 64）。ほかに篇藏 28 項目。
 
 ## 5. API 単位の試験の有無（第2編 第1章）
 
@@ -84,6 +84,12 @@
 | `opn_fil` | 録試 | `ER_ACCES`・`ER_PWD`（B4）は未検証。同じ行程の二重オープンの規則は暫定で試験していない |
 | `cls_fil` | 録試 | `ER_IO` は発生し得ず未検証 |
 | `fil_sts`、`ofl_sts` | 録試 | `F_STATE` の全フィールド（時刻・f_group など）の値は未検証。`F_LOCATE` は NULL のみ |
+| `see_rec`、`fnd_rec` | 録試 | `F_BWD` 系は未対応（`ER_PAR`）。`ER_IO` は発生し得ず未検証 |
+| `rea_rec`、`wri_rec` | 録試 | `wri_rec` の `units` は無視。リンクレコードの属性以外の書き込みは `ER_PAR` を確認。戻り値の意味は原文欠落で自前の解釈 |
+| `ins_rec`、`apd_rec` | 録試 | リンクの `ER_LIMIT`（参照数 255）は未検証。`ER_REC`（原文が不明）は未対応 |
+| `del_rec`、`trc_rec` | 録試 | 良好 |
+| `loc_rec` | 録試 | `F_LOCK` の待ち・`ER_MINTR`・複数ロックは未検証（未実装） |
+| `xch_fil` | 録試 | `ER_XFS`（別 FS）と他の記述子のロック（`ER_LOCK`）は未検証 |
 | `att_fls`、`det_fls`、`lst_fls`、`fls_sts` | 録試 | `syn_fls`・`chg_fls`・`chg_fsm` は未実装 |
 | `mbk_sts` 相当（`頁残`） | なし | 機能のみ。API 未提供 |
 | 1.5 `get_mbk` `rel_mbk`、1.7 イベント、1.8 デバイス、1.10 システム管理 | — | 未実装のため試験なし |
@@ -95,7 +101,7 @@
 | 1 | `ER_*` の網羅表 | 全体 | 原文のエラー名を API ごとに列挙し、各試験の異常系との対応を表にする（欠けた `ER_*` を可視化） |
 | 2 | 同期系の上限・OR 待ち | 1.3 | `ER_LIMIT`、カウント上限、`TWF_ORW` を同試に追加 |
 | 3 | 型の残り | 共有データ §1 | `ErrCode` の二定義、`MSEC`/`STIME` の幅、浮動小数点の方針が決まってから |
-| 4 | 録層 B3 以降 | 1.6 | レコード操作・ロック・属性・アクセス制御。実装と同時に正常・異常・境界を足す。B2 の未検証項目（`ER_LOCK`・`ER_ACCES`・`ER_PWD`）も併せて足す |
+| 4 | 録層 B4 以降 | 1.6 | 属性・アクセス制御・パスワード。実装と同時に正常・異常・境界を足す。B2・B3 の未検証項目（`ER_ACCES`・`ER_PWD`、`xch_fil` の `ER_LOCK`）も併せて足す |
 | 5 | メッセージのハンドラ・タイムアウト | 1.2 | `def_msg`/`ret_msg`/`brk_msg`、`req_tmg`。EL0 への非同期上りの実装後 |
 | 6 | 文字コード・TAD の往復試験 | 共有データ §2・§3 | 符号表と TAD の ID／配置を原文で確定してから。テストベクトルの入手経路を決める |
 | 7 | 描画・HMI の統合試験 | 第2編 第2章・第3章 | 表示装置の実装後。QEMU の framebuffer 出力の比較方法（スクリーンショットの画素比較）を決める |
