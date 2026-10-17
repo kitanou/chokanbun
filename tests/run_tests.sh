@@ -279,7 +279,7 @@ if [ -f "$OUT/kernel.elf" ]; then
         # Then feed 殻 (shell) commands once 甲 has read that line (M4).
         ( printf 'KANBUN\n' > "$PIPE.in"
           for _ in $(seq 1 60); do grep -q "甲得" "$KLOG" 2>/dev/null && break; sleep 0.25; done
-          printf '響 天下太平\n讀 史記\n怪\n讀 無題\n目\n書 筆記 天地玄黄\n讀 筆記\n書 一二三四五六七八九十壱 x\n書 筆記\n目\n削 筆記\n讀 筆記\n目\n削 筆記\n書 新稿 草\n目\n問安 日月\n數 一 二 三\n識試\n名試\n時試\n信試\n利試\n強試\n同試\n緩試\n録試\n篇試\n存在せず 子\n助\n終\n' > "$PIPE.in" ) &
+          printf '響 天下太平\n讀 史記\n怪\n讀 無題\n目\n書 筆記 天地玄黄\n讀 筆記\n書 一二三四五六七八九十壱 x\n書 筆記\n目\n削 筆記\n讀 筆記\n目\n削 筆記\n書 新稿 草\n目\n問安 日月\n數 一 二 三\n識試\n名試\n時試\n信試\n利試\n強試\n同試\n緩試\n録試\n篇試\n章 天地/家/殻章\n移 天地/家/殻章\n在\n書 甲 一二\n改 甲 乙\n讀 乙\n改 甲\n移 ..\n在\n移 天地/典/史記\n移 天地/典\n在\n存在せず 子\n助\n終\n' > "$PIPE.in" ) &
         FEEDPID=$!
         # Wait up to ~15s for the final marker, then stop QEMU.  The generic
         # timer fires five times (5 × CNTFRQ/40 ≈ 125 ms), so this is ample.
@@ -535,8 +535,18 @@ if [ -f "$OUT/kernel.elf" ]; then
             fail "kernel qemu: 殻 削 のあと作成 (新稿=${K_REUSE:-0})"
             sed 's/^/      /' "$KLOG" 2>/dev/null | head -80
         fi
+        # --- 篇藏 F2: 殻の章操作 (章・移・在・改) ---
+        K_DIR="$(sed -n '/^殻章:天地\/家\/殻章/,/^殻在:天地\/典/p' "$KLOG" 2>/dev/null | tr -d '\r' | grep -a '^殻' | grep -av '^殻> ' | paste -sd'|' -)"
+        K_DIR_WANT='殻章:天地/家/殻章|殻移:天地/家/殻章|殻在:天地/家/殻章|殻書 0x0000000000000006|殻改:甲→乙|殻讀:一二|殻用法 改 旧 新|殻移:..|殻在:天地/家|殻誤 0xffffffffffffffec|殻移:天地/典|殻在:天地/典'
+        if [ "$K_DIR" = "$K_DIR_WANT" ]; then
+            pass "kernel qemu: 殻 章・移・在・改 (章を作って移り、書いた篇を名替して読み、.. で上がり、章でない先は -ENOTDIR、天地/典 へ戻る)"
+        else
+            fail "kernel qemu: 殻 章・移・在・改 (got='${K_DIR:-none}')"
+            grep -a '殻' "$KLOG" 2>/dev/null | sed 's/^/      /' | tail -40
+        fi
         K_HELP="$(grep -c '殻命令一覧' "$KLOG" 2>/dev/null)"
         if [ "${K_HELP:-0}" -eq 1 ] && grep -q '書 名 文  … 典籍を作って文を書く' "$KLOG" 2>/dev/null \
+           && grep -q '改 旧 新   … 篇の名を替える' "$KLOG" 2>/dev/null \
            && grep -q '終        … 殻を終える' "$KLOG" 2>/dev/null; then
             pass "kernel qemu: 殻 助 (命令一覧を表示)"
         else
