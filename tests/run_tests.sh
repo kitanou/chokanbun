@@ -226,30 +226,34 @@ if [ -f "$OUT/kernel.elf" ]; then
             fail "kernel qemu: IRQ handler returned via eret (割込完了)"
             sed 's/^/      /' "$KLOG" 2>/dev/null | head -20
         fi
-        # --- M3 software: EL0 行程 + SVC + 漢令 ABI + スケジューラ -------------
+        # --- M3 software: EL0 行程 + SVC + 漢令 ABI + スケジューラ + 空間分離 ----
         if grep -q "民籍投入" "$KLOG" 2>/dev/null; then
             pass "kernel qemu: EL0 行程を投入 (民籍投入)"
         else
             fail "kernel qemu: EL0 行程を投入 (民籍投入)"
             sed 's/^/      /' "$KLOG" 2>/dev/null | head -20
         fi
-        if grep -q "甲在野" "$KLOG" 2>/dev/null && grep -q "乙在野" "$KLOG" 2>/dev/null; then
-            pass "kernel qemu: 2 行程が EL0 で 漢令 書出 を実行 (甲在野/乙在野)"
+        K_AW="$(grep -oE '甲書 0x[0-9a-f]{16}' "$KLOG" 2>/dev/null | grep -oE '0x[0-9a-f]{16}')"
+        K_BW="$(grep -oE '乙書 0x[0-9a-f]{16}' "$KLOG" 2>/dev/null | grep -oE '0x[0-9a-f]{16}')"
+        if [ "$K_AW" = "0x000000000000000a" ] && [ "$K_BW" = "0x000000000000000b" ]; then
+            pass "kernel qemu: 2 行程が EL0 で 書出/書数 を実行 (甲書=0xa 乙書=0xb)"
         else
-            fail "kernel qemu: 2 行程が EL0 で 漢令 書出 を実行 (甲在野/乙在野)"
+            fail "kernel qemu: 2 行程が EL0 で 書出/書数 を実行 (A='${K_AW:-none}' B='${K_BW:-none}')"
             sed 's/^/      /' "$KLOG" 2>/dev/null | head -20
         fi
-        if grep -q "0x0000000000000009" "$KLOG" 2>/dev/null; then
-            pass "kernel qemu: SVC が 書出 の戻り値を x0 で返す"
+        K_AR="$(grep -oE '甲讀 0x[0-9a-f]{16}' "$KLOG" 2>/dev/null | grep -oE '0x[0-9a-f]{16}')"
+        K_BR="$(grep -oE '乙讀 0x[0-9a-f]{16}' "$KLOG" 2>/dev/null | grep -oE '0x[0-9a-f]{16}')"
+        if [ "$K_AR" = "$K_AW" ] && [ "$K_BR" = "$K_BW" ] && [ "$K_AR" != "$K_BR" ]; then
+            pass "kernel qemu: 行程ごとのアドレス空間 (同一仮想アドレスで各自の値)"
         else
-            fail "kernel qemu: SVC が 書出 の戻り値を x0 で返す"
+            fail "kernel qemu: 行程ごとのアドレス空間 (甲讀='${K_AR:-none}' 乙讀='${K_BR:-none}')"
             sed 's/^/      /' "$KLOG" 2>/dev/null | head -20
         fi
-        KSEQ="$(grep -oE '甲在野|乙在野|甲巡|乙巡' "$KLOG" 2>/dev/null | paste -sd' ' -)"
-        if [ "$KSEQ" = "甲在野 甲巡 乙在野 乙巡 甲巡 乙巡" ]; then
-            pass "kernel qemu: ラウンドロビン切替 (譲渡で甲/乙が交互)"
+        KSEQ="$(grep -oE '甲書|乙書|甲讀|乙讀' "$KLOG" 2>/dev/null | paste -sd' ' -)"
+        if [ "$KSEQ" = "甲書 乙書 甲讀 乙讀" ]; then
+            pass "kernel qemu: 譲渡によるラウンドロビン切替"
         else
-            fail "kernel qemu: ラウンドロビン切替 (got '${KSEQ:-none}')"
+            fail "kernel qemu: 譲渡によるラウンドロビン切替 (got '${KSEQ:-none}')"
             sed 's/^/      /' "$KLOG" 2>/dev/null | head -20
         fi
         if grep -q "民務終了 行程=0x0000000000000000" "$KLOG" 2>/dev/null && \

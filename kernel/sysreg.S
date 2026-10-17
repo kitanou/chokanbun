@@ -5,10 +5,12 @@
 // registers that turn translation on.
 //
 // enable_mmu(x0 = level-1 table base, physical, 4 KiB aligned):
-//   Identity map produced by the builder:
-//     index 0: 0x00000000-0x3FFFFFFF  Device-nGnRnE  (PL011 UART, GIC)
-//     index 1: 0x40000000-0x7FFFFFFF  Normal, WB     (RAM, kernel, stack)
-//   T0SZ = 33 selects a 2 GiB region starting at level 1 (1 GiB blocks).
+//   Turns on translation with the table the machine-kanbun builder (設頁表)
+//   produced for 行程 0.  Each 行程 has its own level-1 table; the kernel's
+//   identity mappings are present in all of them:
+//     level 1 index 0: 0x00000000-0x3FFFFFFF  Device-nGnRnE  (PL011 UART, GIC)
+//     level 1 index 1: 0x40000000-0x7FFFFFFF  -> level 2 (2 MiB blocks)
+//   T0SZ = 33 selects a 2 GiB region starting at level 1.
 
     .section .text.sysreg, "ax"
 
@@ -40,6 +42,20 @@ enable_mmu:
     .globl read_sctlr
 read_sctlr:
     mrs x0, sctlr_el1
+    ret
+
+// set_ttbr0(x0 = level-1 table base): point the EL1&0 translation at another
+// table and flush the TLB.  Used by the scheduler (排程) to give each 行程 its
+// own address space.  The kernel's own mappings (the identity-mapped code, data
+// and page-table blocks) are present in every 行程's table, so execution
+// continues after the switch.
+    .globl set_ttbr0
+set_ttbr0:
+    msr ttbr0_el1, x0
+    dsb sy
+    tlbi vmalle1
+    dsb sy
+    isb
     ret
 
 // ---- ARM generic timer (EL1 physical timer, CNTP) -----------------------
