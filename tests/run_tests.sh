@@ -259,6 +259,29 @@ if [ -f "$OUT/kernel.elf" ]; then
             fail "kernel qemu: 行程ごとのアドレス空間 (甲讀='${K_AR:-none}' 乙讀='${K_BR:-none}')"
             sed 's/^/      /' "$KLOG" 2>/dev/null | head -20
         fi
+        # --- M3: デマンドページング (未写像の窓ページを触れると頁が与えられる) ---
+        K_PG="$(grep -cE '頁供 0x[0-9a-f]{16}' "$KLOG" 2>/dev/null)"
+        if [ "${K_PG:-0}" -ge 4 ]; then
+            pass "kernel qemu: デマンドページングで頁を供給 (頁供 x${K_PG})"
+        else
+            fail "kernel qemu: デマンドページングで頁を供給 (頁供 x${K_PG:-0})"
+            sed 's/^/      /' "$KLOG" 2>/dev/null | head -30
+        fi
+        K_AP="$(grep -oE '甲頁 0x[0-9a-f]{16}' "$KLOG" 2>/dev/null | grep -oE '0x[0-9a-f]{16}')"
+        K_BP="$(grep -oE '乙頁 0x[0-9a-f]{16}' "$KLOG" 2>/dev/null | grep -oE '0x[0-9a-f]{16}')"
+        if [ "$K_AP" = "0x0000000000001000" ] && [ "$K_BP" = "0x0000000000001001" ]; then
+            pass "kernel qemu: 未写像ページが触れた時に写像される (甲頁=0x1000 乙頁=0x1001)"
+        else
+            fail "kernel qemu: 未写像ページが触れた時に写像される (甲頁='${K_AP:-none}' 乙頁='${K_BP:-none}')"
+            sed 's/^/      /' "$KLOG" 2>/dev/null | head -30
+        fi
+        K_FA="$(grep -oE '頁供 0x[0-9a-f]{16}' "$KLOG" 2>/dev/null | grep -c '0000000040701000')"
+        if [ "${K_FA:-0}" -ge 2 ]; then
+            pass "kernel qemu: 欠址が窓内の未写像頁 (0x40701000 を 2 回)"
+        else
+            fail "kernel qemu: 欠址が窓内の未写像頁 (0x40701000 x${K_FA:-0})"
+            sed 's/^/      /' "$KLOG" 2>/dev/null | head -30
+        fi
         K_AE="$(grep -oE '甲禁 0x[0-9a-f]{16}' "$KLOG" 2>/dev/null | grep -oE '0x[0-9a-f]{16}')"
         K_BE="$(grep -oE '乙禁 0x[0-9a-f]{16}' "$KLOG" 2>/dev/null | grep -oE '0x[0-9a-f]{16}')"
         if [ "$K_AE" = "0xfffffffffffffff2" ] && [ "$K_BE" = "0xfffffffffffffff2" ]; then
