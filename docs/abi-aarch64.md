@@ -223,7 +223,12 @@
   | 136 | リンク取 | `x0`=パス（TC、256 文字まで。NULL は基準のファイルそのもの）, `x1`=LINK（52 B、F_BASED では基準として入力も）, `x2`=方式（0=F_NORM, 1=F_BASED, +2=F_DIRECT） | 0／`-ENOENT`・`-ENODEV`・`-ENAMETOOLONG`（パス・名前が不正）・`-EACCES`（途中のファイルに E 権が無い）・`-EINVAL`・`-EFAULT`。`get_lnk`。絶対パスは先頭が `/`（TC_FDLM）+ 接続名。先頭の `≡`（TC_FOWN）と NULL は作業ファイル |
   | 137 | 作業変 | `x0`=LINK（52 B）。NULL は作業ファイルを未定義にする | 0／`-ENODEV`・`-ENOENT`・`-EACCES`（E 権）・`-EFAULT`。`chg_wrk`。作業ファイルは子が継ぐ。最初の行程は未定義 |
   | 144 | ファイル作成 | `x0`=LINK（F_FLOAT: FS の指定のみ。F_FIX: 親ファイル。F_FILEID: ID 指定。成功で新しいファイルの LINK に置き換わる）, `x1`=名前（TC）, `x2`=A_MODE（NULL 可）, `x3`=atype, `x4`=opt（0=F_FLOAT, 1=F_FIX, 2=F_FILEID） | 記述子（正）／`-ENOENT`・`-ENODEV`・`-EROFS`・`-ENAMETOOLONG`・`-EINVAL`・`-EFAULT`・`-EMFILE`・`-ENOSPC`・`-E2BIG`・`-EEXIST`（ID が既にある）・`-EACCES`・`-EBUSY`。`cre_fil`。F_FLOAT は固定リンクを作らず参照数 0、F_FIX は親の末尾に固定リンクを足して参照数 1 |
-  | 145 | （欠番） | `cre_lnk`（リンクファイルの生成）は段階 M3 まで未実装 | `-ENOSYS` |
+  | 145 | リンクファイル生成 | `x0`=LINK（opt に応じ FS 指定／親／ID 指定。成功すると新しいリンクファイルの LINK が返る）, `x1`=F_LINK（132 B）, `x2`=opt（F_FLOAT 0・F_FIX 1・F_FILEID 2） | 0／`-ENOENT`・`-ENODEV`・`-EINVAL`（opt 不正・同じ FS を指す）・`-ENAMETOOLONG`（FS 名／ファイル名が空）・`-EEXIST`・`-EACCES`・`-EROFS`・`-EFAULT`。参照数は F_FIX で 1、他は 0。`cre_lnk` |
+  | 151 | ファイル直接生成 | `x0`=LINK, `x1`=名前, `x2`=F_STATE（96 B。種別が 0 ならリンクファイル）, `x3`=F_LINK, `x4`=opt | 通常ファイルは記述子、リンクファイルは 0／`-EACCES`（レベル 0 でない）ほか cre_fil/cre_lnk と同じ。`gen_fil` |
+  | 162 | リンクレコード検索 | `x0`=記述子, `x1`=mode（向き 0〜5 + F_SFILE 0x4000・F_SNAME 0x2000・F_SATR1〜5 0x1000〜0x0100）, `x2`=LINK（条件指定時）, `x3`=サブタイプ, `x4`=recnum の書き先（NULL 可） | 0／`-EBADF`・`-EINVAL`・`-EFAULT`・`-ENOEXEC`（見つからない = ER_REC）。`fnd_lnk` |
+  | 171 | リンクファイル情報 | `x0`=LINK, `x1`=F_LINK の書き先（132 B、NULL 可） | リンクファイルの参照数／`-ENOLINK`（リンクファイルでない）・`-ENOENT`・`-ENODEV`・`-EFAULT`。`lnk_sts` |
+  | 172 | リンクファイル同期 | `x0`=LINK, `x1`=opt（0 チェックのみ、≠0 更新） | 同期状態 0 一致・1 名前・2 生成日時・3 両方／`-ENOLINK`・`-ENOENT`・`-ENODEV`・`-EROFS`。`syn_lnk` |
+  | 173 | 次のリンク取得 | `x0`=LINK（入力は開始ファイル、出力は次のファイル） | 取り出したファイルの参照数／`-ENOENT`（それより大きい ID が無い）・`-ENODEV`・`-EFAULT`。`get_nlk` |
   | 146 | ファイル削除 | `x0`=親 LINK（NULL 可）, `x1`=LINK, `x2`=force | 含んでいたリンクの先で参照数が 0 になった数／`-ENOENT`・`-EBUSY`（開いている・作業ファイル・参照数≠0（親なし）・親が排他で開かれている・他の fd の現在レコード）・`-EPERM`（削除不可）・`-ENOEXEC`（ER_REC。リンクを含む）・`-EROFS`・`-EACCES`（親の W）・`-ETXTBSY`（リンクレコードがロックされている）・`-EFAULT`・`-EINVAL`。`del_fil`。親ありは親から固定リンクを 1 つ消して参照数 -1、0 になれば本体も消す。親なしは参照数 0 のときだけ |
   | 147 | ファイル開 | `x0`=LINK, `x1`=モード（4=READ, 2=WRITE, 6=UPDATE, 0x100=EXCL, 0x200=WEXCL）, `x2`=パスワード（NULL 可） | 記述子（正）／`-ENOENT`・`-ENODEV`・`-EBUSY`・`-EROFS`・`-EINVAL`・`-EFAULT`・`-EMFILE`。`opn_fil` |
   | 148 | ファイル閉 | `x0`=記述子 | 0／`-EBADF`。`cls_fil`。行程の終了で自動的に閉じる |
