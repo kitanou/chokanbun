@@ -1,6 +1,6 @@
 # 実身・仮身モデル設計書（Issue #46）
 
-状態: **設計と V1a（登録簿）・V1b（実身の操作）・V2（続柄）の実装**。BTRON3 の実身／仮身マネージャ（OS 仕様編 第3章 3.8）を、現在の録層・篇藏・漢殻の上にどう載せるかを決める。
+状態: **設計と V1a（登録簿）・V1b（実身の操作）・V2（続柄）・V3（接続と虚身）の実装**。BTRON3 の実身／仮身マネージャ（OS 仕様編 第3章 3.8）を、現在の録層・篇藏・漢殻の上にどう載せるかを決める。
 原文: <https://www.chokanji.com/developer/doc/btron3/os_spec/shell/omgr.html>（3.8.1〜3.8.6、全 60 関数）。関連: [compat/btron3-file-design.md](compat/btron3-file-design.md)、[design-pianfs.md](design-pianfs.md)、[compat/btron3-api-inventory.md](compat/btron3-api-inventory.md)。
 
 ## 1. 原文の要点
@@ -86,6 +86,15 @@
 - `ocnv_vob`: 同じ FS なら 0 を返し何もしない。別の FS なら、元の FS に**リンクファイルを `F_FLOAT` で作り**（参照先の名前・生成日時・アプリタイプは `fil_sts` から。**参照先の FS が接続されている必要がある**＝SYS なら `att_fls` で接続してから）、仮身をそのリンクファイルを指すものに置き換え、`V_LINKFL` を立てる。続柄は、元の FS の表から名前を引いて新しい FS の表へ登録し、索引を付け替える（表が読めなければ 0）。この続柄の付け替えは、書き込める FS が RAM だけなので、FS をまたいだ端から端までの試験はしていない（`続柄登録`・`続柄取得` は単体で試験した）。
 - `odel_obj` はリンクファイルを `lnk_sts` の参照数で判定し、リンクファイルそのものを消す（`fil_sts` は参照先を引くので使えない）。
 
+### V3 で決めたこと
+
+- **`o*` の接続・切断は登録簿の虚身状態を更新する**: `oatt_fls`・`oatt_vob` で接続すると、その FS の登録済みの仮身の `V_DETACH` を外し、`odet_fls`・`odet_vob` で切断すると立てる（原文: アプリは `att_fls`・`det_fls` でなく `o*` を使う。カーネルを直接呼ぶと登録簿は更新されない）。
+- **`oreg_vob` の虚身**: 仮身の FS が接続されていなければ、同じ FS を指す虚身が既に登録されている場合だけ虚身（`V_DETACH`）として登録し、無ければ `ER_NOFS`（原文の接続パネルは出せない）。以前の「FS の接続の検査は V3」を実装した。
+- **`oatt_vob` の接続先**: FS 名から装置を引く表が無いので、組み込みの FS だけ（SYS = 装置 `rom`・接続名 `SYS`、RAM = 装置 `mem`・接続名 `RAM`）。ほかは `ER_NOFS`。
+- **`odet_vob`**: `vid > 0` は `vid` の FS、`vid <= 0` は `dev` の装置（空文字列はシステムデバイス = FS 名が SYS の接続）。切断済みなら 0、切断したら 1 で、`dev` が NULL でなければ論理デバイス名（TC 8 文字 + 終端）を戻す。
+- **`ofat_fls`・`ofdt_fls`** は他のシステムコール実行中でも待たない点だけが違うが、行程内のライブラリなので待つものが無く、`oatt_fls`・`odet_fls` と同じ処理にした。
+- 仮身要求イベント（虚身移行・解除）、小物メニュー・検索対象 FS の更新、接続・切断のパネルは未対応。
+
 ### 未決・未対応（V1a 時点）
 
 - 付箋（`vlnk = NULL`）は `EX_PAR`（付箋は TAD の付箋セグメントに依存するので後）。
@@ -102,7 +111,7 @@
 | V1a | **登録簿（実装済み）**: `oreg_vob`・`b_odup_vob`・`odel_vob`・`oget_vob`・`ochg_sts`（`user/btron/omgr.mkn`、試験 `実試` 20 項目） | 録層（済） |
 | V1b | **実身の操作（実装済み）**: `ocre_obj`・`oopn_obj`・`ochg_nam`・`odel_obj`・`oupd_fil`（`実試` 8 項目）。`onew_obj`・`ocre_chd` は必ずパネルが要る（名前の入力）ので V6 | V1a |
 | V2 | **続柄（実装済み）**: 続柄管理ファイル、`ochg_rel`・`ocnv_vob`（`実試` 6 項目） | V1b |
-| V3 | デバイス／FS: `oatt_fls`・`odet_fls`・`ofat_fls`・`ofdt_fls`・`oatt_vob`・`odet_vob`（虚身状態の判定） | V1b |
+| V3 | **デバイス／FS の接続と虚身（実装済み）**: `oatt_fls`・`odet_fls`・`ofat_fls`・`ofdt_fls`・`oatt_vob`・`odet_vob`、`oreg_vob` の虚身（`実試` 6 項目）。`ofmt_vob`・`oprc_dev` は V6 | V1b |
 | V4 | アプリ管理と実行プロトコル: `oreg_apg` ほか、`osta_prc`・`oend_prc`・`oreq_prc` ほか | V1b、メッセージ・イベント（済）、`def_msg`（lucky-tiger 待ち）の要否を確認 |
 | V5 | 漢殻の命令（実身の生成・仮身の配置・削除・一覧） | V1b〜V3 |
 | V6 | 表示・操作 UI（21 関数）、`otad_vob`、付箋 | F7（表示装置）、TAD |
