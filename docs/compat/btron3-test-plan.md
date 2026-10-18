@@ -55,10 +55,11 @@
 | 篇試 | `user/pian_test.mkn` | 28 | 篇藏（内部設計。BTRON3 の規範ではない） | 篇ID、章、パス、名替、予約章、深さ・名前長の上限 | 正・異・境 | 内部ストレージの試験。BTRON3 適合の根拠にはしない |
 | 貯試 | `user/btron_mem.mkn` | 45 | OS 1.5 メモリ管理 | `get_mbk`、`rel_mbk`、`mbk_sts`、`malloc` 系 18 関数 | 正・異・境・相 | ローカル塊の割当・解放・再利用（昇順 first-fit、解放後の穴）、ローカル域の枯渇（`ER_NOMEM`）、共有・システム塊の全行程写像（同一 VA・同一物理頁を子行程で横断確認）、`DELEXIT` の自動解放、`M_SYSTEM` のレベル 0 権限（子がレベル 1 で `ER_CTX`）、持ち主でない塊の解放（`ER_MPTR`）、`ER_PAR`（余計ビット・頁数 0・負）、`ER_ADR`（书写き先が不正）、`mbk_sts` の口径（空き枚数の減りと戻り）。子は 3 役。不足: 塊表 32 項の満杯・共有域 8 頁づまり（`ER_LIMIT`）の試験なし |
 | 件試 | `user/btron_evt.mkn` | 73 | OS 1.7 イベント管理 | `get_evt`、`put_evt`、`clr_evt`、`get_pdp`、`set_pdp`、`get_etm`、`get_kmp`、`chg_emk`、`set_krp`、`get_krp`、`set_krm`、`get_krm`、`get_kid`、`get_ktb`、`set_ktb`、`chg_pda`、`sig_buz`、`ctl_buz`、`req_evt`、`las_evt` | 正・異・境・相 | 隊 32 項と優先度・発生順、マスク外の破棄、`CLR`/`NOCLR`、`EP_POS`/`EP_STAT`/`EP_TIME`、満杯（`ER_NOSPC`）、`ER_PAR`（t_mask≦0・opt 不正・型 0/5/16・余計ビット・メロディー番号）・`ER_ADR`（窓外）、`chg_emk`（負で取得）、`get_etm` と時間の進み、`get_kmp` のキー反映、`set`/`get_krm`・`krp` の往復、`get_kid`、`get_ktb`/`set_ktb`（keymax 0・kctmax 4001・往復）、絶対座標タイプの `set_pdp`、`ctl_buz` の往復、`req_evt` の `MS_SYS5` を `rcv_msg` で受信・解除、`las_evt` の経過、`EV_AUTKEY` の合成。実機が無いため核内の模型で試験する（子行程は使わない） |
+| 設試 | `user/btron_dev.mkn` | 90 | OS 1.8 デバイス管理 | `opn_dev`、`cls_dev`、`rea_dev`、`wri_dev`、`chg_dmd`、`dev_sts`、`get_dev`、`lst_dev`、`sus_dev` | 正・異・境・相 | 論理名の解決（前綴り一致・支番 1〜3 桁・前 0 なし）と未登録（`ER_NOEXS`）、`o_mode` の不正ビット（`ER_PAR`）と排他（`D_EXCL`/`D_WEXCL` の `ER_BUSY`）、同時オープン 32 の上限（`ER_LIMIT`）、塊型の読み書き（`rda`）と属性データ（`start`<0、読のみ）、`a_size`、文字型（`con`）の路と空読み（`ER_BUSY`）、向きの検査（読否 `prn` の `D_READ` → `ER_DEV`、書禁 `rom` の `D_WRITE` → `ER_RONLY`）、`D_READ`/`D_WRITE` オープンでの逆操作（`ER_DD`）、`dev_sts`（`attr`/`mode`/`blksz`/`wprt`）、`get_dev`/`lst_dev`（`DEV_INFO`）、`chg_dmd` のレベル 0 権限（`ER_ACCES`）と `mode` の範囲、`sus_dev` の通常・強制カウンタ（`D_CHECK`/`D_SUSPEND`/`ER_BUSY`）。実機が無いため核内の模型 4 ユニット（`rda`/`rom`/`con`/`prn`）で試験する（子行程は使わない） |
 | 言語 | `tests/lang/ok`・`err` | ok 7・err 37 | （BTRON3 とは無関係） | 言語仕様の黄金・診断試験 | — | 互換層を書く言語の健全性 |
 | 起動時 | `tests/run_tests.sh` | — | 核の基本動作 | argv 受け渡し、終了コード、EL0 行程、メモリ保護など | — | BTRON3 の項目には紐付けない |
 
-**集計**: BTRON3 互換層の QEMU 試験は 11 種・計 370 項目（識試 13、名試 21、時試 11、信試 31、利試 19、強試 16、同試 21、緩試 24、録試 96、貯試 45、件試 73）。ほかに篇藏 28 項目。
+**集計**: BTRON3 互換層の QEMU 試験は 12 種・計 460 項目（識試 13、名試 21、時試 11、信試 31、利試 19、強試 16、同試 21、緩試 24、録試 96、貯試 45、件試 73、設試 90）。ほかに篇藏 28 項目。
 
 ## 5. API 単位の試験の有無（第2編 第1章）
 
@@ -100,7 +101,9 @@
 | `get_evt`、`put_evt`、`clr_evt`、`get_etm`、`chg_emk`、`req_evt`、`las_evt` | 件試 | 隊 32 項の満杯（`ER_NOSPC`）、型 0・5・16 以上の `ER_PAR`、`opt` の余計ビット、マスク外の破棄、`EV_NULL` の合成（時 = 現在・座 = PD 位置・状 = メタキー状態）、優先度クラス（APPL1〜4 が BUTDWN より先、AUTKEY は次、APPL5〜8 は最後）とクラス内の発生順、`clr_evt` の `last_mask`（`EM_ALL` は選んだ 1 項だけ）、`req_evt` の `MS_SYS5` を `rcv_msg` で受信（型 10・本体 20 B・送り手 = 要求元）と解除後の非配送、`las_evt` の増加と `EM_NULL` での現在時刻化、`get_etm` の 25 ms 刻み |
 | `get_kmp`、`set_krp`、`get_krp`、`set_krm`、`get_krm`、`get_kid`、`get_ktb`、`set_ktb` | 件試 | `put_evt` の KEYDWN/KEYUP がキー状態に反映されること（`get_kmp`）、`offset`/`interval` の往復と 0 の `ER_PAR`、KeyMap の往復、`KBD_ID` の kind=1、KeyTab の往復と keymax=0・kctmax=4001 の `ER_PAR`、`EV_AUTKEY` の合成（対象キー・優先度・時間）と対象外・キーアップでの非合成。不足: 実機の入力（virtio-input）を繋いだときのドライバ境界 |
 | `get_pdp`、`set_pdp`、`chg_pda`、`sig_buz`、`ctl_buz` | 件試 | PD 位置の往復と `PNT` の欄の並び、イベント無しで `EV_NULL`、属性の変更（`PD_ABS` で `set_pdp` が 1）と不正ビットの `ER_PAR`、`sig_buz` の種別検査（0・-1・時間指定・メロディー番号）、`ctl_buz` の 6 種の往復。不足: 実機の PD・ブザー |
-| 1.8 デバイス、1.10 システム管理 | — | 未実装のため試験なし |
+| `opn_dev`、`cls_dev`、`rea_dev`、`wri_dev`、`chg_dmd`、`dev_sts`、`get_dev`、`lst_dev` | 設試 | 論理名（`rda`/`rom`/`con`/`prn` の前綴り一致、支番 1〜3 桁、前 0 なし、`ER_NOEXS`）、`o_mode` の許容ビットと `ER_PAR`、排他（ユニット単位の `ER_BUSY`、閉じれば再開ける）、32 相の上限（`ER_LIMIT`）、塊型の読み書きと属性データ（`start`<0）、`a_size` に容量・空き、文字型の 32 B 路と `ER_BUSY`、向き（読否 → `ER_DEV`、書禁 → `ER_RONLY`）と逆操作（`ER_DD`）、`dev_sts` の 4 欄、`get_dev` の支数、`lst_dev` の `DEV_INFO` 並び、`chg_dmd` の `ER_ACCES`・レベル 0 権限。不足: 実機の器類表（ディスク・コンソール・印刷） |
+| `sus_dev` | 設試 | 通常・強制の禁止カウンタ（`D_DISSUS`/`D_ENASUS`/`D_CHECK`）、通常の `D_SUSPEND` は両方 0 を要求、`D_FORCE|D_SUSPEND` は強制 0 を要求（`ER_BUSY`）、電源管理が無いので直ちに 0。不足: 実機の電源管理 |
+| 1.10 システム管理 | — | 未実装のため試験なし（M7c） |
 
 ## 6. 未整備の試験（優先順）
 

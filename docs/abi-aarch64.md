@@ -292,6 +292,15 @@
   | 209 | 音制御 | `x0`=制御の種別（`GET_BUZ_*` 0x0000〜0x0010 / `SET_BUZ_*` 0x0100〜0x0110）, `x1`=UW の入出力先 | 0／`-EINVAL`（種別が不正）・`-EFAULT`。`ctl_buz` |
   | 210 | 事要 | `x0`=対象イベント型マスク（`EM_NULL` で解除） | 0／`-EINVAL`（0〜0x7FFF 外）・`-EFAULT`。指定した型のイベントが発生したら `MS_SYS5`（型 10、本体 20 B の EVENT）を要求元へ送る。要求元の行程が終わると自動で解除する。`req_evt` |
   | 211 | 事経過 | `x0`=対象イベント型マスク（`EM_NULL` で全型を現在時刻に） | 最後に発生してからの経過（ms）／`-EINVAL`（0〜0x7FFF 外）。`las_evt` |
+  | 212 | 器開 | `x0`=TC\* 論理デバイス名（窓内の NUL 終端、最大 8 B）, `x1`=W `o_mode`, `x2`=W\* `error` | 記述子番号（>0）／`-EINVAL`（`o_mode` が不正）・`-EFAULT`・`-ENOENT`（未登録）・`-EBUSY`（排他中）・`-EACCES`（利用者レベルが 0 でない）・`-EOPNOTSUPP`（読否の物を読で開く）・`-EROFS`（書禁の物を書で開く）・`-EMFILE`（32 相全使用）。`opn_dev` |
+  | 213 | 器閉 | `x0`=W `dd`, `x1`=W `eject`, `x2`=W\* `error` | 0／`-ENOTTY`（`dd` 不正・他人の記述子）・`-EFAULT`。`cls_dev` |
+  | 214 | 器読 | `x0`=W `dd`, `x1`=W `start`, `x2`=B\* `buf`, `x3`=W `size`, `x4`=W\* `a_size`, `x5`=W\* `error` | 0／`-ENOTTY`（`dd` 不正・D_WRITE オープン・他人の記述子）・`-EINVAL`（`size`<0・`start` が範囲外）・`-EFAULT`・`-EBUSY`（文字型で読む物が無い）・`-EOPNOTSUPP`（読否の物）・`-EROFS`。`rea_dev` |
+  | 215 | 器書 | `x0`=W `dd`, `x1`=W `start`, `x2`=B\* `buf`, `x3`=W `size`, `x4`=W\* `a_size`, `x5`=W\* `error` | 0／`-ENOTTY`（`dd` 不正・D_READ オープン・他人の記述子）・`-EINVAL`・`-EFAULT`・`-EBUSY`・`-EOPNOTSUPP`・`-EROFS`（書禁の物）。`wri_dev` |
+  | 216 | 器様変 | `x0`=TC\* 論理デバイス名, `x1`=UW `mode`（`R<<8|W` 1〜0xFFF） | 0／`-EINVAL`（`mode` が 1〜0xFFF 外）・`-EACCES`（利用者レベルが 0 でない）・`-EFAULT`・`-ENOENT`。`chg_dmd` |
+  | 217 | 器状 | `x0`=TC\* 論理デバイス名, `x1`=`DEV_STATE`\*（16 B） | 0／`-EFAULT`・`-ENOENT`。`attr`/`mode`/`blksz`/`wprt` を書く。`dev_sts` |
+  | 218 | 器名取 | `x0`=TC\* `buf`（8 B）, `x1`=UW `devno` | そのユニットの支数／`-EFAULT`・`-ENOENT`（番号が範囲外）。`get_dev` |
+  | 219 | 器並 | `x0`=`DEV_INFO`\* `dev`（16 B × `ndev`）, `x1`=UW `ndev` | 登録ユニット数／`-EFAULT`。`lst_dev` |
+  | 220 | 器休 | `x0`=UW `mode`（`D_DISSUS`=2/`D_ENASUS`=3/`D_CHECK`=4/`D_SUSPEND`=1 ＋ `D_FORCE`=0x8000） | 0（`D_CHECK` は禁止・強制の数）／`-EINVAL`・`-EBUSY`（通常サスペンド時に禁止中）・`-EMFILE`（禁止要求が上限）。電源管理が無いので `D_SUSPEND` は直ちに 0 を返す。`sus_dev` |
 - `読込`（番10）は**書込系漢令**の最初の例で、UART 受信 FIFO（`UART_FR` の RXFE
   ビットで空きを判定し `UART_DR` を読む）から、今ある分だけを検証済みの民の窓
   バッファへ書く。殻（シェル）の入力経路になる。呼び出し側は改行まで繰り返し
