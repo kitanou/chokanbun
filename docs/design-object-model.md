@@ -1,6 +1,6 @@
 # 実身・仮身モデル設計書（Issue #46）
 
-状態: **設計と V1a（登録簿）・V1b（実身の操作）の実装**。BTRON3 の実身／仮身マネージャ（OS 仕様編 第3章 3.8）を、現在の録層・篇藏・漢殻の上にどう載せるかを決める。
+状態: **設計と V1a（登録簿）・V1b（実身の操作）・V2（続柄）の実装**。BTRON3 の実身／仮身マネージャ（OS 仕様編 第3章 3.8）を、現在の録層・篇藏・漢殻の上にどう載せるかを決める。
 原文: <https://www.chokanji.com/developer/doc/btron3/os_spec/shell/omgr.html>（3.8.1〜3.8.6、全 60 関数）。関連: [compat/btron3-file-design.md](compat/btron3-file-design.md)、[design-pianfs.md](design-pianfs.md)、[compat/btron3-api-inventory.md](compat/btron3-api-inventory.md)。
 
 ## 1. 原文の要点
@@ -78,6 +78,14 @@
 - **`ochg_nam`**: 名前が `NULL`（変更パネル）は `EX_PAR`。同じ実身を指す他の仮身への仮身要求イベントとデバイス仮身の改名は未対応。
 - **`oupd_fil`**: 実行メニュー・小物メニューが無いので、`vid`・`lnk` の検査だけ行って 0。
 
+### V2 で決めたこと
+
+- **続柄管理ファイル**: 原文はファイルの名前とレコードの形を規定しない（「ルート直下」「`VOBJREL` の表」「索引 0 は名なし」とだけ書く）。実装依存として、FS のルート直下の通常ファイル「続柄」（TC 2 文字）に、`VOBJREL`（名前 32 B ＋ 色 4 B = 36 B）を 1 レコードずつ、レコード番号＝索引で並べる。索引 0（全て 0）は最初に作る。追加だけで消さない。索引は 256 個まで（超えると `EX_LIMIT`）。
+- 仮身の続柄は、**参照する実身（間接参照ならリンクファイル）の FS**の表を引く（原文）。
+- `ochg_rel`: 索引が無ければ `EX_PAR`、`index < 0`（続柄変更パネル）は出せないので `EX_PAR`。
+- `ocnv_vob`: 同じ FS なら 0 を返し何もしない。別の FS なら、元の FS に**リンクファイルを `F_FLOAT` で作り**（参照先の名前・生成日時・アプリタイプは `fil_sts` から。**参照先の FS が接続されている必要がある**＝SYS なら `att_fls` で接続してから）、仮身をそのリンクファイルを指すものに置き換え、`V_LINKFL` を立てる。続柄は、元の FS の表から名前を引いて新しい FS の表へ登録し、索引を付け替える（表が読めなければ 0）。この続柄の付け替えは、書き込める FS が RAM だけなので、FS をまたいだ端から端までの試験はしていない（`続柄登録`・`続柄取得` は単体で試験した）。
+- `odel_obj` はリンクファイルを `lnk_sts` の参照数で判定し、リンクファイルそのものを消す（`fil_sts` は参照先を引くので使えない）。
+
 ### 未決・未対応（V1a 時点）
 
 - 付箋（`vlnk = NULL`）は `EX_PAR`（付箋は TAD の付箋セグメントに依存するので後）。
@@ -93,7 +101,7 @@
 | V0 | この設計書の確定（§5 の決定事項） | — |
 | V1a | **登録簿（実装済み）**: `oreg_vob`・`b_odup_vob`・`odel_vob`・`oget_vob`・`ochg_sts`（`user/btron/omgr.mkn`、試験 `実試` 20 項目） | 録層（済） |
 | V1b | **実身の操作（実装済み）**: `ocre_obj`・`oopn_obj`・`ochg_nam`・`odel_obj`・`oupd_fil`（`実試` 8 項目）。`onew_obj`・`ocre_chd` は必ずパネルが要る（名前の入力）ので V6 | V1a |
-| V2 | 続柄: 続柄管理ファイル、`ochg_rel`・`ocnv_vob` | V1b |
+| V2 | **続柄（実装済み）**: 続柄管理ファイル、`ochg_rel`・`ocnv_vob`（`実試` 6 項目） | V1b |
 | V3 | デバイス／FS: `oatt_fls`・`odet_fls`・`ofat_fls`・`ofdt_fls`・`oatt_vob`・`odet_vob`（虚身状態の判定） | V1b |
 | V4 | アプリ管理と実行プロトコル: `oreg_apg` ほか、`osta_prc`・`oend_prc`・`oreq_prc` ほか | V1b、メッセージ・イベント（済）、`def_msg`（lucky-tiger 待ち）の要否を確認 |
 | V5 | 漢殻の命令（実身の生成・仮身の配置・削除・一覧） | V1b〜V3 |
