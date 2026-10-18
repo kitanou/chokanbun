@@ -308,7 +308,7 @@ if [ -f "$OUT/kernel.elf" ]; then
         # Then feed 殻 (shell) commands once 甲 has read that line (M4).
         ( printf 'KANBUN\n' > "$PIPE.in"
           for _ in $(seq 1 60); do grep -q "甲得" "$KLOG" 2>/dev/null && break; sleep 0.25; done
-          printf '響 天下太平\n讀 史記\n怪\n讀 無題\n目\n書 筆記 天地玄黄\n讀 筆記\n書 一二三四五六七八九十壱 x\n書 筆記\n目\n削 筆記\n讀 筆記\n目\n削 筆記\n書 新稿 草\n目\n問安 日月\n數 一 二 三\n識試\n名試\n時試\n信試\n利試\n強試\n同試\n緩試\n録試\n篇試\n貯試\n件試\n設試\n系試\n章 天地/家/殻章\n移 天地/家/殻章\n在\n書 甲 一二\n改 甲 乙\n讀 乙\n改 甲\n移 ..\n在\n移 天地/典/史記\n移 天地/典\n在\n存在せず 子\n助\n終\n' > "$PIPE.in" ) &
+          printf '響 天下太平\n讀 史記\n怪\n讀 無題\n目\n書 筆記 天地玄黄\n讀 筆記\n書 一二三四五六七八九十壱 x\n書 筆記\n目\n削 筆記\n讀 筆記\n目\n削 筆記\n書 新稿 草\n目\n問安 日月\n數 一 二 三\n識試\n名試\n時試\n信試\n利試\n強試\n同試\n緩試\n録試\n篇試\n貯試\n件試\n設試\n系試\n章 天地/家/殻章\n移 天地/家/殻章\n在\n書 甲 一二\n改 甲 乙\n讀 乙\n改 甲\n移 ..\n在\n移 天地/典/史記\n移 天地/典\n在\n存在せず 子\n\n終了\n   \n助\n終\n' > "$PIPE.in" ) &
         FEEDPID=$!
         # Wait up to ~40s for the final marker, then stop QEMU.  The generic
         # timer fires five times (5 × CNTFRQ/40 ≈ 125 ms); the long parts are the
@@ -796,10 +796,11 @@ if [ -f "$OUT/kernel.elf" ]; then
             grep -a '^名試 ' "$KLOG" 2>/dev/null | sed 's/^/      /'
         fi
         K_UNK="$(grep -ac '殻不明' "$KLOG" 2>/dev/null)"
-        if [ "${K_UNK:-0}" -ge 2 ]; then
-            pass "kernel qemu: 像の無い命令は 殻不明 (組み込みでも外部命令でもない)"
+        K_SERR="$(grep -ac '^殻誤' "$KLOG" 2>/dev/null)"  # 空行・空白だけの行が 殻誤 を出さないこと (他の試験の 3 件だけ)
+        if [ "${K_UNK:-0}" -eq 3 ] && [ "${K_SERR:-0}" -eq 3 ]; then
+            pass "kernel qemu: 像の無い命令は 殻不明 (怪・存在せず 子・終了 の 3 件。空行と空白だけの行は何も出さず、終了 は 終 と取り違えて殻を終えない)"
         else
-            fail "kernel qemu: 像の無い命令は 殻不明 (件数=${K_UNK:-0})"
+            fail "kernel qemu: 像の無い命令は 殻不明 (件数=${K_UNK:-0}、期待 3。殻誤=${K_SERR:-0}、期待 3)"
         fi
         # --- M5/P0: 行程表の統合・行程数 8・頁池の拡大 ---------------------------
         tbl_val() { grep -a "$1 " "$KLOG" 2>/dev/null | head -1 | grep -oE '0x[0-9a-f]{16}'; }
