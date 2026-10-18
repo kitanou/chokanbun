@@ -217,12 +217,17 @@ sh tools/mkimage.sh user/btron_dev.mkn "$OUT/btron_dev.zo" "$OUT" 2>"$OUT/user_b
         fail "user: BTRON3 互換層の試験 設試 を漢像にビルド"
         sed 's/^/      /' "$OUT/user_btron_dev.build.log" | head -10
     }
+sh tools/mkimage.sh user/btron_omgr.mkn "$OUT/btron_omgr.zo" "$OUT" 2>"$OUT/user_btron_omgr.build.log" \
+    && pass "user: BTRON3 互換層の試験 実試 (3.8 実身／仮身マネージャの登録簿) を漢像にビルド" || {
+        fail "user: BTRON3 互換層の試験 実試 を漢像にビルド"
+        sed 's/^/      /' "$OUT/user_btron_omgr.build.log" | head -10
+    }
 sh tools/mkimage.sh user/btron_sys.mkn "$OUT/btron_sys.zo" "$OUT" 2>"$OUT/user_btron_sys.build.log" \
     && pass "user: BTRON3 互換層の試験 系試 (1.10 システム管理) を漢像にビルド" || {
         fail "user: BTRON3 互換層の試験 系試 を漢像にビルド"
         sed 's/^/      /' "$OUT/user_btron_sys.build.log" | head -10
     }
-sh tools/gen-images.sh "$OUT/kernel_images.S" 問安="$OUT/hello.zo" 數="$OUT/count.zo" 識試="$OUT/btron_gtid.zo" 名試="$OUT/btron_gname.zo" 時試="$OUT/btron_clk.zo" 信試="$OUT/btron_msg.zo" 利試="$OUT/btron_usr.zo" 強試="$OUT/btron_term.zo" 同試="$OUT/btron_sync.zo" 緩試="$OUT/btron_comm.zo" 録試="$OUT/btron_file.zo" 篇試="$OUT/pian_test.zo" 永試="$OUT/pian_persist.zo" 貯試="$OUT/btron_mem.zo" 件試="$OUT/btron_evt.zo" 設試="$OUT/btron_dev.zo" 系試="$OUT/btron_sys.zo" \
+sh tools/gen-images.sh "$OUT/kernel_images.S" 問安="$OUT/hello.zo" 數="$OUT/count.zo" 識試="$OUT/btron_gtid.zo" 名試="$OUT/btron_gname.zo" 時試="$OUT/btron_clk.zo" 信試="$OUT/btron_msg.zo" 利試="$OUT/btron_usr.zo" 強試="$OUT/btron_term.zo" 同試="$OUT/btron_sync.zo" 緩試="$OUT/btron_comm.zo" 録試="$OUT/btron_file.zo" 篇試="$OUT/pian_test.zo" 永試="$OUT/pian_persist.zo" 貯試="$OUT/btron_mem.zo" 件試="$OUT/btron_evt.zo" 設試="$OUT/btron_dev.zo" 系試="$OUT/btron_sys.zo" 実試="$OUT/btron_omgr.zo" \
     && "$CLANG" --target=aarch64-none-elf -c "$OUT/kernel_images.S" -o "$OUT/kernel_images.o" \
         >"$OUT/kernel_images.log" 2>&1 \
     && pass "kernel: 漢像の埋め込み (像表)" || fail "kernel: 漢像の埋め込み (像表)"
@@ -308,7 +313,7 @@ if [ -f "$OUT/kernel.elf" ]; then
         # Then feed 殻 (shell) commands once 甲 has read that line (M4).
         ( printf 'KANBUN\n' > "$PIPE.in"
           for _ in $(seq 1 60); do grep -q "甲得" "$KLOG" 2>/dev/null && break; sleep 0.25; done
-          printf '響 天下太平\n讀 史記\n怪\n讀 無題\n目\n書 筆記 天地玄黄\n讀 筆記\n書 一二三四五六七八九十壱 x\n書 筆記\n目\n削 筆記\n讀 筆記\n目\n削 筆記\n書 新稿 草\n目\n問安 日月\n數 一 二 三\n識試\n名試\n時試\n信試\n利試\n強試\n同試\n緩試\n録試\n篇試\n貯試\n件試\n設試\n系試\n章 天地/家/殻章\n移 天地/家/殻章\n在\n書 甲 一二\n改 甲 乙\n讀 乙\n改 甲\n移 ..\n在\n移 天地/典/史記\n移 天地/典\n在\n存在せず 子\n\n終了\n   \n助\n終\n' > "$PIPE.in" ) &
+          printf '響 天下太平\n讀 史記\n怪\n讀 無題\n目\n書 筆記 天地玄黄\n讀 筆記\n書 一二三四五六七八九十壱 x\n書 筆記\n目\n削 筆記\n讀 筆記\n目\n削 筆記\n書 新稿 草\n目\n問安 日月\n數 一 二 三\n識試\n名試\n時試\n信試\n利試\n強試\n同試\n緩試\n録試\n篇試\n貯試\n件試\n設試\n系試\n実試\n章 天地/家/殻章\n移 天地/家/殻章\n在\n書 甲 一二\n改 甲 乙\n讀 乙\n改 甲\n移 ..\n在\n移 天地/典/史記\n移 天地/典\n在\n存在せず 子\n\n終了\n   \n助\n終\n' > "$PIPE.in" ) &
         FEEDPID=$!
         # Wait up to ~40s for the final marker, then stop QEMU.  The generic
         # timer fires five times (5 × CNTFRQ/40 ≈ 125 ms); the long parts are the
@@ -689,6 +694,15 @@ if [ -f "$OUT/kernel.elf" ]; then
             fail "kernel qemu: vda のディスクイメージが無い"
         fi
         # --- M7c: システム管理 (1.10) 漢令 179〜180 ----------------------------------
+        # --- 3.8 実身／仮身マネージャ (docs/design-object-model.md) V1a: 登録簿 -----------------
+        OM_N="$(grep -ac '^実試 ' "$KLOG" 2>/dev/null)"
+        OM_BAD="$(grep -a '^実試 ' "$KLOG" 2>/dev/null | grep -vc '0x0000000000000001$')"
+        if [ "${OM_N:-0}" -eq 20 ] && [ "${OM_BAD:-1}" -eq 0 ]; then
+            pass "kernel qemu: BTRON3 互換層 実身／仮身マネージャの登録簿 (oreg_vob・b_odup_vob・odel_vob・oget_vob・ochg_sts の ${OM_N} 項目)"
+        else
+            fail "kernel qemu: BTRON3 互換層 実身／仮身マネージャの登録簿 (項目=${OM_N:-0}/20、失敗=${OM_BAD:-?})"
+            grep -a '^実試 ' "$KLOG" 2>/dev/null | grep -av '0x0000000000000001$' | sed 's/^/      /' | head -40
+        fi
         SV_N="$(grep -ac '^系試 ' "$KLOG" 2>/dev/null)"
         SV_BAD="$(grep -a '^系試 ' "$KLOG" 2>/dev/null | grep -vc '0x0000000000000001$')"
         if [ "${SV_N:-0}" -eq 38 ] && [ "${SV_BAD:-1}" -eq 0 ]; then
