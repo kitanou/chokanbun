@@ -221,7 +221,7 @@ TAD（第1編 第3章）・フロッピー形式（第4章）・描画（第2編
 | D7 | `btron3-os.md` 1.7 | ポインタに「加速」 | 動作タイプ（絶対/相対）・**感度 0〜15・スキャン速度 0〜15** |
 | D8 | `btron3-os.md` 1.8 | 「論理名の規約は要確認」 | ユニット名（種別 + ユニット）+ サブユニット番号、最大 8 文字（§7.3） |
 
-API の名前と数は、ディスプレイプリミティブ（37+41+20+6 = 104 + `gdra_lin` ほか）・外殻 11 節（約 352）とも `btron3-api-inventory.md` と**一致**した（`wset_inf`・`odup_vob`→正しくは `b_odup_vob` など綴りの確認のみ）。
+API の名前と数は、ディスプレイプリミティブ（37+42+20+6 = 105）・外殻 11 節（約 352）とも `btron3-api-inventory.md` と**一致**した（`b_odup_vob` の綴りなどの確認のみ。`odup_vob` は本文中の言及で、関数名は `b_odup_vob`）。
 
 ### 7.2 実装に関わる食い違い（今の実装 ≠ 原文）
 
@@ -238,7 +238,7 @@ API の名前と数は、ディスプレイプリミティブ（37+41+20+6 = 104
 
 - **座標**: 16 ビット整数（-32768〜32767）、右と下に増える。`RECT` は右・下を含まない半開。`left ≧ right` または `top ≧ bottom` は空。`PNT`{H x, H y}・`RECT`（共用体: left/top/right/bottom または lefttop/rightbot）は **`user/btron/types.mkn` の実装と一致**。`RLIST` は次ポインタ + `RECT`。
 - **ビットマップ**: `BMP`{UW planes, UH pixbits, UH rowbytes(偶数), RECT bounds, UB* baseaddr[]}。深さは最大 28、横は 16 の倍数、各行の最上位ビットが左。`PIXVAL`=W。圧縮ビットマップ `CBMP`{W compac, BMP}（NOCOMPAC 0・MH 1・MR(K=2) 2・MR(K=4) 3）。
-- **カラー**: `COLOR` は UW{trans:1, crep:3, cval:28}。crep=0 はピクセル値直接、crep=1 は 8 ビットずつの RGB（0〜255）。`GID`（描画環境 ID）= W。対象デバイスは文字列で指定し、**"SCREEN"・"MSGPNL" は必須**。`DEV_SPEC`は 16 B×… の固定構造（attr・planes・pixbits・hpixels・vpixels・hres・vres・color[4]・resv[6]）。
+- **カラー**: `COLOR` は UW{trans:1, crep:3, cval:28}。crep=0 はピクセル値直接、crep=1 は 8 ビットずつの RGB（0〜255）。`GID`（描画環境 ID）= W。対象デバイスは文字列で指定し、**"SCREEN"・"MSGPNL" は必須**。`DEV_SPEC` は H 17 個 = 34 B の固定構造（attr・planes・pixbits・hpixels・vpixels・hres・vres・color[4]・resv[6]）。
 - **外殻**は 11 の管理部（ウィンドウ・メニュー・パーツ 11 種・パネル・トレー・データ・テキスト入力・実身/仮身・フォント・TCP/IP・印刷）。ウィンドウは通常（主/従属）・内部・パネルの別があり、**入力受付状態は主ウィンドウ 1 つ**、前面ウィンドウは入力を前処理する。フロントエンドプロセスは `wdef_fep` で定義し、イベントは `wget_evt` で受ける。再表示は `wsta_dsp`/`wend_dsp`、ドラッグ中の描画は `wsta_drg`。実身/仮身マネージャが仮身の表示・移動・複写・アプリの起動を担い、**仮身は #46 のモデルと同時に設計する**。
 - TCP/IP マネージャは BSD ソケット風（`so_*`）で、独自のエラーコード表（3.10.3）を持つ。
 
