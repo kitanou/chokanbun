@@ -51,7 +51,10 @@ test: $(BIN)
 
 run: test
 	@echo "=== Running QEMU (漢極 kernel) ==="
+	@test -f tests/output/disk.img || dd if=/dev/zero of=tests/output/disk.img bs=512 count=64 2>/dev/null
 	qemu-system-aarch64 -M virt,gic-version=2 -cpu cortex-a57 -nographic -serial mon:stdio \
+		-global virtio-mmio.force-legacy=false \
+		-drive file=tests/output/disk.img,if=none,format=raw,id=hd0 -device virtio-blk-device,drive=hd0 \
 		-kernel tests/output/kernel.elf
 
 clean:

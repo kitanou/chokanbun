@@ -690,6 +690,7 @@
 註 @取込 proc/sync2.mkn
 註 @取込 proc/mem.mkn
 註 @取込 proc/evt.mkn
+註 @取込 proc/blk.mkn
 註 @取込 proc/dev.mkn
 註 @取込 proc/sys.mkn
 註 @取込 file/btron.mkn

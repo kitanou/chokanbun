@@ -291,7 +291,11 @@ if [ -f "$OUT/kernel.elf" ]; then
         # The kernel's console is bidirectional, so 読込 (番10) can read this input.
         cat "$PIPE.out" > "$KLOG" &
         CATPID=$!
+        # 設試 の vda (virtio-blk) 用の 32 KiB のディスクイメージ。QEMU の終了後に中身を調べる。
+        dd if=/dev/zero of="$OUT/disk.img" bs=512 count=64 2>/dev/null
         qemu-system-aarch64 -M virt,gic-version=2 -cpu cortex-a57 -nographic \
+            -global virtio-mmio.force-legacy=false \
+            -drive file="$OUT/disk.img",if=none,format=raw,id=hd0 -device virtio-blk-device,drive=hd0 \
             -serial "pipe:$PIPE" -kernel "$OUT/kernel.elf" \
             >"$OUT/kernel_qemu.console.log" 2>&1 &
         QPID=$!
@@ -660,11 +664,24 @@ if [ -f "$OUT/kernel.elf" ]; then
         # --- M7b: デバイス管理 (1.8) 漢令 212〜220 -----------------------------------
         DV_N="$(grep -ac '^設試 ' "$KLOG" 2>/dev/null)"
         DV_BAD="$(grep -a '^設試 ' "$KLOG" 2>/dev/null | grep -vc '0x0000000000000001$')"
-        if [ "${DV_N:-0}" -eq 93 ] && [ "${DV_BAD:-1}" -eq 0 ]; then
+        if [ "${DV_N:-0}" -eq 97 ] && [ "${DV_BAD:-1}" -eq 0 ]; then
             pass "kernel qemu: BTRON3 互換層 デバイス管理 (opn_dev・cls_dev・rea_dev・wri_dev・chg_dmd・dev_sts・get_dev・lst_dev・sus_dev の ${DV_N} 項目)"
         else
-            fail "kernel qemu: BTRON3 互換層 デバイス管理 (項目=${DV_N:-0}/93、失敗=${DV_BAD:-?})"
+            fail "kernel qemu: BTRON3 互換層 デバイス管理 (項目=${DV_N:-0}/97、失敗=${DV_BAD:-?})"
             grep -a '^設試 ' "$KLOG" 2>/dev/null | grep -av '0x0000000000000001$' | sed 's/^/      /' | head -40
+        fi
+        # --- vda (virtio-blk): QEMU が終わったあとのディスクイメージに、書いた区画が届いている ----
+        if [ -f "$OUT/disk.img" ]; then
+            IMG_S3="$(od -An -v -tx1 -j 1536 -N 4 "$OUT/disk.img" | tr -s ' ' | sed 's/^ //; s/ $//')"
+            IMG_S10="$(od -An -v -tx1 -j 5120 -N 4 "$OUT/disk.img" | tr -s ' ' | sed 's/^ //; s/ $//')"
+            IMG_S4="$(od -An -v -tx1 -j 2048 -N 4 "$OUT/disk.img" | tr -s ' ' | sed 's/^ //; s/ $//')"
+            if [ "$IMG_S3" = "05 06 07 08" ] && [ "$IMG_S10" = "28 29 2a 2b" ] && [ "$IMG_S4" = "00 00 00 00" ]; then
+                pass "kernel qemu: vda (virtio-blk) に書いた区画 3・10 がディスクイメージに届き、書いていない区画 4 は 0 のまま"
+            else
+                fail "kernel qemu: vda のディスクイメージ (区画 3='$IMG_S3' 区画 10='$IMG_S10' 区画 4='$IMG_S4')"
+            fi
+        else
+            fail "kernel qemu: vda のディスクイメージが無い"
         fi
         # --- M7c: システム管理 (1.10) 漢令 179〜180 ----------------------------------
         SV_N="$(grep -ac '^系試 ' "$KLOG" 2>/dev/null)"
@@ -794,10 +811,10 @@ if [ -f "$OUT/kernel.elf" ]; then
             grep -a '行程表' "$KLOG" 2>/dev/null | sed 's/^/      /'
         fi
         K_TOTAL="$(tbl_val '頁池 総')"
-        if [ "$K_TOTAL" = "$(printf '0x%016x' 4096)" ]; then
-            pass "kernel qemu: 頁池 16 MiB (4096 ページ = 空き + 行程の棧 2 ページ × 8)"
+        if [ "$K_TOTAL" = "$(printf '0x%016x' 4094)" ]; then
+            pass "kernel qemu: 頁池 16 MiB (4096 ページ = 空き + 行程の棧 2 ページ × 8 + vda の環 2 ページ。総数は vda の 2 ページを除く)"
         else
-            fail "kernel qemu: 頁池 16 MiB (総=${K_TOTAL:-none}、期待 0x1000)"
+            fail "kernel qemu: 頁池 16 MiB (総=${K_TOTAL:-none}、期待 0xffe)"
             grep -a '頁池' "$KLOG" 2>/dev/null | sed 's/^/      /'
         fi
         # --- M5/P0: 柄表・開表 (行程ごとの柄、開くたびに独立した位置) ---------------
