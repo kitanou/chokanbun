@@ -76,7 +76,7 @@
 
 | API | 要点 | 既存実装 | 状態 |
 |---|---|---|---|
-| `snd_msg` | 送信（`WAIT`/`NOWAIT`、宛先 pid / 0 / -1） | `user/btron/msg.mkn` → 漢令 信送 80（`kernel/proc/msg.mkn`）。8 件のキュー、満杯で WAIT は眠る。`CONFM` は `ER_PAR`（未対応） | 部分適合（`CONFM` 未実装） |
+| `snd_msg` | 送信（`WAIT`/`NOWAIT`、宛先 pid / 0 / -1） | `user/btron/msg.mkn` → 漢令 信送 80（`kernel/proc/msg.mkn`）。8 件のキュー、満杯で WAIT は眠る。`CONFM` は積んだあと相手が取り出すまで眠り（槽 +56 に送信側の識を持ち、取り出し・`clr_msg`・相手の終了で起こす）、自分宛は `ER_SELF`、相手が受けずに終わると `ER_NOPRC` | 実装済・未検証（`ER_MINTR` は無し） |
 | `rcv_msg` | 受信（型マスク、`NOWAIT`/`NOCLR`/`CHECK`/`WAIEVT`） | 漢令 信受 81。最古の該当を返す。`CHECK`（2）は合う型が無くても別の型があれば先頭 8 バイトを返す。`WAIEVT`（4）は `WAIT` と同じに待つ（型マスク 0 可、`NOWAIT` と併用は `ER_PAR`） | 部分適合（`brk_msg` で待ちを解く `ER_NOME`・`ER_MINTR`・`CONFM` が未実装） |
 | `clr_msg` | 消去 | 漢令 信消 82 | 実装済・未検証 |
 | `req_tmg` / `can_tmg` | タイムアウトメッセージ | 漢令 83・84（`kernel/proc/msg.mkn` の時限表 16 件。刻 25 ms へ切り上げ、`覚醒` が `MS_TMOUT` を積む） | 実装済 |
@@ -278,7 +278,7 @@
 | 部分適合（機能のみ・API 不一致） | 1.1、1.6 |
 | 実装済・未検証 | 1.4（API 3 本。試験は QEMU 上 21 項目）、1.5（API 3 本 + `malloc` 系 18 関数。試験は QEMU 上 `貯試` 45 項目）、1.7（API 20 本。試験は QEMU 上 `件試` 73 項目。実機の入力は核内の模型で代用）、1.8（API 9 本。試験は QEMU 上 `設試` 90 項目。実機は核内の模型 4 ユニットで代用）、1.10（API 2 本。試験は QEMU 上 `系試` 38 項目。`def_exc`/`ret_exc` は未実装） |
 | 実装済・未検証（API 単位） | 1.9 の `set_tim`/`set_tod`、1.1 の `get_usr`/`chg_usr`/`get_tid`/`ter_prc` |
-| 部分適合 | 1.3（メッセージバッファの `bufsz`=0 のみ未対応）、1.2（`snd_msg`/`rcv_msg`/`clr_msg` のみ。ハンドラ・タイムアウト・終了通知は未実装）、1.9（取得系のみ。設定系は未実装） |
+| 部分適合 | 1.3（メッセージバッファの `bufsz`=0 のみ未対応）、1.2（ハンドラ `def_msg`/`ret_msg`/`brk_msg` が未実装。`WAIEVT` の解除と `ER_MINTR` もそれに依存）、1.9（取得系のみ。設定系は未実装） |
 | 未実装 | 1.10 の `def_exc`/`ret_exc`（1.2 のハンドラ機構と同じ前提） |
 | 適合確認済み | なし |
 

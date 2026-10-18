@@ -46,7 +46,7 @@
 | 識試 | `user/btron_gtid.mkn` | 13 | OS 1.1、共有データ §1、ER 規約 | `get_tid`、`ER_*` の符号と `錯換`、`H`（符号・範囲・隣欄保持）、`Bool`、`SIZE`/`PNT`/`RECT` の配置と共用体 | 正・境 | `ER_*` の数値は実装依存（G0）。型配置は欄名が仮 |
 | 名試 | `user/btron_gname.mkn` | 21 | OS 1.4 グローバル名 | `cre_nam`（`N_CREATE`/`N_MODIFY`/`N_FORCE`）、`del_nam`、`get_nam` | 正・異・境・相 | 8 文字、16 件、`ER_EXS`/`ER_NOEXS`/`ER_PAR`/`ER_ADR`/`ER_NOSPC`、`DELEXIT` |
 | 時試 | `user/btron_clk.mkn` | 11 | OS 1.9 時計管理 | `get_tim`、`get_tod`（暦・閏年・通日） | 正・異・境 | 暦の期待値は手計算とホスト日付との比較。ずれの符号は要確認 |
-| 信試 | `user/btron_msg.mkn` | 38 | OS 1.2 メッセージ、1.1 の終了通知 | `snd_msg`、`rcv_msg`、`clr_msg`、`cre_prc`（BTRON3 流）、`ext_prc`、`MS_EXIT` | 正・異・境・相 | 型 1〜31、本体 1〜32 B、キュー 8、`ER_SZOVR`/`ER_NOSPC`/`ER_NOPRC`、枠の即解放 |
+| 信試 | `user/btron_msg.mkn` | 40 | OS 1.2 メッセージ、1.1 の終了通知 | `snd_msg`、`rcv_msg`、`clr_msg`、`cre_prc`（BTRON3 流）、`ext_prc`、`MS_EXIT` | 正・異・境・相 | 型 1〜31、本体 1〜32 B、キュー 8、`ER_SZOVR`/`ER_NOSPC`/`ER_NOPRC`、枠の即解放 |
 | 利試 | `user/btron_usr.mkn` | 19 | OS 1.1 利用者情報、1.9 設定系 | `get_usr`、`chg_usr`、`set_tim`、`set_tod` | 正・異・相 | 権限（level 0 のみ設定可）、子が親の写しを継ぐ。level の向きは解釈 |
 | 強試 | `user/btron_term.mkn` | 23 | OS 1.1 強制終了・状態 | `ter_prc`（`TERM_NRM`/`TERM_ALL`）、`prc_sts`、`MS_TERM` | 正・異・相 | `ER_SELF`/`ER_NOPRC`/`ER_LEVEL`/`ER_PAR`、子孫の終了順、枠の回収 |
 | 同試 | `user/btron_sync.mkn` | 21 | OS 1.3 セマフォ・イベントフラグ | `cre_sem`、`del_sem`、`sig_sem`、`wai_sem`、`cre_flg`、`del_flg`、`set_flg`、`clr_flg`、`wai_flg` | 正・異・境・相 | FIFO、時間切れ、`ER_DLT`、`DELEXIT`、排他の自動返却。待ち順は解釈 |
@@ -60,7 +60,7 @@
 | 言語 | `tests/lang/ok`・`err` | ok 7・err 37 | （BTRON3 とは無関係） | 言語仕様の黄金・診断試験 | — | 互換層を書く言語の健全性 |
 | 起動時 | `tests/run_tests.sh` | — | 核の基本動作 | argv 受け渡し、終了コード、EL0 行程、メモリ保護など | — | BTRON3 の項目には紐付けない |
 
-**集計**: BTRON3 互換層の QEMU 試験は 13 種・計 518 項目（識試 13、名試 21、時試 11、信試 38、利試 19、強試 23、同試 21、緩試 24、録試 102、貯試 45、件試 73、設試 90、系試 38）。ほかに篇藏 28 項目。
+**集計**: BTRON3 互換層の QEMU 試験は 13 種・計 520 項目（識試 13、名試 21、時試 11、信試 40、利試 19、強試 23、同試 21、緩試 24、録試 102、貯試 45、件試 73、設試 90、系試 38）。ほかに篇藏 28 項目。
 
 ## 5. API 単位の試験の有無（第2編 第1章）
 
@@ -74,7 +74,7 @@
 | `ext_prc` | 信試（`MS_EXIT`） | 資源解放の網羅（共有メモリ等は未実装） |
 | `ter_prc`、`prc_sts` | 強試 | `ER_LEVEL` の向きは解釈。優先度の返り値は固定値 |
 | `get_usr`、`chg_usr` | 利試 | 利用者名の接尾部、グループ名の検証は未実装 |
-| `snd_msg`、`rcv_msg`、`clr_msg` | 信試 | `CONFM` は未対応で試験も `ER_PAR` 確認。`CHECK`・`WAIEVT`・`req_tmg`・`can_tmg` は信試で確認のみ |
+| `snd_msg`、`rcv_msg`、`clr_msg` | 信試 | `CONFM`（取り出しまで待つ・相手が終わると `ER_NOPRC`・自分宛は `ER_SELF`）を子行程で確認。`CHECK`・`WAIEVT`・`req_tmg`・`can_tmg` は信試で確認のみ |
 | `cre_nam`、`del_nam`、`get_nam` | 名試 | 良好。`get_nam` の戻り動作は原文の欠落箇所（要確認） |
 | `cre_sem` `del_sem` `sig_sem` `wai_sem` | 同試 | カウント上限 65535、16 個上限（`ER_LIMIT`）の境界試験なし |
 | `cre_flg` `del_flg` `set_flg` `clr_flg` `wai_flg` | 同試 | OR 待ち（`TWF_ORW`）、複数待ち、16 個上限の試験なし |
