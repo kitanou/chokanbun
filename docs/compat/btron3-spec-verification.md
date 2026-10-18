@@ -103,7 +103,7 @@
 | P7 | C | メッセージ | `req_tmg`/`can_tmg`/`def_msg`/`ret_msg`/`brk_msg`、`WAIEVT`、`CHECK`、`MH_*` | `req_tmg`・`can_tmg`・`WAIEVT`・`CHECK` は実装済み。`def_msg`/`ret_msg`/`brk_msg`/`MH_*` は未実装（EL0 への上り呼びが要る） |
 | P8 | C | タスク | `cre_tsk`/`ext_tsk`/`ter_tsk`/`slp_tsk`/`wup_tsk`/`can_wup`/`dly_tsk`、`chg_pri`、`get_inf` | 未実装（`get_tid` と `待機` 相当のみ） |
 | P9 | B | `get_tod`/`set_tim` の ≦ 0 | `time` ≦ 0 が「現在／設定しない」 | 0 のときだけ |
-| P10 | C | 同期 | `bufsz`=0 の同期バッファ、`ER_MINTR` | 未実装 |
+| P10 | C | 同期 | `bufsz`=0 の同期バッファ、`ER_MINTR` | `bufsz`=0 は実装済み。`ER_MINTR` は未実装（ハンドラが要る） |
 | P11 | C | 1.10 | `def_exc`/`ret_exc` | 未実装（`get_ver`/`get_cnf` は M7c で実装、§6.8） |
 
 ### 4.3 文字コード

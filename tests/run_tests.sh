@@ -701,10 +701,10 @@ if [ -f "$OUT/kernel.elf" ]; then
         # --- #42 G6b: メッセージバッファとランデブポート (1.3) ------------------------
         CM_N="$(grep -ac '^緩試 ' "$KLOG" 2>/dev/null)"
         CM_BAD="$(grep -a '^緩試 ' "$KLOG" 2>/dev/null | grep -vc '0x0000000000000001$')"
-        if [ "${CM_N:-0}" -eq 24 ] && [ "${CM_BAD:-1}" -eq 0 ]; then
+        if [ "${CM_N:-0}" -eq 27 ] && [ "${CM_BAD:-1}" -eq 0 ]; then
             pass "kernel qemu: BTRON3 互換層 メッセージバッファ・ランデブ (環の折り返し・待ち・転送・削除の ${CM_N} 項目)"
         else
-            fail "kernel qemu: BTRON3 互換層 メッセージバッファ・ランデブ (項目=${CM_N:-0}/24、失敗=${CM_BAD:-?})"
+            fail "kernel qemu: BTRON3 互換層 メッセージバッファ・ランデブ (項目=${CM_N:-0}/27、失敗=${CM_BAD:-?})"
             grep -a '^緩試 ' "$KLOG" 2>/dev/null | sed 's/^/      /'
         fi
         # --- #42 G6a: セマフォとイベントフラグ (1.3) -------------------------------------
