@@ -749,10 +749,10 @@ if [ -f "$OUT/kernel.elf" ]; then
         # --- #42 G3a: メッセージ (snd_msg / rcv_msg / clr_msg) ---------------------
         MS_N="$(grep -ac '^信試 ' "$KLOG" 2>/dev/null)"
         MS_BAD="$(grep -a '^信試 ' "$KLOG" 2>/dev/null | grep -vc '0x0000000000000001$')"
-        if [ "${MS_N:-0}" -eq 44 ] && [ "${MS_BAD:-1}" -eq 0 ]; then
+        if [ "${MS_N:-0}" -eq 45 ] && [ "${MS_BAD:-1}" -eq 0 ]; then
             pass "kernel qemu: BTRON3 互換層 メッセージ (FIFO・型選択・NOCLR・clr_msg・ER_*・行程間の待ち合わせ・子の終了通知 MS_EXIT の ${MS_N} 項目)"
         else
-            fail "kernel qemu: BTRON3 互換層 メッセージ (項目=${MS_N:-0}/44、失敗=${MS_BAD:-?})"
+            fail "kernel qemu: BTRON3 互換層 メッセージ (項目=${MS_N:-0}/45、失敗=${MS_BAD:-?})"
             grep -a '^信試 ' "$KLOG" 2>/dev/null | sed 's/^/      /'
         fi
         # --- #42 G2: 時計の取得系 (get_tim / get_tod) と構造体の複写出 ---------------

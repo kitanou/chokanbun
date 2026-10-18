@@ -367,7 +367,7 @@ API の名前と数は、ディスプレイプリミティブ（37+42+20+6 = 105
 
 | 項目 | 推測・要約の内容 | 原文 | 対応 |
 |---|---|---|---|
-| オプション値 | `CHECK`=2・`WAIEVT`=4（旧記録）| `CONFM`=2・`CHECK`=2・`WAIEVT`=4（#define） | 一致 |
+| オプション値 | `CHECK`=2・`WAIEVT`=4（旧記録）| `CONFM`=2・`CHECK`=2・`WAIEVT`=4（#define）。`CLR`=0・`NOCLR`=8 は message.html に #define が無く、共有データ編の旧記録による（今回の復号では未再確認） | 一致（`CLR`/`NOCLR` は未再確認） |
 | `CONFM` の解除 | 取り出し（CLR）と `clr_msg`、相手の終了 | `NOCLR` で受信してもキューに残っていて受信とみなす。`CHECK` のヘッダのみは受信とみなさない | `NOCLR` でも解除するよう修正 |
 | `rcv_msg` の `msgsz` | 8〜40 のみ | 8 以上なら上限なし（入り切らなければ `msgsz` までを格納してエラー、`CLR` でも残す） | 上限を撤廃 |
 | `rcv_msg`/`clr_msg` の負の型マスク | 上位ビットを落として受け付けた | `t_mask`≦0（`WAIEVT` 時は <0）と `last_mask`<0 は `ER_PAR` | 修正 |
