@@ -222,12 +222,17 @@ sh tools/mkimage.sh user/btron_omgr.mkn "$OUT/btron_omgr.zo" "$OUT" 2>"$OUT/user
         fail "user: BTRON3 互換層の試験 実試 を漢像にビルド"
         sed 's/^/      /' "$OUT/user_btron_omgr.build.log" | head -10
     }
+sh tools/mkimage.sh user/obj.mkn "$OUT/obj.zo" "$OUT" 2>"$OUT/user_obj.build.log" \
+    && pass "user: 実身・仮身の漢殻の命令 (実作・仮置・実削・実目・実名) を漢像にビルド" || {
+        fail "user: 実身・仮身の漢殻の命令を漢像にビルド"
+        sed 's/^/      /' "$OUT/user_obj.build.log" | head -10
+    }
 sh tools/mkimage.sh user/btron_sys.mkn "$OUT/btron_sys.zo" "$OUT" 2>"$OUT/user_btron_sys.build.log" \
     && pass "user: BTRON3 互換層の試験 系試 (1.10 システム管理) を漢像にビルド" || {
         fail "user: BTRON3 互換層の試験 系試 を漢像にビルド"
         sed 's/^/      /' "$OUT/user_btron_sys.build.log" | head -10
     }
-sh tools/gen-images.sh "$OUT/kernel_images.S" 問安="$OUT/hello.zo" 數="$OUT/count.zo" 識試="$OUT/btron_gtid.zo" 名試="$OUT/btron_gname.zo" 時試="$OUT/btron_clk.zo" 信試="$OUT/btron_msg.zo" 利試="$OUT/btron_usr.zo" 強試="$OUT/btron_term.zo" 同試="$OUT/btron_sync.zo" 緩試="$OUT/btron_comm.zo" 録試="$OUT/btron_file.zo" 篇試="$OUT/pian_test.zo" 永試="$OUT/pian_persist.zo" 貯試="$OUT/btron_mem.zo" 件試="$OUT/btron_evt.zo" 設試="$OUT/btron_dev.zo" 系試="$OUT/btron_sys.zo" 実試="$OUT/btron_omgr.zo" \
+sh tools/gen-images.sh "$OUT/kernel_images.S" 問安="$OUT/hello.zo" 數="$OUT/count.zo" 識試="$OUT/btron_gtid.zo" 名試="$OUT/btron_gname.zo" 時試="$OUT/btron_clk.zo" 信試="$OUT/btron_msg.zo" 利試="$OUT/btron_usr.zo" 強試="$OUT/btron_term.zo" 同試="$OUT/btron_sync.zo" 緩試="$OUT/btron_comm.zo" 録試="$OUT/btron_file.zo" 篇試="$OUT/pian_test.zo" 永試="$OUT/pian_persist.zo" 貯試="$OUT/btron_mem.zo" 件試="$OUT/btron_evt.zo" 設試="$OUT/btron_dev.zo" 系試="$OUT/btron_sys.zo" 実試="$OUT/btron_omgr.zo" 実作="$OUT/obj.zo" 仮置="$OUT/obj.zo" 実削="$OUT/obj.zo" 実目="$OUT/obj.zo" 実名="$OUT/obj.zo" \
     && "$CLANG" --target=aarch64-none-elf -c "$OUT/kernel_images.S" -o "$OUT/kernel_images.o" \
         >"$OUT/kernel_images.log" 2>&1 \
     && pass "kernel: 漢像の埋め込み (像表)" || fail "kernel: 漢像の埋め込み (像表)"
@@ -313,7 +318,7 @@ if [ -f "$OUT/kernel.elf" ]; then
         # Then feed 殻 (shell) commands once 甲 has read that line (M4).
         ( printf 'KANBUN\n' > "$PIPE.in"
           for _ in $(seq 1 60); do grep -q "甲得" "$KLOG" 2>/dev/null && break; sleep 0.25; done
-          printf '響 天下太平\n讀 史記\n怪\n讀 無題\n目\n書 筆記 天地玄黄\n讀 筆記\n書 一二三四五六七八九十壱 x\n書 筆記\n目\n削 筆記\n讀 筆記\n目\n削 筆記\n書 新稿 草\n目\n問安 日月\n數 一 二 三\n識試\n名試\n時試\n信試\n利試\n強試\n同試\n緩試\n録試\n篇試\n貯試\n件試\n設試\n系試\n実試\n章 天地/家/殻章\n移 天地/家/殻章\n在\n書 甲 一二\n改 甲 乙\n讀 乙\n改 甲\n移 ..\n在\n移 天地/典/史記\n移 天地/典\n在\n存在せず 子\n\n終了\n   \n助\n終\n' > "$PIPE.in" ) &
+          printf '響 天下太平\n讀 史記\n怪\n讀 無題\n目\n書 筆記 天地玄黄\n讀 筆記\n書 一二三四五六七八九十壱 x\n書 筆記\n目\n削 筆記\n讀 筆記\n目\n削 筆記\n書 新稿 草\n目\n問安 日月\n數 一 二 三\n識試\n名試\n時試\n信試\n利試\n強試\n同試\n緩試\n録試\n篇試\n貯試\n件試\n設試\n系試\n実試\n章 天地/家/殻章\n移 天地/家/殻章\n在\n書 甲 一二\n改 甲 乙\n讀 乙\n改 甲\n移 ..\n在\n移 天地/典/史記\n移 天地/典\n在\n存在せず 子\n\n終了\n   \n実作 oa\n実作 ob\n実作 abcdefghijklmnopqrst\n実作 abcdefghijklmnopqrstu\n実作 日本\n実作 a/b\n実目\n仮置 oa ob\n実目\n実削 oa\n実目\n実名 ob oc\n実目\n実削 oc\n実目\n助\n終\n' > "$PIPE.in" ) &
         FEEDPID=$!
         # Wait up to ~40s for the final marker, then stop QEMU.  The generic
         # timer fires five times (5 × CNTFRQ/40 ≈ 125 ms); the long parts are the
@@ -815,6 +820,25 @@ if [ -f "$OUT/kernel.elf" ]; then
             pass "kernel qemu: 像の無い命令は 殻不明 (怪・存在せず 子・終了 の 3 件。空行と空白だけの行は何も出さず、終了 は 終 と取り違えて殻を終えない)"
         else
             fail "kernel qemu: 像の無い命令は 殻不明 (件数=${K_UNK:-0}、期待 3。殻誤=${K_SERR:-0}、期待 3)"
+        fi
+        # --- 実身・仮身の漢殻の命令 (docs/design-object-model.md V5): 実作・仮置・実削・実目・実名 -------
+        OB_LAST="$(awk '/^実目 ID=0 /{buf=""} /^実目 /{buf=buf $0 "\n"} END{printf "%s", buf}' "$KLOG" 2>/dev/null)"
+        OB_OK=1
+        [ "$(grep -ac '^実作 完 ID=[0-9]* 参照=1$' "$KLOG" 2>/dev/null)" -eq 3 ] || OB_OK=0
+        [ "$(grep -ac '^実誤 実作 ' "$KLOG" 2>/dev/null)" -eq 3 ] || OB_OK=0
+        grep -aq '^仮置 完 参照=2$' "$KLOG" 2>/dev/null || OB_OK=0
+        grep -aq '^実目 ID=[0-9]* 参照=2 名=oa$' "$KLOG" 2>/dev/null || OB_OK=0
+        grep -aq '^実削 完 外=1 消=0$' "$KLOG" 2>/dev/null || OB_OK=0
+        grep -aq '^実名 完=1$' "$KLOG" 2>/dev/null || OB_OK=0
+        grep -aq '^実削 完 外=1 消=2$' "$KLOG" 2>/dev/null || OB_OK=0
+        printf '%s' "$OB_LAST" | grep -aq '名=abcdefghijklmnopqrst$' || OB_OK=0
+        [ "$(printf '%s' "$OB_LAST" | grep -ac '名=ob$\|名=oc$')" -eq 0 ] || OB_OK=0
+        [ "$(printf '%s' "$OB_LAST" | grep -ac '名=oa$')" -eq 1 ] || OB_OK=0
+        if [ "$OB_OK" -eq 1 ]; then
+            pass "kernel qemu: 実身・仮身の漢殻の命令 (実作 3 件と不正な名前 3 件の拒否、仮置で参照数 2、実削は他の仮身が参照していれば実身を残し (消=0)、実名、実削で入れ子の 2 つを消す、実目)"
+        else
+            fail "kernel qemu: 実身・仮身の漢殻の命令"
+            grep -a '^実[作削目名]\|^仮置\|^実誤' "$KLOG" 2>/dev/null | grep -av '^実試' | sed 's/^/      /' | head -30
         fi
         # --- M5/P0: 行程表の統合・行程数 8・頁池の拡大 ---------------------------
         tbl_val() { grep -a "$1 " "$KLOG" 2>/dev/null | head -1 | grep -oE '0x[0-9a-f]{16}'; }
