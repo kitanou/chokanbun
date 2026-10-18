@@ -932,18 +932,18 @@ if [ -f "$OUT/kernel.elf" ]; then
             fail "kernel qemu: 再起動後の読み戻しとスロット B への書込み (ヘッダ='$P2_HDR')"
             grep -a '永試\|篇戻' "$OUT/persist2.log" 2>/dev/null | sed 's/^/      /' | head -6
         fi
-        pian_boot "$OUT/persist3.log" $'永試 R\n永試 D\n終\n'
-        if persist_ok "$OUT/persist3.log" 'R:' && grep -aq '篇戻 世代=0x0000000000000002' "$OUT/persist3.log" && persist_ok "$OUT/persist3.log" 'D:'; then
-            pass "kernel qemu: 世代 2 (スロット B) から戻り、開いたまま保存した篇も削れる (開数は保存した値が残らない)"
+        pian_boot "$OUT/persist3.log" $'永試 R\n永試 D\n同\n終\n'
+        if persist_ok "$OUT/persist3.log" 'R:' && grep -aq '篇戻 世代=0x0000000000000002' "$OUT/persist3.log" && persist_ok "$OUT/persist3.log" 'D:' && grep -aq '殻同 保存した' "$OUT/persist3.log"; then
+            pass "kernel qemu: 世代 2 (スロット B) から戻り、開いたまま保存した篇も削れる (開数は保存した値が残らない)。殻の 同 で世代 3 をスロット A へ保存できる"
         else
             fail "kernel qemu: 世代 2 の読み戻しと開数"
             grep -a '永試\|篇戻' "$OUT/persist3.log" 2>/dev/null | sed 's/^/      /' | head -6
         fi
-        # スロット B のヘッダは無傷のまま、データの区画 1 つ (表の先頭) を壊す → データのチェックサムが合わず、世代 1 のスロット A から戻る
+        # スロット B のヘッダは無傷のまま、データの区画 1 つ (表の先頭) を壊す → データのチェックサムが合わず、(殻の 同 で書いた) 世代 3 のスロット A から戻る
         printf '\377\377\377\377' | dd of="$PERSIST_IMG" bs=1 seek=$((1121 * 512)) conv=notrunc 2>/dev/null
         pian_boot "$OUT/persist4.log" $'永試 R\n終\n'
-        if persist_ok "$OUT/persist4.log" 'R:' && grep -aq '篇戻 世代=0x0000000000000001' "$OUT/persist4.log"; then
-            pass "kernel qemu: ヘッダが無傷でもデータの区画が壊れたスロット B は使わず、世代 1 のスロット A から戻る (データのチェックサム)"
+        if persist_ok "$OUT/persist4.log" 'R:' && grep -aq '篇戻 世代=0x0000000000000003' "$OUT/persist4.log"; then
+            pass "kernel qemu: ヘッダが無傷でもデータの区画が壊れたスロット B は使わず、世代 3 のスロット A から戻る (データのチェックサム)"
         else
             fail "kernel qemu: 壊れたデータのスロットを避けて戻れない"
             grep -a '永試\|篇戻' "$OUT/persist4.log" 2>/dev/null | sed 's/^/      /' | head -6
