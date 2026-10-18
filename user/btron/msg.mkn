@@ -6,6 +6,7 @@
 常「MS_TERM」之無符六四 為 3
 常「MS_TMOUT」之無符六四 為 4
 常「MS_SYSEVT」之無符六四 為 5
+常「MS_SYS5」之無符六四 為 10
 常「MS_TYPE0」之無符六四 為 24
 常「MS_TYPE7」之無符六四 為 31
 常「MM_ALL」之無符六四 為 0x7FFFFFFF
