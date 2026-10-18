@@ -150,7 +150,7 @@
 | ロック・交換 | `loc_rec` `xch_fil` | §5 | B3 |
 | 属性・名前 | `chk_fil` `chg_fmd` `chg_fat` `chg_fpw` `chg_fnm` `chg_ftm` `get_dfm` `set_dfm` | 見出しの更新、§6 | B4 |
 | 情報 | `fil_sts` `ofl_sts` | `F_STATE`/`F_LINK` の組立て | B2 |
-| 写像 | `map_rec` `ump_rec` | 民の窓への頁の割り当て（読み取り専用から） | B6 |
+| 写像 | `map_rec` `ump_rec` | 漢令 174・175。ファイルの本体の頁を民の窓へ写す（行程内。共有写像は未実装） | B6（一部実装済） |
 
 ## 8. 漢令帯 128〜159 の割当（案）
 

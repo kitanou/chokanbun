@@ -142,7 +142,7 @@ TAD（第1編 第3章）・フロッピー形式（第4章）・描画（第2編
 | F18 | **済** | リンクレコードの `wri_rec` は `offset`=0・`size`≧52 の `LINK` 全体を渡し、属性だけが書かれる。`rea_rec` は FS 名付きの `LINK` を返す |
 | F23 | **済** | `fil_sts` の `name` は 42 B（TNULL 終端）。`F_LOCATE` は 100 B で書く（M2） |
 | F24 | **済** | `cre_fil` の `F_FILEID` |
-| F6・F26 | **済（M3）** | リンクファイル、`cre_lnk`、`gen_fil`、`lnk_sts`、`syn_lnk`、`get_nlk`、`fnd_lnk`（§6.2）。`syn_fls`・`chg_fls`・`chg_fsm` は漢令 132〜134 で実装済み（原文 file.html の仕様どおり。`syn_fls` は書き戻す媒体が無いので常に 0、`chg_fls` は接続権 F と書込権 W、ルートファイルの名前も更新）。未実装は `map_rec`/`ump_rec` |
+| F6・F26 | **済（M3）** | リンクファイル、`cre_lnk`、`gen_fil`、`lnk_sts`、`syn_lnk`、`get_nlk`、`fnd_lnk`（§6.2）。`map_rec`/`ump_rec` は漢令 174・175 で実装済み（行程内の写像のみ）。`syn_fls`・`chg_fls`・`chg_fsm` は漢令 132〜134 で実装済み（原文 file.html の仕様どおり。`syn_fls` は書き戻す媒体が無いので常に 0、`chg_fls` は接続権 F と書込権 W、ルートファイルの名前も更新）。未実装は `map_rec`/`ump_rec` |
 | F8・F9・F11・F12・F14・F15・F23 | **済（M2）** | 下の §6.1 |
 | F16・F17・F19〜F22・F25 | **済（M4）** | §6.3 |
 

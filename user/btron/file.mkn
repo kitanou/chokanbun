@@ -18,6 +18,12 @@
 常「F_WRITE」之無符六四 為 0x0002
 常「F_UPDATE」之無符六四 為 0x0006
 常「F_EXCL」之無符六四 為 0x0100
+常「F_EXECUTE」之無符六四 為 0x0001   註 map_rec のアクセス種別 (実行)
+常「F_COMMON」之無符六四 為 0x1000    註 map_rec: 共通メモリへ (この実装では ER_NOSPT。値は実装依存)
+常「F_SYSTEM」之無符六四 為 0x2000    註 map_rec: システムメモリへ (同上)
+常「F_EXECUTE」之無符六四 為 0x0001   註 map_rec のアクセス種別 (実行)
+常「F_COMMON」之無符六四 為 0x1000    註 map_rec: 共通メモリへ (この実装では ER_NOSPT。値は実装依存)
+常「F_SYSTEM」之無符六四 為 0x2000    註 map_rec: システムメモリへ (同上)
 常「F_WEXCL」之無符六四 為 0x0200
 常「F_FILE」之無符六四 為 0x1000
 常「F_RONLY」之無符六四 為 0x0010
@@ -78,6 +84,16 @@
 註 chg_fsm(TC* dev, UW mode): 接続モードの変更。変更前のモードを返す。
 公開 記號「chg_fsm」 術曰「BTRON系様変」 受「装置」之無符六四 受「様」之無符六四 返 無符六四
     歸 呼「錯換」以(呼「奏令」以(134, 装置, 様 位與 0xFFFFFFFF, 0, 0, 0, 0))
+終術
+
+註 map_rec(W fd, W offset, B** addr, W size, W mode): 現在のレコードの本体を行程の窓へ写像する。成功は写像の ID。
+公開 記號「map_rec」 術曰「BTRON録写像」 受「記述」之無符六四 受「差」之無符六四 受「宛」之無符六四 受「長」之無符六四 受「様」之無符六四 返 無符六四
+    歸 呼「錯換」以(呼「奏令」以(174, 記述, 差 位與 0xFFFFFFFF, 宛, 長 位與 0xFFFFFFFF, 様 位與 0xFFFFFFFF, 0))
+終術
+
+註 ump_rec(W fd, W mapid): 写像を外す。
+公開 記號「ump_rec」 術曰「BTRON録解像」 受「記述」之無符六四 受「識」之無符六四 返 無符六四
+    歸 呼「錯換」以(呼「奏令」以(175, 記述, 識 位與 0xFFFFFFFF, 0, 0, 0, 0))
 終術
 
 註 get_lnk(TC* path, LINK* lnk, W mode)

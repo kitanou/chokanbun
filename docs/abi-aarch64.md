@@ -254,6 +254,8 @@
   | 145 | リンクファイル生成 | `x0`=LINK（opt に応じ FS 指定／親／ID 指定。成功すると新しいリンクファイルの LINK が返る）, `x1`=F_LINK（132 B）, `x2`=opt（F_FLOAT 0・F_FIX 1・F_FILEID 2） | 0／`-ENOENT`・`-ENODEV`・`-EINVAL`（opt 不正・同じ FS を指す）・`-ENAMETOOLONG`（FS 名／ファイル名が空）・`-EEXIST`・`-EACCES`・`-EROFS`・`-EFAULT`。参照数は F_FIX で 1、他は 0。`cre_lnk` |
   | 151 | ファイル直接生成 | `x0`=LINK, `x1`=名前, `x2`=F_STATE（96 B。種別が 0 ならリンクファイル）, `x3`=F_LINK, `x4`=opt | 通常ファイルは記述子、リンクファイルは 0／`-EACCES`（レベル 0 でない）ほか cre_fil/cre_lnk と同じ。`gen_fil` |
   | 162 | リンクレコード検索 | `x0`=記述子, `x1`=mode（向き 0〜5 + F_SFILE 0x4000・F_SNAME 0x2000・F_SATR1〜5 0x1000〜0x0100）, `x2`=LINK（条件指定時）, `x3`=サブタイプ, `x4`=recnum の書き先（NULL 可） | 0／`-EBADF`・`-EINVAL`・`-EFAULT`・`-ENOEXEC`（見つからない = ER_REC）。`fnd_lnk` |
+  | 174 | レコード写像 | `x0`=記述子, `x1`=offset, `x2`=addr の書き先（8 B）, `x3`=size, `x4`=mode（F_READ 4・F_WRITE 2・F_EXECUTE 1・F_COMMON 0x1000・F_SYSTEM 0x2000） | 写像の ID（1〜16）／`-EBADF`（記述子・モードの食い違い）・`-ENOEXEC`（リンク）・`-ENODATA`（終端）・`-ETXTBSY`（他がロック）・`-EINVAL`・`-EFAULT`・`-EPFNOSUPPORT`（共有写像・空きなし）。窓の頁にファイルの頁を写す。`map_rec` |
+  | 175 | 写像解除 | `x0`=記述子, `x1`=写像の ID | 0／`-EBADF`・`-ENOENT`。`ump_rec` |
   | 171 | リンクファイル情報 | `x0`=LINK, `x1`=F_LINK の書き先（132 B、NULL 可） | リンクファイルの参照数／`-ENOLINK`（リンクファイルでない）・`-ENOENT`・`-ENODEV`・`-EFAULT`。`lnk_sts` |
   | 172 | リンクファイル同期 | `x0`=LINK, `x1`=opt（0 チェックのみ、≠0 更新） | 同期状態 0 一致・1 名前・2 生成日時・3 両方／`-ENOLINK`・`-ENOENT`・`-ENODEV`・`-EROFS`。`syn_lnk` |
   | 173 | 次のリンク取得 | `x0`=LINK（入力は開始ファイル、出力は次のファイル） | 取り出したファイルの参照数／`-ENOENT`（それより大きい ID が無い）・`-ENODEV`・`-EFAULT`。`get_nlk` |

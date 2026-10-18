@@ -176,14 +176,14 @@
 | 検査・属性 | `chk_fil` `chg_fmd` `chg_fat` `chg_fpw` `chg_fnm` `chg_ftm` `get_dfm` `set_dfm` | 漢令 163〜170。所有者・グループ・公開のアクセス判定（利用者レベル 0 は常に可、グループ・公開は「許す最大レベル」）を `opn_fil`・`cre_fil`・`cre_lnk`・`del_fil` に適用。パスワードはハッシュで保存し `opn_fil`・`chk_fil(F_PASWD)` で照合。属性（書込禁止・削除禁止・アプリ属性 1/2）、名前・時刻の変更、行程ごとの既定アクセスモード。試験 `録試` | 部分適合（`A_MODE`/`DA_MODE` の並びと `chg_fnm`・`get_dfm`/`set_dfm` の細部が要確認。アクセス管理レベル 1 は 2 と同じ扱い） |
 | 状態・リンク | `fil_sts` `ofl_sts` `lnk_sts` `syn_lnk` `get_nlk`（実装） | 漢令 149・150。F_STATE（96 B）・F_LOCATE（100 B）と名前（42 B）を書き参照数を返す。F_LOCATE も書く（100 B）。試験 `録試` | 部分適合（F_STATE の整列と F_LOCATE が要確認） |
 | ファイルシステム | `att_fls` `det_fls` `lst_fls` `fls_sts`（実装）、`syn_fls` `chg_fls` `chg_fsm`（実装） | 漢令 128〜134。装置名は 1.8 のデバイス表の論理デバイス名（RAM FS は `rda`＝起動時に接続、SYS は `rom`＝読取専用・未接続）。`att_fls` は表に無い名前を ER_NODEV、F（接続権）が呼び手のレベルに足りなければ ER_ACCES | 部分適合 |
-| 写像 | `map_rec` `ump_rec` | なし | 未実装 |
+| 写像 | `map_rec` `ump_rec` | 漢令 174・175（`kernel/file/btron.mkn`）。現在のレコードの本体を、ファイルの本体の頁ごと呼び出した行程の窓（局所塊域の空き）へ写像する（頁表の項に印＝ビット 55 を付け、窓清が頁池へ返さない）。写像表 16 件・開表の枠と対。モードは開いた時のモードの範囲内（外は `ER_FD`）、リンクは `ER_REC`、終端は `ER_ENDR`、他の記述子のロックは `ER_LOCK`、`F_COMMON`/`F_SYSTEM`（行程間の共有写像）は `ER_NOSPT`。写像のあるファイルは並びを変える操作（`wri_rec`/`ins_rec`/`apd_rec`/`del_rec`/`trc_rec`/`xch_fil`/`del_fil`）を `ER_BUSY` にする。閉じると外れる | 実装済・未検証（`F_COMMON`/`F_SYSTEM`・`ER_IO` なし。`F_COMMON` 等の値は原文に無く実装依存） |
 
 **B0 の確認結果**: 原文 1.6 の末尾まで確認した（アクセス権の配置、アクセス管理レベル、レコードの制限が無いこと、`TC_FSEP` が出現番号の区切りであること、各 API の戻り値の細部）。残る要確認は [btron3-file-design.md](btron3-file-design.md) §12。
 
 **設計**: [btron3-file-design.md](btron3-file-design.md)（篇藏の上に「録」層を置き、型 `録` の篇をレコード列のファイルとして扱う。段階 B0〜B6）。
 
 **主な差分**: BTRON3 の「レコード列＋リンク＋ファイル ID」モデルと、現在の「名前→バイト列（最大 256 B、8 件）」は構造が異なる。Issue の Phase 4 に従い、**篇藏（`design-pianfs.md`）を内部ストレージ、BTRON3 互換モデルを外部層**とする分離が必要。RAMFS の上限（8 件・256 B）は互換試験の障害になるため、拡張が前提。
-**要確認**: レコード番号の基準、パス区切り文字の具体、`ER_*` 割当、`map_rec` のモード。
+**要確認**: レコード番号の基準、パス区切り文字の具体、`ER_*` 割当、`map_rec` のモードの値（`F_COMMON`・`F_SYSTEM`）。
 
 ## 1.7 イベント管理（kernel/event.html）
 
