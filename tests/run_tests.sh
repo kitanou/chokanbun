@@ -692,10 +692,10 @@ if [ -f "$OUT/kernel.elf" ]; then
         # --- #42 1.6 B1: ファイル管理の接続とパス解決 ----------------------------------
         FL_N="$(grep -ac '^録試 ' "$KLOG" 2>/dev/null)"
         FL_BAD="$(grep -a '^録試 ' "$KLOG" 2>/dev/null | grep -vc '0x0000000000000001$')"
-        if [ "${FL_N:-0}" -eq 101 ] && [ "${FL_BAD:-1}" -eq 0 ]; then
+        if [ "${FL_N:-0}" -eq 102 ] && [ "${FL_BAD:-1}" -eq 0 ]; then
             pass "kernel qemu: BTRON3 互換層 ファイル管理 B1・B2 (接続・get_lnk・chg_wrk・作成・削除・開閉・状態の ${FL_N} 項目)"
         else
-            fail "kernel qemu: BTRON3 互換層 ファイル管理 B1 (項目=${FL_N:-0}/101、失敗=${FL_BAD:-?})"
+            fail "kernel qemu: BTRON3 互換層 ファイル管理 B1 (項目=${FL_N:-0}/102、失敗=${FL_BAD:-?})"
             grep -a '^録試 ' "$KLOG" 2>/dev/null | sed 's/^/      /'
         fi
         # --- #42 G6b: メッセージバッファとランデブポート (1.3) ------------------------
@@ -719,10 +719,10 @@ if [ -f "$OUT/kernel.elf" ]; then
         # --- #42 G5: ter_prc (MS_TERM・TERM_ALL・ER_LEVEL・ER_SELF) と prc_sts ------------
         TM_N="$(grep -ac '^強試 ' "$KLOG" 2>/dev/null)"
         TM_BAD="$(grep -a '^強試 ' "$KLOG" 2>/dev/null | grep -vc '0x0000000000000001$')"
-        if [ "${TM_N:-0}" -eq 16 ] && [ "${TM_BAD:-1}" -eq 0 ]; then
+        if [ "${TM_N:-0}" -eq 19 ] && [ "${TM_BAD:-1}" -eq 0 ]; then
             pass "kernel qemu: BTRON3 互換層 強制終了・行程状態 (${TM_N} 項目)"
         else
-            fail "kernel qemu: BTRON3 互換層 強制終了・行程状態 (項目=${TM_N:-0}/16、失敗=${TM_BAD:-?})"
+            fail "kernel qemu: BTRON3 互換層 強制終了・行程状態 (項目=${TM_N:-0}/19、失敗=${TM_BAD:-?})"
             grep -a '^強試 ' "$KLOG" 2>/dev/null | sed 's/^/      /'
         fi
         # --- #42 G4: 利用者情報 (get_usr / chg_usr) と set_tim / set_tod の権限 --------

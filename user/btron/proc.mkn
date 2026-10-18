@@ -24,6 +24,11 @@
     歸 呼「錯換」以(呼「奏令」以(68, 識 位與 0xFFFFFFFF, 碼 位與 0xFFFFFFFF, 選 位與 0xFFFFFFFF, 0, 0, 0))
 終術
 
+註 chg_pri(W id, W pri, W opt): 優先度を変える。opt は P_ABS・P_REL・P_TASK。成功は変更後の優先度 (0〜255)。
+公開 記號「chg_pri」 術曰「BTRON優先変」 受「識」之無符六四 受「優」之無符六四 受「様」之無符六四 返 無符六四
+    歸 呼「錯換」以(呼「奏令」以(71, 識 位與 0xFFFFFFFF, 優 位與 0xFFFFFFFF, 様 位與 0xFFFFFFFF, 0, 0, 0))
+終術
+
 註 prc_sts(W pid, P_STATE* buff, TC* name): P_STATE = {UW state; W priority; W parpid} (12 B)。buff・name は NULL 可。
 公開 記號「prc_sts」 術曰「BTRON行程状」 受「識」之無符六四 受「状」之無符六四 受「名」之無符六四 返 無符六四
     歸 呼「錯換」以(呼「奏令」以(69, 識 位與 0xFFFFFFFF, 状, 名, 0, 0, 0))

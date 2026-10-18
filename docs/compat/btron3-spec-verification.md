@@ -97,7 +97,7 @@
 | P1 | A | `cre_prc` の `pri` | -1 は自プロセスと同じ優先度、0〜255 も可。範囲外は `ER_PPRI` | -1 を `ER_PPRI` にしている（**誤**） |
 | P2 | A | 実行形式 | 実行プログラムレコード（**先頭レコード**）。無ければ `ER_REC` | 像ファイルの見出しの像番号 |
 | P3 | B | `chg_usr` | **システムプロセスのみ**。一般アプリは実行できない | 独自のレベル規則で一般プロセスも可 |
-| P4 | B | `prc_sts` | 戻り値は pid。`P_STATE`{state, priority, parpid}、name は実身名 | 要コード確認（優先度は 128 固定、name 空） |
+| P4 | B | `prc_sts` | 戻り値は pid。`P_STATE`{state, priority, parpid}、name は実身名 | 要コード確認（優先度は優先表の値（既定 128）、name 空） |
 | P5 | A | `rcv_msg` の戻り値 | 送信元 pid（自分なら 0）。入り切らないときはエラー | 常に 0。入り切らないときは切って成功 |
 | P6 | B | `snd_msg` | 本体サイズ 0 以下も `ER_SZOVR`、`CONFM` 対応、`ER_SELF` | `CONFM` 未対応 |
 | P7 | C | メッセージ | `req_tmg`/`can_tmg`/`def_msg`/`ret_msg`/`brk_msg`、`WAIEVT`、`CHECK`、`MH_*` | `req_tmg`・`can_tmg`・`WAIEVT`・`CHECK` は実装済み。`def_msg`/`ret_msg`/`brk_msg`/`MH_*` は未実装（EL0 への上り呼びが要る） |
