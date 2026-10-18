@@ -75,7 +75,7 @@
 | 1.9 | 時計管理 | kernel/clk.html | 汎用タイマー | 部分適合（取得系のみ、[詳細](btron3-os.md)） |
 | 1.10 | システム管理 | kernel/system.html | なし | 未実装（[詳細](btron3-os.md)） |
 
-### 第2章 ドローイングプリミティブ
+### 第2章 ディスプレイプリミティブ
 
 API 一覧: [btron3-api-inventory.md](btron3-api-inventory.md)（2.3: 37、2.4: 42、2.5: 20、2.6: 6 関数）。現状は全て未実装。
 
@@ -88,7 +88,7 @@ API 一覧: [btron3-api-inventory.md](btron3-api-inventory.md)（2.3: 37、2.4: 
 | 2.5 | 文字（列）描画関数 | dp/character_func.html | 未実装（API 棚卸し済） |
 | 2.6 | ポインタ制御関数、標準ポインタ形状 | dp/pointer_func.html | 未実装（API 棚卸し済） |
 
-### 第3章 シェル（HMI・統合情報環境）
+### 第3章 外殻（シェル。HMI・統合情報環境）
 
 API 一覧: [btron3-api-inventory.md](btron3-api-inventory.md)（約 247 関数）。現状は全て未実装。
 
@@ -98,13 +98,13 @@ API 一覧: [btron3-api-inventory.md](btron3-api-inventory.md)（約 247 関数�
 | 3.2 | メニューマネージャ（標準／常駐メニュー） | shell/menu.html | 未実装（API 棚卸し済） |
 | 3.3 | パーツマネージャ（11 種のパーツ） | shell/parts.html | 未実装（API 棚卸し済） |
 | 3.4 | パネルマネージャ | shell/panel.html | 未実装（API 棚卸し済） |
-| 3.5 | トレイマネージャ | shell/tray.html | 未実装（API 棚卸し済） |
+| 3.5 | トレーマネージャ | shell/tray.html | 未実装（API 棚卸し済） |
 | 3.6 | データマネージャ（データボックス、標準データ形式） | shell/data.html | 未実装（API 棚卸し済） |
-| 3.7 | テキスト入力パーツ | shell/tip.html | 未実装（API 棚卸し済） |
-| 3.8 | アプリケーションマネージャ（実身／仮身の移動・複写、起動、メニュー管理） | shell/omgr.html | 未実装（API 棚卸し済） |
+| 3.7 | テキスト入力プリミティブ | shell/tip.html | 未実装（API 棚卸し済） |
+| 3.8 | 実身／仮身マネージャ（実身／仮身の移動・複写、起動、メニュー管理） | shell/omgr.html | 未実装（API 棚卸し済） |
 | 3.9 | フォントマネージャ（標準フォントデータ形式） | shell/font_mgr.html | 未実装（API 棚卸し済） |
 | 3.10 | TCP/IP マネージャ | shell/tcpip.html | 未実装（API 棚卸し済） |
-| 3.11 | プリントマネージャ（スプール、プリンタ管理） | shell/printmgr.html | 未実装（API 棚卸し済） |
+| 3.11 | 印刷マネージャ（スプール、プリンタ管理） | shell/printmgr.html | 未実装（API 棚卸し済） |
 
 **注**: 第3.8 節の「アプリケーション」は原文の日本語タイトルが取得時に判読できなかった。実身／仮身／虚身・付箋の規定位置は原文確認のうえ確定する（取得した英語訳は機械的な当て字である）。
 
