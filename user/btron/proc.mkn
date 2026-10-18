@@ -29,7 +29,7 @@
     歸 呼「錯換」以(呼「奏令」以(71, 識 位與 0xFFFFFFFF, 優 位與 0xFFFFFFFF, 様 位與 0xFFFFFFFF, 0, 0, 0))
 終術
 
-註 get_inf(W pid, P_INFO* buff): P_INFO = {UW etime (秒); UW utime (ms); UW stime (ms); W tmem} (16 B)。
+註 get_inf(W pid, P_INFO* buff): P_INFO = {UW etime (秒); UW utime (ms); UW stime (ms); W tmem; W wmem; W resv[11]} (64 B)。
 公開 記號「get_inf」 術曰「BTRON統計」 受「識」之無符六四 受「書先」之無符六四 返 無符六四
     歸 呼「錯換」以(呼「奏令」以(72, 識 位與 0xFFFFFFFF, 書先, 0, 0, 0, 0))
 終術
