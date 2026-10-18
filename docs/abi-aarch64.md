@@ -217,7 +217,7 @@
   | 83 | 時限要求 | `x0`=time（ms、正）, `x1`=code | 0／`-EINVAL`（time が 0 以下）・`-ENOSPC`（時限表 16 件が満杯）。time 後（25 ms の刻へ切り上げ）に MS_TMOUT {型 4, 大きさ 4, 本体=code} が自分のキューに積まれる（キューが満杯なら捨てる）。`req_tmg` |
   | 84 | 時限取消 | なし | 0。自分の要求を全部取り消す（キューにあるものは消さない）。`can_tmg` |
   | 85 | 事象通知 | なし | 0。`WAIEVT` で `rcv_msg` の待ちに入っている行程（最後に入ったもの）の待ちを解き、その `rcv_msg` に `-ENOMEDIUM`（ER_NOME）を返させる。待つ行程が無ければ要求を 1 つ記録（次の `WAIEVT` が直ちに ER_NOME）。`brk_msg` |
-  | 86 | 篇同 | なし | 0／`-ENXIO`（`vda` が無い・容量が 2304 区画未満）・`-EIO`・`-ENOMEM`。篇藏の状態を `vda` のスロットへ書く（[design-persistence.md](design-persistence.md)）。`篇同` |
+  | 86 | 篇同 | なし | 0／`-ENXIO`（`vda` が無い・容量が 10370 区画未満）・`-EIO`・`-ENOMEM`。篇藏と録層（FS 0）の状態を `vda` のスロットへ書く（[design-persistence.md](design-persistence.md)）。`篇同` |
   | 96 | 作セマ | `x0`=初期カウント, `x1`=指定（SEM_SYNC=0 / SEM_EXCL=0x4000、+DELEXIT=0x8000） | ID（正）／`-EINVAL`（排他で cnt≠1・同期で cnt<0・不明なビット）・`-EMFILE`（16 個満杯）。`cre_sem` |
   | 97 | 削セマ | `x0`=ID | 0／`-EBADR`（ID が不正）・`-ENOENT`（無い）。待っている行程は `-EIDRM` で起こす。`del_sem` |
   | 98 | 返セマ | `x0`=ID | 0／`-EBADR`・`-ENOENT`・`-EPROTO`（排他を持っていない）・`-EMFILE`（上限）。待ちがあれば先頭へ手渡す。`sig_sem` |

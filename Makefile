@@ -52,7 +52,9 @@ test: $(BIN)
 run: test
 	@echo "=== Running QEMU (漢極 kernel) ==="
 	@# 殻の 同 で篇藏を保存すると、再起動で戻る。make test が作り直さないイメージ (make clean で消える)。
-	@test -f tests/output/run-disk.img || dd if=/dev/zero of=tests/output/run-disk.img bs=512 count=4096 2>/dev/null
+	@test -f tests/output/run-disk.img || dd if=/dev/zero of=tests/output/run-disk.img bs=512 count=12288 2>/dev/null
+	@# 版 1 のときの 4096 区画のイメージは永続化に足りない (要 10370 区画)ので、中身を残したまま 12288 区画へ広げる。
+	@test "$$(wc -c < tests/output/run-disk.img)" -ge 6291456 || dd if=/dev/null of=tests/output/run-disk.img bs=512 seek=12288 count=0 2>/dev/null
 	qemu-system-aarch64 -M virt,gic-version=2 -cpu cortex-a57 -nographic -serial mon:stdio \
 		-global virtio-mmio.force-legacy=false \
 		-drive file=tests/output/run-disk.img,if=none,format=raw,id=hd0 -device virtio-blk-device,drive=hd0 \
