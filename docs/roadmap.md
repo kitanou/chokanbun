@@ -70,7 +70,7 @@
   - 互換層（`user/btron/`、EL0 ライブラリ → 漢令）: 1.1 の一部（`get_tid`・`get_usr`/`chg_usr`・`ter_prc`/`prc_sts`・`ext_prc`/`cre_prc` 暫定）、1.2 の基本部、1.3 全体（`bufsz`=0 を除く）、1.4、1.5（`get_mbk`/`rel_mbk`/`mbk_sts` + `malloc` 系 18 関数。民の窓にローカル塊域・共有域、共有塊は全行程に同一物理頁）、1.7（イベント管理 20 API。隊・優先度・`EV_NULL`/`EV_AUTKEY` の合成・`req_evt` の `MS_SYS5`。キーボード・ポインティングデバイス・ブザーは核内の模型）、1.9。各 API は「実装済・未検証」（[compat/btron3-os.md](compat/btron3-os.md)・[compat/btron3-spec-verification.md](compat/btron3-spec-verification.md) §6.5・§6.6）
   - 共有データ編 §1 の基本データタイプ: `H`・`Bool`/`BOOL`・`SIZE`/`PNT`/`RECT` の配置を追加（`ErrCode` の二定義と浮動小数点が未）
   - 1.6 ファイル管理: 設計・原文確認（B0）・録層の骨格と接続・パス解決（B1）・作成・削除・開閉・状態（B2。`gen_fil` を除く）・レコード操作とロック（B3。`fnd_lnk` を除く）・属性・アクセス制御・パスワード（B4）・SYS FS の像ファイルと `cre_prc` の LINK 版（B5）。B6（写像・永続化）以降は未着手（[compat/btron3-file-design.md](compat/btron3-file-design.md)）
-- [x] 適合試験計画を作成し、互換層の QEMU 試験 13 種・514 項目（1.5 メモリの `貯試` 45 項目・1.7 イベントの `件試` 73 項目・1.8 デバイスの `設試` 90 項目・1.10 システムの `系試` 38 項目を含む）を規範項目に紐付け（[compat/btron3-test-plan.md](compat/btron3-test-plan.md)）。「適合確認済」への合否基準も定義
+- [x] 適合試験計画を作成し、互換層の QEMU 試験 13 種・518 項目（1.5 メモリの `貯試` 45 項目・1.7 イベントの `件試` 73 項目・1.8 デバイスの `設試` 90 項目・1.10 システムの `系試` 38 項目を含む）を規範項目に紐付け（[compat/btron3-test-plan.md](compat/btron3-test-plan.md)）。「適合確認済」への合否基準も定義
 - [ ] 共有データ編とOS仕様編の全章・節・API・データ形式を棚卸し（OS仕様編 第1章は照合済み。第2章・第3章は API 名のみ棚卸し済みで約 352 関数、全て未実装。共有データ編は要求を要約したが、原文の文字化けで符号表・TAD の ID/配置が要確認。[compat/btron3-api-inventory.md](compat/btron3-api-inventory.md)・[compat/btron3-shared-data.md](compat/btron3-shared-data.md)）
 - [ ] 各要求に実装箇所・差分・テスト・適合状態を対応づける
 - [ ] 行程・メッセージ・同期・時刻・メモリ・装置・ファイル関連APIを規範条件と照合
@@ -151,14 +151,14 @@ BTRON3の外部仕様を満たすことを優先し、その上で超漢文固�
 
 - コンパイラ、AArch64生成、QEMUテスト、カーネル起動、EL0行程、アドレス空間、スケジューラ、VFS、漢殻の基礎は実装済み。
 - BTRON3適合性は複数領域で実装が進んでいるが、「適合確認済」は 0 項目で、完全準拠を意味しない。適合性マトリクス（[compat/btron3-conformance.md](compat/btron3-conformance.md)）は全章・節を一覧化し、第2編 第1章を API 単位で照合済み。第2章・第3章は API 名の棚卸しのみ、共有データ編は原文の文字化けで要確認事項が多い。
-- 互換層の QEMU 試験は 13 種・514 項目。1.6 ファイル管理は録層の B5（作成・削除・開閉・状態・レコード操作・ロック・属性・アクセス制御・パスワード・SYS の像ファイルと `cre_prc` の LINK 版）まで実装し、原文を直接確認して作り直した（モデル M1・構造体と権限 M2・リンクファイル M3・レコードの細部 M4・他の章 M5 は完了。1.5 メモリ管理も段階 M6、1.7 イベント管理も段階 M7a、1.8 デバイス管理も段階 M7b、1.10 システム管理の `get_ver`/`get_cnf` も段階 M7c として実装済み。K5（`att_fls` の装置名をデバイス表に合わせ接続権 F を検査）、接続系の `syn_fls`/`chg_fls`/`chg_fsm`、1.2 の `req_tmg`/`can_tmg` と `rcv_msg` の `CHECK`/`WAIEVT` も実装済み。[compat/btron3-spec-verification.md](compat/btron3-spec-verification.md)）。写像が未実装。解釈の分かれる箇所は設計書の §12 に記録している。
+- 互換層の QEMU 試験は 13 種・518 項目。1.6 ファイル管理は録層の B5（作成・削除・開閉・状態・レコード操作・ロック・属性・アクセス制御・パスワード・SYS の像ファイルと `cre_prc` の LINK 版）まで実装し、原文を直接確認して作り直した（モデル M1・構造体と権限 M2・リンクファイル M3・レコードの細部 M4・他の章 M5 は完了。1.5 メモリ管理も段階 M6、1.7 イベント管理も段階 M7a、1.8 デバイス管理も段階 M7b、1.10 システム管理の `get_ver`/`get_cnf` も段階 M7c として実装済み。K5（`att_fls` の装置名をデバイス表に合わせ接続権 F を検査）、接続系の `syn_fls`/`chg_fls`/`chg_fsm`、1.2 の `req_tmg`/`can_tmg` と `rcv_msg` の `CHECK`/`WAIEVT` も実装済み。[compat/btron3-spec-verification.md](compat/btron3-spec-verification.md)）。写像が未実装。解釈の分かれる箇所は設計書の §12 に記録している。
 - 実身・仮身の統合、篇藏の階層化・永続化、GUI、機械漢文ブートローダー、セルフホスティングは今後の段階。
 - 黄帝紀元は採用方針が決まっているが、起点・換算規則の仕様確定が必要。
 - 独自機械漢文CPUは長期の独立研究トラックであり、AArch64版OSの完成とは分離する。
 
 ## 次に着手する優先順位
 
-1. **1.6 ファイル管理を原文どおりに仕上げる**（Issue #42。[compat/btron3-spec-verification.md](compat/btron3-spec-verification.md)）。**段階 M1〜M5 と 1.5 メモリ管理（M6）は完了**。B6（写像・永続化）と `map_rec`/`ump_rec` は未着手。1.2 の残りはハンドラ（`def_msg`/`ret_msg`/`brk_msg`）と `CONFM`、1.1 は `chg_pri` と優先度スケジューラ（群 A の厳密な優先順）まで実装済みで、残りは `get_inf`・副タスク・群 B/C の配分比。
+1. **1.6 ファイル管理を原文どおりに仕上げる**（Issue #42。[compat/btron3-spec-verification.md](compat/btron3-spec-verification.md)）。**段階 M1〜M5 と 1.5 メモリ管理（M6）は完了**。B6（写像・永続化）と `map_rec`/`ump_rec` は未着手。1.2 の残りはハンドラ（`def_msg`/`ret_msg`/`brk_msg`）と `CONFM`、1.1 は `chg_pri` と優先度スケジューラ（群 A の厳密な優先順）まで実装済みで、`get_inf`・`slp_tsk`・`wup_tsk`・`can_wup`・`dly_tsk` も実装済み（`wup_tsk` は副タスクが無いので常に `ER_ID`）。残りは副タスク（`cre_tsk` ほか）・群 B/C の配分比。
 2. **段階 M7（1.7 イベント・1.8 デバイス・1.10 システム。K2〜K5）の続き**: **1.7 イベント管理は段階 M7a、1.8 デバイス管理は段階 M7b、1.10 システム管理の `get_ver`/`get_cnf` は段階 M7c として完了**（§6.6・§6.7・§6.8）。残るは 1.10 の `def_exc`/`ret_exc`（1.2 のハンドラ機構と同じ前提）。続いて TAD・描画・シェルなど（原文は §7 で読み済み）、表示装置と入力装置が決まってから。録層 B6（写像・本文の拡張・永続化）はモデルの作り直しの後。
 3. **漢殻・行程管理の実装残件を整理する**（Issue #6、#46）。init、親子行程、終了、柄継承、必須UIとしての診断経路を検証する。
 4. **実身・仮身のデータモデルを確定する**（Issue #46）。既存VFS/篇藏とBTRON3仕様の境界を決め、適合性を損なわずに統合する。

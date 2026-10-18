@@ -201,6 +201,11 @@
   | 31 | 頁残 | なし | 頁池の空きページ数（診断） |
   | 70 | 行程作成 | `x0`=LINK（SYS の像ファイル）, `x1`=優先度（0〜255、-1 は自行程と同じ）, `x2`=MESSAGE（NULL 可。8 B の見出し {W 型, W 大きさ} + 本体。型 0 のとき NUL 区切りが引数。本体は 255 B まで） | 子の識（正）／`-EDOM`（ER_PPRI）・`-E2BIG`（ER_SZOVR）・`-EFAULT`・`-ENOEXEC`（ER_REC。像ファイルでない）・`-ENOENT`・`-ENODEV`・`-EACCES`・`-EBUSY`・`-EAGAIN`・`-ENOMEM`。`cre_prc`。子は BTRON3 流（終了時に MS_EXIT、枠を即解放） |
   | 71 | 優先度変更 | `x0`=id（0=自分, -1=親, 正=行程。`P_TASK` なら 0 か自分の識）, `x1`=pri, `x2`=opt（P_ABS 0・P_REL 1・P_TASK 2） | 変更後の優先度（0〜255）／`-EDOM`（群の外・範囲外）・`-EINVAL`（opt）・`-ESRCH`・`-EBADR`（自分以外のタスク）。`chg_pri` |
+  | 72 | 行程統計 | `x0`=pid（0=自分, -1=親, 正）, `x1`=P_INFO の書き先（16 B） | 0／`-ESRCH`・`-EFAULT`。{etime 秒, utime ms, stime ms（常に 0）, tmem バイト}。`get_inf` |
+  | 73 | タスクの眠り | `x0`=time（ms。-1 は無期限） | 時間切れで `-ETIMEDOUT`（ER_NONE）／`-EINVAL`（0 と -1 以外の負）。`slp_tsk` |
+  | 74 | タスクの起床 | `x0`=tskid | 常に `-EBADR`（ER_ID。副タスクが無い）。`wup_tsk` |
+  | 75 | 起床要求の取消 | `x0`=tskid | 0（自分）／`-EBADR`。`can_wup` |
+  | 76 | タスクの遅延 | `x0`=time（ms。0 は譲渡） | 0／`-EINVAL`（負）。`dly_tsk` |
   | 64 | 生BTRON | `x0`=名前, `x1`=名前長, `x2`=引数, `x3`=引数長（17 と同じ） | 子の識／17 と同じ誤り。子は BTRON3 流: 終了時（`終行程` など）に親のキューへ MS_EXIT `{pid, code}` を積み、僵にならず枠を即解放する（`待行程` では回収できず `-ECHILD`）。互換層の `cre_prc`（暫定形）が使う |
   | 66 | 利用者取 | `x0`=pid（0 自分、-1 親、正 その行程）, `x1`=P_USER の書き先（窓内の書込可能な 148 B） | 0／`-ESRCH`・`-EFAULT`。`get_usr` |
   | 67 | 利用者変 | `x0`=P_USER（窓内の 148 B） | 0／`-EINVAL`（level が 0〜15 外、net_level が 1〜15 外）・`-EACCES`（level 0 の行程以外。原文は「システムプロセスのみ」で、レベル 0 をそれとみなす暫定）・`-EFAULT`。`chg_usr` |

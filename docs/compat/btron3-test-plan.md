@@ -48,7 +48,7 @@
 | 時試 | `user/btron_clk.mkn` | 11 | OS 1.9 時計管理 | `get_tim`、`get_tod`（暦・閏年・通日） | 正・異・境 | 暦の期待値は手計算とホスト日付との比較。ずれの符号は要確認 |
 | 信試 | `user/btron_msg.mkn` | 38 | OS 1.2 メッセージ、1.1 の終了通知 | `snd_msg`、`rcv_msg`、`clr_msg`、`cre_prc`（BTRON3 流）、`ext_prc`、`MS_EXIT` | 正・異・境・相 | 型 1〜31、本体 1〜32 B、キュー 8、`ER_SZOVR`/`ER_NOSPC`/`ER_NOPRC`、枠の即解放 |
 | 利試 | `user/btron_usr.mkn` | 19 | OS 1.1 利用者情報、1.9 設定系 | `get_usr`、`chg_usr`、`set_tim`、`set_tod` | 正・異・相 | 権限（level 0 のみ設定可）、子が親の写しを継ぐ。level の向きは解釈 |
-| 強試 | `user/btron_term.mkn` | 19 | OS 1.1 強制終了・状態 | `ter_prc`（`TERM_NRM`/`TERM_ALL`）、`prc_sts`、`MS_TERM` | 正・異・相 | `ER_SELF`/`ER_NOPRC`/`ER_LEVEL`/`ER_PAR`、子孫の終了順、枠の回収 |
+| 強試 | `user/btron_term.mkn` | 23 | OS 1.1 強制終了・状態 | `ter_prc`（`TERM_NRM`/`TERM_ALL`）、`prc_sts`、`MS_TERM` | 正・異・相 | `ER_SELF`/`ER_NOPRC`/`ER_LEVEL`/`ER_PAR`、子孫の終了順、枠の回収 |
 | 同試 | `user/btron_sync.mkn` | 21 | OS 1.3 セマフォ・イベントフラグ | `cre_sem`、`del_sem`、`sig_sem`、`wai_sem`、`cre_flg`、`del_flg`、`set_flg`、`clr_flg`、`wai_flg` | 正・異・境・相 | FIFO、時間切れ、`ER_DLT`、`DELEXIT`、排他の自動返却。待ち順は解釈 |
 | 緩試 | `user/btron_comm.mkn` | 24 | OS 1.3 メッセージバッファ・ランデブ | `cre_mbf`、`del_mbf`、`snd_mbf`、`rcv_mbf`、`cre_por`、`del_por`、`cal_por`、`acp_por`、`fwd_por`、`rpl_rdv` | 正・異・境・相 | 環の折り返し、満杯・空、転送、削除。`bufsz`=0 は未対応 |
 | 録試 | `user/btron_file.mkn` | 102 | OS 1.6 ファイル管理 B1〜B5、1.1 の `cre_prc` | `get_lnk`、`chg_wrk`、`att_fls`、`det_fls`、`lst_fls`、`fls_sts`、`cre_fil`、`cre_lnk`、`gen_fil`、`fnd_lnk`、`lnk_sts`、`syn_lnk`、`get_nlk`、`del_fil`、`opn_fil`、`cls_fil`、`fil_sts`、`ofl_sts`、`see_rec`、`fnd_rec`、`rea_rec`、`wri_rec`、`ins_rec`、`apd_rec`、`del_rec`、`trc_rec`、`loc_rec`、`xch_fil`、`chk_fil`、`chg_fmd`、`chg_fat`、`chg_fpw`、`chg_fnm`、`chg_ftm`、`get_dfm`、`set_dfm`、`cre_prc` | 正・異・境・相 | B1: 出現番号、`F_BASED`/`F_DIRECT`、作業ファイル継承。B2: 記述子の世代、ファイル数の上限と頁の返却、親レコードの満杯（`ER_SZOVR`）、参照数の増減、`F_EXCL`/`F_WEXCL` の行程間試験（子行程を使う）、行程終了での自動クローズ、読取専用 FS。B3: レコードの追記・挿入・書き足し（後ろが壊れない）・切り詰め・削除、リンクレコード、本文の容量、記述子間と行程間のロック、挿入・削除でのロック番号のずれ、`xch_fil`。B4: 属性の設定・解除、パスワード（20 文字・21 文字の境界を含む）、名前・時刻の変更、既定のアクセスモード、`A_MODE`、別の利用者・グループ・レベルになる子行程でのアクセス判定 |
@@ -60,7 +60,7 @@
 | 言語 | `tests/lang/ok`・`err` | ok 7・err 37 | （BTRON3 とは無関係） | 言語仕様の黄金・診断試験 | — | 互換層を書く言語の健全性 |
 | 起動時 | `tests/run_tests.sh` | — | 核の基本動作 | argv 受け渡し、終了コード、EL0 行程、メモリ保護など | — | BTRON3 の項目には紐付けない |
 
-**集計**: BTRON3 互換層の QEMU 試験は 13 種・計 514 項目（識試 13、名試 21、時試 11、信試 38、利試 19、強試 19、同試 21、緩試 24、録試 102、貯試 45、件試 73、設試 90、系試 38）。ほかに篇藏 28 項目。
+**集計**: BTRON3 互換層の QEMU 試験は 13 種・計 518 項目（識試 13、名試 21、時試 11、信試 38、利試 19、強試 23、同試 21、緩試 24、録試 102、貯試 45、件試 73、設試 90、系試 38）。ほかに篇藏 28 項目。
 
 ## 5. API 単位の試験の有無（第2編 第1章）
 

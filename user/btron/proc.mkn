@@ -29,6 +29,31 @@
     歸 呼「錯換」以(呼「奏令」以(71, 識 位與 0xFFFFFFFF, 優 位與 0xFFFFFFFF, 様 位與 0xFFFFFFFF, 0, 0, 0))
 終術
 
+註 get_inf(W pid, P_INFO* buff): P_INFO = {UW etime (秒); UW utime (ms); UW stime (ms); W tmem} (16 B)。
+公開 記號「get_inf」 術曰「BTRON統計」 受「識」之無符六四 受「書先」之無符六四 返 無符六四
+    歸 呼「錯換」以(呼「奏令」以(72, 識 位與 0xFFFFFFFF, 書先, 0, 0, 0, 0))
+終術
+
+註 slp_tsk(W time): time ms 眠る (-1 は起こされるまで)。時間切れは ER_NONE。
+公開 記號「slp_tsk」 術曰「BTRON眠」 受「時」之無符六四 返 無符六四
+    歸 呼「錯換」以(呼「奏令」以(73, 時 位與 0xFFFFFFFF, 0, 0, 0, 0, 0))
+終術
+
+註 wup_tsk(W tskid): 同じ行程の別のタスクを起こす。
+公開 記號「wup_tsk」 術曰「BTRON起床」 受「識」之無符六四 返 無符六四
+    歸 呼「錯換」以(呼「奏令」以(74, 識 位與 0xFFFFFFFF, 0, 0, 0, 0, 0))
+終術
+
+註 can_wup(W tskid): 積まれた起床要求を取り消し、その数を返す。
+公開 記號「can_wup」 術曰「BTRON起床取消」 受「識」之無符六四 返 無符六四
+    歸 呼「錯換」以(呼「奏令」以(75, 識 位與 0xFFFFFFFF, 0, 0, 0, 0, 0))
+終術
+
+註 dly_tsk(W time): time ms 待つ (0 は CPU を譲る)。
+公開 記號「dly_tsk」 術曰「BTRON遅」 受「時」之無符六四 返 無符六四
+    歸 呼「錯換」以(呼「奏令」以(76, 時 位與 0xFFFFFFFF, 0, 0, 0, 0, 0))
+終術
+
 註 prc_sts(W pid, P_STATE* buff, TC* name): P_STATE = {UW state; W priority; W parpid} (12 B)。buff・name は NULL 可。
 公開 記號「prc_sts」 術曰「BTRON行程状」 受「識」之無符六四 受「状」之無符六四 受「名」之無符六四 返 無符六四
     歸 呼「錯換」以(呼「奏令」以(69, 識 位與 0xFFFFFFFF, 状, 名, 0, 0, 0))

@@ -719,10 +719,10 @@ if [ -f "$OUT/kernel.elf" ]; then
         # --- #42 G5: ter_prc (MS_TERM・TERM_ALL・ER_LEVEL・ER_SELF) と prc_sts ------------
         TM_N="$(grep -ac '^強試 ' "$KLOG" 2>/dev/null)"
         TM_BAD="$(grep -a '^強試 ' "$KLOG" 2>/dev/null | grep -vc '0x0000000000000001$')"
-        if [ "${TM_N:-0}" -eq 19 ] && [ "${TM_BAD:-1}" -eq 0 ]; then
+        if [ "${TM_N:-0}" -eq 23 ] && [ "${TM_BAD:-1}" -eq 0 ]; then
             pass "kernel qemu: BTRON3 互換層 強制終了・行程状態 (${TM_N} 項目)"
         else
-            fail "kernel qemu: BTRON3 互換層 強制終了・行程状態 (項目=${TM_N:-0}/19、失敗=${TM_BAD:-?})"
+            fail "kernel qemu: BTRON3 互換層 強制終了・行程状態 (項目=${TM_N:-0}/23、失敗=${TM_BAD:-?})"
             grep -a '^強試 ' "$KLOG" 2>/dev/null | sed 's/^/      /'
         fi
         # --- #42 G4: 利用者情報 (get_usr / chg_usr) と set_tim / set_tod の権限 --------
