@@ -56,10 +56,11 @@
 | 貯試 | `user/btron_mem.mkn` | 45 | OS 1.5 メモリ管理 | `get_mbk`、`rel_mbk`、`mbk_sts`、`malloc` 系 18 関数 | 正・異・境・相 | ローカル塊の割当・解放・再利用（昇順 first-fit、解放後の穴）、ローカル域の枯渇（`ER_NOMEM`）、共有・システム塊の全行程写像（同一 VA・同一物理頁を子行程で横断確認）、`DELEXIT` の自動解放、`M_SYSTEM` のレベル 0 権限（子がレベル 1 で `ER_CTX`）、持ち主でない塊の解放（`ER_MPTR`）、`ER_PAR`（余計ビット・頁数 0・負）、`ER_ADR`（书写き先が不正）、`mbk_sts` の口径（空き枚数の減りと戻り）。子は 3 役。不足: 塊表 32 項の満杯・共有域 8 頁づまり（`ER_LIMIT`）の試験なし |
 | 件試 | `user/btron_evt.mkn` | 73 | OS 1.7 イベント管理 | `get_evt`、`put_evt`、`clr_evt`、`get_pdp`、`set_pdp`、`get_etm`、`get_kmp`、`chg_emk`、`set_krp`、`get_krp`、`set_krm`、`get_krm`、`get_kid`、`get_ktb`、`set_ktb`、`chg_pda`、`sig_buz`、`ctl_buz`、`req_evt`、`las_evt` | 正・異・境・相 | 隊 32 項と優先度・発生順、マスク外の破棄、`CLR`/`NOCLR`、`EP_POS`/`EP_STAT`/`EP_TIME`、満杯（`ER_NOSPC`）、`ER_PAR`（t_mask≦0・opt 不正・型 0/5/16・余計ビット・メロディー番号）・`ER_ADR`（窓外）、`chg_emk`（負で取得）、`get_etm` と時間の進み、`get_kmp` のキー反映、`set`/`get_krm`・`krp` の往復、`get_kid`、`get_ktb`/`set_ktb`（keymax 0・kctmax 4001・往復）、絶対座標タイプの `set_pdp`、`ctl_buz` の往復、`req_evt` の `MS_SYS5` を `rcv_msg` で受信・解除、`las_evt` の経過、`EV_AUTKEY` の合成。実機が無いため核内の模型で試験する（子行程は使わない） |
 | 設試 | `user/btron_dev.mkn` | 90 | OS 1.8 デバイス管理 | `opn_dev`、`cls_dev`、`rea_dev`、`wri_dev`、`chg_dmd`、`dev_sts`、`get_dev`、`lst_dev`、`sus_dev` | 正・異・境・相 | 論理名の解決（前綴り一致・支番 1〜3 桁・前 0 なし）と未登録（`ER_NOEXS`）、`o_mode` の不正ビット（`ER_PAR`）と排他（`D_EXCL`/`D_WEXCL` の `ER_BUSY`）、同時オープン 32 の上限（`ER_LIMIT`）、塊型の読み書き（`rda`）と属性データ（`start`<0、読のみ）、`a_size`、文字型（`con`）の路と空読み（`ER_BUSY`）、向きの検査（読否 `prn` の `D_READ` → `ER_DEV`、書禁 `rom` の `D_WRITE` → `ER_RONLY`）、`D_READ`/`D_WRITE` オープンでの逆操作（`ER_DD`）、`dev_sts`（`attr`/`mode`/`blksz`/`wprt`）、`get_dev`/`lst_dev`（`DEV_INFO`）、`chg_dmd` のレベル 0 権限（`ER_ACCES`）と `mode` の範囲、`sus_dev` の通常・強制カウンタ（`D_CHECK`/`D_SUSPEND`/`ER_BUSY`）。実機が無いため核内の模型 4 ユニット（`rda`/`rom`/`con`/`prn`）で試験する（子行程は使わない） |
+| 系試 | `user/btron_sys.mkn` | 38 | OS 1.10 システム管理 | `get_ver`、`get_cnf` | 正・異・境 | `T_VER`（20 B）の全欄（`maker`/`id`/`spver`/`prver`/`prno[4]`/`cpu`/`var`）と 20 バイトだけ書くこと、格納域が窓外・窓末で入らない場合（`ER_ADR`）、構成情報の数値 3 項目（`NPRC`/`PGSZ`/`NDEV`）と文字列 2 項目（`SYSNAM`/`SYSVER`）の内容と末尾の NUL、未知の名前（`ER_NOEXS`）・部分名・余分付き・大小文字、名または格納域が窓外（`ER_ADR`）、数値で `len`<4 と `len`<0（`ER_PAR`）、文字列の `len`=0・不足（4）・ちょうど（11）・余りあり（12）の切り詰め。`def_exc`/`ret_exc` は未実装のため試験しない（子行程は使わない） |
 | 言語 | `tests/lang/ok`・`err` | ok 7・err 37 | （BTRON3 とは無関係） | 言語仕様の黄金・診断試験 | — | 互換層を書く言語の健全性 |
 | 起動時 | `tests/run_tests.sh` | — | 核の基本動作 | argv 受け渡し、終了コード、EL0 行程、メモリ保護など | — | BTRON3 の項目には紐付けない |
 
-**集計**: BTRON3 互換層の QEMU 試験は 12 種・計 460 項目（識試 13、名試 21、時試 11、信試 31、利試 19、強試 16、同試 21、緩試 24、録試 96、貯試 45、件試 73、設試 90）。ほかに篇藏 28 項目。
+**集計**: BTRON3 互換層の QEMU 試験は 13 種・計 498 項目（識試 13、名試 21、時試 11、信試 31、利試 19、強試 16、同試 21、緩試 24、録試 96、貯試 45、件試 73、設試 90、系試 38）。ほかに篇藏 28 項目。
 
 ## 5. API 単位の試験の有無（第2編 第1章）
 
@@ -103,7 +104,7 @@
 | `get_pdp`、`set_pdp`、`chg_pda`、`sig_buz`、`ctl_buz` | 件試 | PD 位置の往復と `PNT` の欄の並び、イベント無しで `EV_NULL`、属性の変更（`PD_ABS` で `set_pdp` が 1）と不正ビットの `ER_PAR`、`sig_buz` の種別検査（0・-1・時間指定・メロディー番号）、`ctl_buz` の 6 種の往復。不足: 実機の PD・ブザー |
 | `opn_dev`、`cls_dev`、`rea_dev`、`wri_dev`、`chg_dmd`、`dev_sts`、`get_dev`、`lst_dev` | 設試 | 論理名（`rda`/`rom`/`con`/`prn` の前綴り一致、支番 1〜3 桁、前 0 なし、`ER_NOEXS`）、`o_mode` の許容ビットと `ER_PAR`、排他（ユニット単位の `ER_BUSY`、閉じれば再開ける）、32 相の上限（`ER_LIMIT`）、塊型の読み書きと属性データ（`start`<0）、`a_size` に容量・空き、文字型の 32 B 路と `ER_BUSY`、向き（読否 → `ER_DEV`、書禁 → `ER_RONLY`）と逆操作（`ER_DD`）、`dev_sts` の 4 欄、`get_dev` の支数、`lst_dev` の `DEV_INFO` 並び、`chg_dmd` の `ER_ACCES`・レベル 0 権限。不足: 実機の器類表（ディスク・コンソール・印刷） |
 | `sus_dev` | 設試 | 通常・強制の禁止カウンタ（`D_DISSUS`/`D_ENASUS`/`D_CHECK`）、通常の `D_SUSPEND` は両方 0 を要求、`D_FORCE|D_SUSPEND` は強制 0 を要求（`ER_BUSY`）、電源管理が無いので直ちに 0。不足: 実機の電源管理 |
-| 1.10 システム管理 | — | 未実装のため試験なし（M7c） |
+| `get_ver`、`get_cnf` | 系試 | `T_VER`（20 B）の全欄（`maker`/`id`/`spver`/`prver`/`prno[4]`/`cpu`/`var`）と 20 バイトだけ書くこと、格納域が窓外・窓末で入らない場合（`ER_ADR`）、数値 3 項目（`NPRC`/`PGSZ`/`NDEV`）と文字列 2 項目（`SYSNAM`/`SYSVER`）の内容・末尾 NUL、未知の名前・部分名・余分付き・大小文字（`ER_NOEXS`）、`len` の境界（数値で `len`<4・`len`<0 は `ER_PAR`、文字列の切り詰め）。不足: `def_exc`/`ret_exc`（未実装のため試験なし） |
 
 ## 6. 未整備の試験（優先順）
 

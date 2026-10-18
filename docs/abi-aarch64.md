@@ -272,6 +272,8 @@
   | 176 | 時刻取 | `x0`=STIME の書き先（窓内の書込可能な 4 B）, `x1`=TIMEZONE の書き先（12 B） | 0／`-EFAULT`。QEMU virt の PL031 RTC を 1985-01-01 起点の秒数に換算。`get_tim` |
   | 177 | 複写出 | `x0`=宛（書込可能な窓内）, `x1`=元（窓内）, `x2`=長（`令長限` 以下） | 0／`-EFAULT`（何も書かない）。構造体を民へ返すときの複製検査の共通部品（互換層が作業域で組み立てて呼ぶ） |
   | 178 | 時刻設 | `x0`=STIME（≦ 0 なら変えない）, `x1`=TIMEZONE（0 なら変えない。12 B） | 0／`-EACCES`（利用者レベルが 0 でない）・`-EINVAL`（adjust が ±43200、dst_adj が ±720 の外）・`-EFAULT`。検査を終えてから書く。`set_tim` |
+  | 179 | 版取 | `x0`=`T_VER` の書き先（窓内の 20 B） | 0／`-EFAULT`。`T_VER`（`UH`×10 = `maker`/`id`/`spver`/`prver`/`prno[4]`/`cpu`/`var`）を書く。値は実装依存（`btron3-spec-verification.md` §6.8 の選択を記録）。`get_ver` |
+  | 180 | 構取 | `x0`=`TC*` 項目名（窓内の NUL 終端、16 B 以下）, `x1`=`VP` 格納域（窓内）, `x2`=`W` 格納域のバイト数 | 0（数値情報。格納域に `W` 4 B）／>0（文字列情報。文字数。末尾に NUL、領域不足なら `len` バイト）／`-EINVAL`（`len`<0・数値で `len`<4）・`-EFAULT`（名前または格納域が窓外）・`-ENOENT`（項目名が無い）。項目名は実装依存（`NPRC`/`PGSZ`/`NDEV`/`SYSNAM`/`SYSVER`）。`get_cnf` |
   | 192 | 事取 | `x0`=対象イベント型マスク（>0）, `x1`=EVENT の書き先（20 B）, `x2`=opt（`CLR`=0 / `NOCLR`=8） | 取り出したイベントの型（0〜15。該当が無ければ `EV_NULL`=0）／`-EINVAL`（t_mask≦0・opt が 0/8 以外）・`-EFAULT`。優先度クラス 1〜6、クラス内は発生順。`get_evt` |
   | 193 | 事生 | `x0`=EVENT（20 B）, `x1`=opt（`EP_POS` 1・`EP_STAT` 2・`EP_TIME` 4 の和か `EP_NONE` 0） | 0（型がシステムイベントマスクに含まれなければ何もせず 0）／`-EINVAL`（型が 0・5・16 以上、opt 不正）・`-ENOSPC`（隊 32 項が満杯）・`-EFAULT`。`put_evt` |
   | 194 | 事消 | `x0`=対象イベント型マスク（>0）, `x1`=最後マスク（`EM_NULL` で全部。`EM_ALL` は選ばれる 1 項だけ） | 0／`-EINVAL`（t_mask≦0）・`-EFAULT`。`clr_evt` |
