@@ -244,7 +244,7 @@
   | 122 | 塊状 | `x0`=M_STATE の書き先（12 B: blksz, total, free） | 0／`-EFAULT`。blksz=4096、total=4096、free=空き物理頁数（参考値）。`mbk_sts` |
   | 128 | 接続 | `x0`=装置名（TC、8 文字まで）, `x1`=接続名（TC、8 文字まで）, `x2`=LINK の書き先（52 B）, `x3`=モード（0=SYNC, 1=RONLY, 2=ASYN） | 0／`-ENXIO`（装置が無い）・`-EBUSY`（接続済み）・`-EEXIST`（接続名が使用中）・`-ENAMETOOLONG`（空の名前）・`-EINVAL`・`-EFAULT`。`att_fls`（[btron3-file-design.md](compat/btron3-file-design.md)） |
   | 129 | 切断 | `x0`=装置名, `x1`=取り出し（無視） | 0／`-ENOENT`・`-ENODEV`（接続されていない）・`-EBUSY`（作業ファイルとして使用中）。`det_fls` |
-  | 130 | 接続一覧 | `x0`=F_ATTACH の配列（32 B ずつ）, `x1`=個数 | 接続中の数／`-EINVAL`（個数が負）・`-EFAULT`。`lst_fls` |
+  | 130 | 接続一覧 | `x0`=F_ATTACH の配列（32 B ずつ）, `x1`=個数（正）／F_GETDEV -1（接続名からデバイス名）／F_GETNAM -2（デバイス名から接続名） | 接続中の数（-1・-2 は 1）／`-EINVAL`（0 と -3 以下）・`-ENODEV`（-1・-2 で接続されていない）・`-EFAULT`。`lst_fls` |
   | 131 | FS 状態 | `x0`=装置名, `x1`=FS_STATE の書き先（104 B） | 書込可能なら 0、読取専用なら 1／`-ENOENT`・`-ENODEV`・`-EFAULT`。`fls_sts` |
   | 132 | FS 同期 | なし | 0（この核の FS は書き戻す媒体が無いので常に成功）。`syn_fls` |
   | 133 | FS 情報変更 | `x0`=装置名（NULL は `-EINVAL`）, `x1`=新しい FS 名（TC、NULL は変えない）, `x2`=新しい位置名（TC、NULL は変えない） | 0／`-ENOENT`（未登録）・`-ENODEV`（FS の無い装置）・`-EACCES`（接続権 F または書込権 W が足りない）・`-EROFS`（読取専用の接続）・`-ENAMETOOLONG`（FS 名が空）・`-EEXIST`（同名の FS）・`-EFAULT`。ルートファイルの名前も変わる。`chg_fls` |

@@ -367,7 +367,7 @@ API の名前と数は、ディスプレイプリミティブ（37+42+20+6 = 105
 
 | 項目 | 推測・要約の内容 | 原文 | 対応 |
 |---|---|---|---|
-| オプション値 | `CHECK`=2・`WAIEVT`=4（旧記録）| `CONFM`=2・`CHECK`=2・`WAIEVT`=4（#define）。`CLR`=0・`NOCLR`=8 は message.html に #define が無く、共有データ編の旧記録による（今回の復号では未再確認） | 一致（`CLR`/`NOCLR` は未再確認） |
+| オプション値 | `CHECK`=2・`WAIEVT`=4（旧記録）| `CONFM`=2・`CHECK`=2・`WAIEVT`=4（#define）。`NOCLR`=0x0008 は taskcomm.html の `wai_flg` で確認（`CLR`=0 は共有データ編の旧記録） | 一致 |
 | `CONFM` の解除 | 取り出し（CLR）と `clr_msg`、相手の終了 | `NOCLR` で受信してもキューに残っていて受信とみなす。`CHECK` のヘッダのみは受信とみなさない | `NOCLR` でも解除するよう修正 |
 | `rcv_msg` の `msgsz` | 8〜40 のみ | 8 以上なら上限なし（入り切らなければ `msgsz` までを格納してエラー、`CLR` でも残す） | 上限を撤廃 |
 | `rcv_msg`/`clr_msg` の負の型マスク | 上位ビットを落として受け付けた | `t_mask`≦0（`WAIEVT` 時は <0）と `last_mask`<0 は `ER_PAR` | 修正 |
@@ -378,3 +378,10 @@ API の名前と数は、ディスプレイプリミティブ（37+42+20+6 = 105
 | `map_rec` の禁止範囲 | 写像のあるファイルの並びを変える操作すべて | 写像したレコードへの `del_rec`/`wri_rec`/`trc_rec` と `xch_fil` | 位置以降への操作だけ止め、`apd_rec` は通す |
 | `cre_prc`・`chg_pri`・`slp_tsk` 系・`req_tmg` | — | 要約どおり | 一致 |
 | `att_fls` ほかの誤り | 未登録名は `ER_NODEV` | 未登録・ブロック型でないは `ER_NOEXS`、`ER_NODEV` は「アクセスできない」。`det_fls`・`fls_sts` も接続アクセス権（`ER_ACCES`）が要る。`att_fls`・`chg_fls`・`fls_sts` はデバイスが開かれていれば `ER_BUSY` | 修正（FS の無いブロック型は `ER_TRON`/`ER_NOFS`） |
+| `lst_fls` の負の `cnt` | ER_PAR | `F_GETDEV`(-1) は接続名からデバイス名、`F_GETNAM`(-2) はデバイス名から接続名を取り出して 1 を返し、接続されていなければ ER_NOFS、0 と -2 未満は ER_PAR | 実装（録試で確認） |
+
+### 8.1 機械的な照合（同じ日の追加）
+
+- **定数**: 復号した 10 ページ（message・taskcomm・proc・file・gname・memory・event・device・clk・system）の `#define` 237 個のうち、リポジトリに同名の定数がある 195 個の値は原文と一致した（`T_FOREVER` の -1 が `0xFFFFFFFF` なのは 32 ビット表現の違いだけ）。無かった 42 個は、使っていないメッセージ型（`MS_SYS*`・`MS_MNG*`・`MS_TYPE1`〜）、`fnd_lnk` の `F_SATR2`〜`5`、A_MODE の `F_OWNAC*`、言語 `F_JPN`・`F_ENG`、`F_GETDEV`・`F_GETNAM`。このうち民側に必要なものは定数を足した。
+- **システムコール**: 原文の【形式】にあるシステムコールは、民側のラッパーが無いものが `def_msg`・`ret_msg`・`cre_tsk`・`ext_tsk`・`ter_tsk`・`def_exc`・`ret_exc` だけ（いずれも上り呼びか副タスクが要る）。
+- **本文の読み直し**: 1.3（セマフォ・イベントフラグ）、1.4、1.5、1.9 を全文読み、実装方針と矛盾する点は無かった（`wai_flg` が条件成立時に値の全ビットを 0 にすること、`SEM_EXCL` の `ER_OBJ`、`get_mbk` の属性など）。1.7 イベントと 1.8 デバイスは、定数とシステムコールの網羅だけを機械的に照合し、本文の読み直しは未了。
