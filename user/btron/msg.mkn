@@ -1,5 +1,5 @@
 註 BTRON3 互換層 1.2 メッセージ管理の基本部 (docs/compat/btron3-os.md §1.2)。要: lib.mkn、btron/types.mkn、btron/er.mkn を先に取込む。
-註 MESSAGE = {W msg_type; W msg_size; UB msg_body[32]} (40 B)。ハンドラ・タイムアウト・CONFM・WAIEVT・CHECK は未実装。
+註 MESSAGE = {W msg_type; W msg_size; UB msg_body[32]} (40 B)。ハンドラ・CONFM は未実装。
 
 常「MS_ABORT」之無符六四 為 1
 常「MS_EXIT」之無符六四 為 2
@@ -14,6 +14,8 @@
 常「WAIT」之無符六四 為 0x0000
 常「NOWAIT」之無符六四 為 0x0001
 常「CONFM」之無符六四 為 0x0002
+常「CHECK」之無符六四 為 0x0002   註 rcv_msg 用 (CONFM と同じ値)
+常「WAIEVT」之無符六四 為 0x0004
 
 註 MSGMASK(type) = 1 << (type - 1)
 公開 記號「msgmask」 術曰「BTRON型掩」 受「型」之無符六四 返 無符六四
@@ -28,6 +30,16 @@
 註 rcv_msg(W t_mask, MESSAGE* msg, W msgsz, W opt): 成功は 0。
 公開 記號「rcv_msg」 術曰「BTRON信受」 受「型掩」之無符六四 受「信」之無符六四 受「大」之無符六四 受「指定」之無符六四 返 無符六四
     歸 呼「錯換」以(呼「奏令」以(81, 型掩, 信, 大, 指定 位與 0xFFFFFFFF, 0, 0))
+終術
+
+註 req_tmg(W time, W code): time ms 後に MS_TMOUT {code} を自分のキューへ送る。
+公開 記號「req_tmg」 術曰「BTRON時限要求」 受「時」之無符六四 受「碼」之無符六四 返 無符六四
+    歸 呼「錯換」以(呼「奏令」以(83, 時 位與 0xFFFFFFFF, 碼 位與 0xFFFFFFFF, 0, 0, 0, 0))
+終術
+
+註 can_tmg(): 自分の時限要求を全部取り消す。
+公開 記號「can_tmg」 術曰「BTRON時限取消」 返 無符六四
+    歸 呼「錯換」以(呼「奏令」以(84, 0, 0, 0, 0, 0, 0))
 終術
 
 註 clr_msg(W t_mask, W last_mask)

@@ -77,11 +77,11 @@
 | API | 要点 | 既存実装 | 状態 |
 |---|---|---|---|
 | `snd_msg` | 送信（`WAIT`/`NOWAIT`、宛先 pid / 0 / -1） | `user/btron/msg.mkn` → 漢令 信送 80（`kernel/proc/msg.mkn`）。8 件のキュー、満杯で WAIT は眠る。`CONFM` は `ER_PAR`（未対応） | 部分適合（`CONFM` 未実装） |
-| `rcv_msg` | 受信（型マスク、`NOWAIT`/`NOCLR`） | 漢令 信受 81。最古の該当を返す。`WAIEVT`/`CHECK` は `ER_PAR`（未対応） | 部分適合（`WAIEVT`/`CHECK` 未実装） |
+| `rcv_msg` | 受信（型マスク、`NOWAIT`/`NOCLR`/`CHECK`/`WAIEVT`） | 漢令 信受 81。最古の該当を返す。`CHECK`（2）は合う型が無くても別の型があれば先頭 8 バイトを返す。`WAIEVT`（4）は `WAIT` と同じに待つ（型マスク 0 可、`NOWAIT` と併用は `ER_PAR`） | 部分適合（`brk_msg` で待ちを解く `ER_NOME`・`ER_MINTR`・`CONFM` が未実装） |
 | `clr_msg` | 消去 | 漢令 信消 82 | 実装済・未検証 |
-| `req_tmg` / `can_tmg` | タイムアウトメッセージ | なし | 未実装 |
+| `req_tmg` / `can_tmg` | タイムアウトメッセージ | 漢令 83・84（`kernel/proc/msg.mkn` の時限表 16 件。刻 25 ms へ切り上げ、`覚醒` が `MS_TMOUT` を積む） | 実装済 |
 | `def_msg` / `ret_msg` / `brk_msg` | ハンドラ定義・復帰・中断 | なし。EL0 への非同期上り呼びが必要 | 未実装 |
-| `req_tmg` / `can_tmg` | タイムアウトメッセージ | なし（`待機` のみ） | 未実装 |
+| `req_tmg` / `can_tmg` | タイムアウトメッセージ | 上の行（漢令 83・84） | 実装済 |
 | `def_msg` / `ret_msg` / `brk_msg` | ハンドラ定義・復帰・中断 | なし。EL0 への非同期上り呼びの仕組み（シグナル相当）が必要 | 未実装 |
 
 **方針メモ**: ハンドラは EL0 へ非同期に割り込む機構が要り、POSIX シグナルより先に必要になる。終了通知（型 1–3）が `cre_prc`/`ext_prc` の適合の前提なので、**1.1 の適合は 1.2 に依存する**。
@@ -175,7 +175,7 @@
 | ロック・交換 | `loc_rec` `xch_fil` | 漢令 160・161。ロックは記述子ごとに 1 件、`F_LOCK` は待たない（`F_TSLOCK` と同じ）。`xch_fil` は本文とレコード数を入れ替え、時刻は入れ替えない。試験 `録試`（行程をまたぐロックを含む） | 部分適合（待ち・複数ロック・別 FS 間の `ER_XFS` の試験が無い） |
 | 検査・属性 | `chk_fil` `chg_fmd` `chg_fat` `chg_fpw` `chg_fnm` `chg_ftm` `get_dfm` `set_dfm` | 漢令 163〜170。所有者・グループ・公開のアクセス判定（利用者レベル 0 は常に可、グループ・公開は「許す最大レベル」）を `opn_fil`・`cre_fil`・`cre_lnk`・`del_fil` に適用。パスワードはハッシュで保存し `opn_fil`・`chk_fil(F_PASWD)` で照合。属性（書込禁止・削除禁止・アプリ属性 1/2）、名前・時刻の変更、行程ごとの既定アクセスモード。試験 `録試` | 部分適合（`A_MODE`/`DA_MODE` の並びと `chg_fnm`・`get_dfm`/`set_dfm` の細部が要確認。アクセス管理レベル 1 は 2 と同じ扱い） |
 | 状態・リンク | `fil_sts` `ofl_sts` `lnk_sts` `syn_lnk` `get_nlk`（実装） | 漢令 149・150。F_STATE（96 B）・F_LOCATE（100 B）と名前（42 B）を書き参照数を返す。F_LOCATE も書く（100 B）。試験 `録試` | 部分適合（F_STATE の整列と F_LOCATE が要確認） |
-| ファイルシステム | `att_fls` `det_fls` `lst_fls` `fls_sts`（実装）、`syn_fls` `chg_fls` `chg_fsm`（未実装） | 漢令 128〜131。装置は RAM（起動時に接続）と SYS（読取専用、未接続） | 部分適合 |
+| ファイルシステム | `att_fls` `det_fls` `lst_fls` `fls_sts`（実装）、`syn_fls` `chg_fls` `chg_fsm`（実装） | 漢令 128〜134。装置名は 1.8 のデバイス表の論理デバイス名（RAM FS は `rda`＝起動時に接続、SYS は `rom`＝読取専用・未接続）。`att_fls` は表に無い名前を ER_NODEV、F（接続権）が呼び手のレベルに足りなければ ER_ACCES | 部分適合 |
 | 写像 | `map_rec` `ump_rec` | なし | 未実装 |
 
 **B0 の確認結果**: 原文 1.6 の末尾まで確認した（アクセス権の配置、アクセス管理レベル、レコードの制限が無いこと、`TC_FSEP` が出現番号の区切りであること、各 API の戻り値の細部）。残る要確認は [btron3-file-design.md](btron3-file-design.md) §12。

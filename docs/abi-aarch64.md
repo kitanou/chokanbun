@@ -206,8 +206,10 @@
   | 68 | 強終 | `x0`=pid（0 自分、-1 親、正）, `x1`=終了コード, `x2`=選（0=TERM_NRM、1=TERM_ALL） | 0／`-EDEADLK`（自分）・`-ESRCH`・`-EINVAL`（選が不正）・`-ENOTCAPABLE`（呼出側より上位の利用者レベルの行程）。TERM_ALL は子孫を深い順に終える。呼出側自身が終わるとき（親・祖先を対象にしたとき）は戻らない。BTRON3 流の対象の親へ MS_TERM `{pid, code}`（対象の分だけ）。`ter_prc` |
   | 69 | 行程状 | `x0`=pid, `x1`=P_STATE の書き先（12 B、0 可）, `x2`=名前の書き先（0 可） | 指定した行程の pid（正）／`-ESRCH`・`-EFAULT`。state は実行中 0x8000・実行可能 0x4000・待ち 0x2000、優先度は 128 固定、名前は空。`prc_sts` |
   | 80 | 信送 | `x0`=宛先 pid（>0 その行程、0 自分、-1 親）, `x1`=MESSAGE（窓内）, `x2`=指定（WAIT=0 / NOWAIT=1。CONFM=2 は未対応） | 0／`-EINVAL`（型が 1〜31 外・不正な指定）・`-E2BIG`（本体が 1〜32 バイト外）・`-ESRCH`（宛先が無い・終了済み）・`-ENOSPC`（満杯で NOWAIT）・`-EFAULT`。満杯で WAIT なら眠り、空きができたら svc を再実行する。`snd_msg` |
-  | 81 | 信受 | `x0`=型マスク, `x1`=MESSAGE の書き先, `x2`=msgsz（8〜40）, `x3`=指定（NOWAIT=1、NOCLR=8。WAIEVT・CHECK は未対応） | 送り手の pid（自行程からなら 0。子の終了通知は終わった子の pid）／`-ENOMSG`（無くて NOWAIT）・`-E2BIG`（msgsz に入り切らない。入る分だけ写し、メッセージは残る）・`-EINVAL`・`-EFAULT`。無ければ眠り、届いたら svc を再実行する。`rcv_msg` |
+  | 81 | 信受 | `x0`=型マスク, `x1`=MESSAGE の書き先, `x2`=msgsz（8〜40）, `x3`=指定（NOWAIT=1、CHECK=2、WAIEVT=4、NOCLR=8。NOWAIT と WAIEVT の併用・定義外のビットは `-EINVAL`。型マスク 0 は WAIEVT のときだけ許す。WAIEVT は WAIT と同じに待ち、`brk_msg` は未実装） | 送り手の pid（自行程からなら 0。子の終了通知は終わった子の pid）／`-ENOMSG`（無くて NOWAIT）・`-E2BIG`（msgsz に入り切らない。入る分だけ写し、メッセージは残る）・`-EINVAL`・`-EFAULT`。無ければ眠り、届いたら svc を再実行する。`rcv_msg` |
   | 82 | 信消 | `x0`=型マスク, `x1`=最後マスク | 0／`-EINVAL`。`clr_msg` |
+  | 83 | 時限要求 | `x0`=time（ms、正）, `x1`=code | 0／`-EINVAL`（time が 0 以下）・`-ENOSPC`（時限表 16 件が満杯）。time 後（25 ms の刻へ切り上げ）に MS_TMOUT {型 4, 大きさ 4, 本体=code} が自分のキューに積まれる（キューが満杯なら捨てる）。`req_tmg` |
+  | 84 | 時限取消 | なし | 0。自分の要求を全部取り消す（キューにあるものは消さない）。`can_tmg` |
   | 96 | 作セマ | `x0`=初期カウント, `x1`=指定（SEM_SYNC=0 / SEM_EXCL=0x4000、+DELEXIT=0x8000） | ID（正）／`-EINVAL`（排他で cnt≠1・同期で cnt<0・不明なビット）・`-EMFILE`（16 個満杯）。`cre_sem` |
   | 97 | 削セマ | `x0`=ID | 0／`-EBADR`（ID が不正）・`-ENOENT`（無い）。待っている行程は `-EIDRM` で起こす。`del_sem` |
   | 98 | 返セマ | `x0`=ID | 0／`-EBADR`・`-ENOENT`・`-EPROTO`（排他を持っていない）・`-EMFILE`（上限）。待ちがあれば先頭へ手渡す。`sig_sem` |
@@ -237,6 +239,9 @@
   | 129 | 切断 | `x0`=装置名, `x1`=取り出し（無視） | 0／`-ENOENT`・`-ENODEV`（接続されていない）・`-EBUSY`（作業ファイルとして使用中）。`det_fls` |
   | 130 | 接続一覧 | `x0`=F_ATTACH の配列（32 B ずつ）, `x1`=個数 | 接続中の数／`-EINVAL`（個数が負）・`-EFAULT`。`lst_fls` |
   | 131 | FS 状態 | `x0`=装置名, `x1`=FS_STATE の書き先（104 B） | 書込可能なら 0、読取専用なら 1／`-ENOENT`・`-ENODEV`・`-EFAULT`。`fls_sts` |
+  | 132 | FS 同期 | なし | 0（この核の FS は書き戻す媒体が無いので常に成功）。`syn_fls` |
+  | 133 | FS 情報変更 | `x0`=装置名（NULL は `-EINVAL`）, `x1`=新しい FS 名（TC、NULL は変えない）, `x2`=新しい位置名（TC、NULL は変えない） | 0／`-ENOENT`（未登録）・`-ENODEV`（FS の無い装置）・`-EACCES`（接続権 F または書込権 W が足りない）・`-EROFS`（読取専用の接続）・`-ENAMETOOLONG`（FS 名が空）・`-EEXIST`（同名の FS）・`-EFAULT`。ルートファイルの名前も変わる。`chg_fls` |
+  | 134 | 接続モード変更 | `x0`=装置名, `x1`=モード（0 SYNC・1 RONLY・2 ASYN） | 変更前のモード／`-EINVAL`・`-ENODEV`（FS が接続されていない・未登録）・`-EACCES`・`-EFAULT`。以後の書込は新しいモードで判定される。`chg_fsm` |
   | 136 | リンク取 | `x0`=パス（TC、256 文字まで。NULL は基準のファイルそのもの）, `x1`=LINK（52 B、F_BASED では基準として入力も）, `x2`=方式（0=F_NORM, 1=F_BASED, +2=F_DIRECT） | 0／`-ENOENT`・`-ENODEV`・`-ENAMETOOLONG`（パス・名前が不正）・`-EACCES`（途中のファイルに E 権が無い）・`-EINVAL`・`-EFAULT`。`get_lnk`。絶対パスは先頭が `/`（TC_FDLM）+ 接続名。先頭の `≡`（TC_FOWN）と NULL は作業ファイル |
   | 137 | 作業変 | `x0`=LINK（52 B）。NULL は作業ファイルを未定義にする | 0／`-ENODEV`・`-ENOENT`・`-EACCES`（E 権）・`-EFAULT`。`chg_wrk`。作業ファイルは子が継ぐ。最初の行程は未定義 |
   | 144 | ファイル作成 | `x0`=LINK（F_FLOAT: FS の指定のみ。F_FIX: 親ファイル。F_FILEID: ID 指定。成功で新しいファイルの LINK に置き換わる）, `x1`=名前（TC）, `x2`=A_MODE（NULL 可）, `x3`=atype, `x4`=opt（0=F_FLOAT, 1=F_FIX, 2=F_FILEID） | 記述子（正）／`-ENOENT`・`-ENODEV`・`-EROFS`・`-ENAMETOOLONG`・`-EINVAL`・`-EFAULT`・`-EMFILE`・`-ENOSPC`・`-E2BIG`・`-EEXIST`（ID が既にある）・`-EACCES`・`-EBUSY`。`cre_fil`。F_FLOAT は固定リンクを作らず参照数 0、F_FIX は親の末尾に固定リンクを足して参照数 1 |

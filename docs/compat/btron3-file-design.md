@@ -158,7 +158,7 @@
 
 | 帯 | 内容 |
 |---|---|
-| 128〜135 | 接続（att/det/lst/fls_sts/chg_fls/chg_fsm/syn_fls） |
+| 128〜135 | 接続（128 att_fls・129 det_fls・130 lst_fls・131 fls_sts・132 syn_fls・133 chg_fls・134 chg_fsm。135 は空き） |
 | 136〜143 | リンク・作業ファイル（get_lnk/chg_wrk/syn_lnk/get_nlk/lnk_sts） |
 | 144〜151 | 作成・削除・開閉・状態 |
 | 152〜159 | レコード操作・ロック・属性（まとめた入口にして、操作名を第 1 引数に取る形も検討） |

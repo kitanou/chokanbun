@@ -100,7 +100,7 @@
 | P4 | B | `prc_sts` | 戻り値は pid。`P_STATE`{state, priority, parpid}、name は実身名 | 要コード確認（優先度は 128 固定、name 空） |
 | P5 | A | `rcv_msg` の戻り値 | 送信元 pid（自分なら 0）。入り切らないときはエラー | 常に 0。入り切らないときは切って成功 |
 | P6 | B | `snd_msg` | 本体サイズ 0 以下も `ER_SZOVR`、`CONFM` 対応、`ER_SELF` | `CONFM` 未対応 |
-| P7 | C | メッセージ | `req_tmg`/`can_tmg`/`def_msg`/`ret_msg`/`brk_msg`、`WAIEVT`、`CHECK`、`MH_*` | 未実装 |
+| P7 | C | メッセージ | `req_tmg`/`can_tmg`/`def_msg`/`ret_msg`/`brk_msg`、`WAIEVT`、`CHECK`、`MH_*` | `req_tmg`・`can_tmg`・`WAIEVT`・`CHECK` は実装済み。`def_msg`/`ret_msg`/`brk_msg`/`MH_*` は未実装（EL0 への上り呼びが要る） |
 | P8 | C | タスク | `cre_tsk`/`ext_tsk`/`ter_tsk`/`slp_tsk`/`wup_tsk`/`can_wup`/`dly_tsk`、`chg_pri`、`get_inf` | 未実装（`get_tid` と `待機` 相当のみ） |
 | P9 | B | `get_tod`/`set_tim` の ≦ 0 | `time` ≦ 0 が「現在／設定しない」 | 0 のときだけ |
 | P10 | C | 同期 | `bufsz`=0 の同期バッファ、`ER_MINTR` | 未実装 |
@@ -142,7 +142,7 @@ TAD（第1編 第3章）・フロッピー形式（第4章）・描画（第2編
 | F18 | **済** | リンクレコードの `wri_rec` は `offset`=0・`size`≧52 の `LINK` 全体を渡し、属性だけが書かれる。`rea_rec` は FS 名付きの `LINK` を返す |
 | F23 | **済** | `fil_sts` の `name` は 42 B（TNULL 終端）。`F_LOCATE` は 100 B で書く（M2） |
 | F24 | **済** | `cre_fil` の `F_FILEID` |
-| F6・F26 | **済（M3）** | リンクファイル、`cre_lnk`、`gen_fil`、`lnk_sts`、`syn_lnk`、`get_nlk`、`fnd_lnk`（§6.2）。未実装は `syn_fls`・`chg_fls`・`chg_fsm`・`map_rec`/`ump_rec` |
+| F6・F26 | **済（M3）** | リンクファイル、`cre_lnk`、`gen_fil`、`lnk_sts`、`syn_lnk`、`get_nlk`、`fnd_lnk`（§6.2）。`syn_fls`・`chg_fls`・`chg_fsm` は漢令 132〜134 で実装済み（原文 file.html の仕様どおり。`syn_fls` は書き戻す媒体が無いので常に 0、`chg_fls` は接続権 F と書込権 W、ルートファイルの名前も更新）。未実装は `map_rec`/`ump_rec` |
 | F8・F9・F11・F12・F14・F15・F23 | **済（M2）** | 下の §6.1 |
 | F16・F17・F19〜F22・F25 | **済（M4）** | §6.3 |
 
@@ -341,7 +341,7 @@ API の名前と数は、ディスプレイプリミティブ（37+42+20+6 = 105
 | K2 | 1.7 イベント | 型 0〜15、マスク `EM_ALL` 0x7FFF、`EVENT`{type, time(ms), pos, data, stat}。`get_evt`・`put_evt`・`clr_evt`・`req_evt`・`las_evt`・`chg_emk`・キーボード/ポインタ/ブザー 12 本。起動直後のシステムイベントマスクは 0。**原文の内部不整合**: `ES_NODSP` は説明で 0x00200000・定義で 0x00400000、`ES_PDSIM` は 0x00C00000 と 0x00800000 | 漢令 192〜211（**実装済**、§6.6）。実機が無いためキーボード・ポインティングデバイス・ブザーは核内の模型。`ES_NODSP` は定義側の 0x00400000 を採用 | 完了（M7a。実機入力は未） |
 | K3 | 1.8 デバイス | `opn_dev`・`cls_dev`・`rea_dev`・`wri_dev`・`chg_dmd`・`dev_sts`・`get_dev`・`lst_dev`・`sus_dev`。モード `D_READ` 1・`D_WRITE` 2・`D_UPDATE` 3・`D_EXCL` 0x100・`D_WEXCL` 0x200・`D_NOWAIT` 0x8000。`DEV_STATE`・`DEV_INFO`。属性 `DA_CHARDEV` 0x8000 など。物理デバイス名のオープンは配下の論理デバイス全部の排他とみなす | 漢令 212〜220（**実装済**、§6.7）。実機が無いため核内に 4 ユニットの模型デバイス（`rda`・`rom`・`con`・`prn`）。物理デバイス名の排他はユニット全体の記述子で表す | 完了（M7b。実機の器類表は未） |
 | K4 | 1.10 システム | `def_exc`・`ret_exc`・`get_ver`（`T_VER`）・`get_cnf` | 漢令 179〜180（**実装済**、§6.8）。`T_VER`（20 B）と構成情報（項目名は実装依存）を返す。`def_exc`/`ret_exc` は未実装（1.2 のハンドラ機構と同じ前提） | 部分完了（M7c） |
-| K5 | 1.6 の装置名 | 装置名は論理デバイス名（最大 8 文字、最後は数字でない）。`att_fls` はデバイスの接続アクセス権 F（`ER_ACCES`）を見る | `RAM`・`SYS` を固定の装置名にしている。アクセス権は無い。デバイス表（§6.7）はできたが FS はまだ繋いでいない | M7c 以降でデバイス表と合わせる |
+| K5 | 1.6 の装置名 | 装置名は論理デバイス名（最大 8 文字、最後は数字でない）。`att_fls` はデバイスの接続アクセス権 F（`ER_ACCES`）を見る | `att_fls` はデバイス表（§6.7）の論理デバイス名で装置を解く（RAM FS=`rda`、SYS=`rom`。接続名・FS 名は `RAM`・`SYS` のまま）。表に無い名前・FS の無いユニット（`con`・`prn`）・サブユニット名（`rda1`）は ER_NODEV。接続権 F（`chg_dmd` の様の 8〜11 ビット）が呼び手のレベルに足りなければ ER_ACCES（レベル 6 の子行程で `chg_dmd` により F を絞った `rom` への接続が ER_ACCES になることを録試で確認） | 完了（K5） |
 | K6 | 実行形式 | レコード種別 9（実行プログラム）の**サブタイプが CPU 種別**。AArch64 の値は原文に無い | 像ファイルの見出しに像番号を持つ（P2） | M5 残 |
 
 ### 7.3 ディスプレイプリミティブ・外殻の要点（実装前の前提）
