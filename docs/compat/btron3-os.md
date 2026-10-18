@@ -45,7 +45,7 @@
 | `get_usr` | 利用者情報の取得（pid 0 / -1 / 正） | `user/btron/proc.mkn` → 漢令 利用者取 66（`kernel/proc/user.mkn`）。起動時の値は root・level 0・net_level 1 | 実装済・未検証 |
 | `chg_usr` | 自分の利用者情報の変更 | 漢令 利用者変 67。範囲検査。level 0 の行程だけが実行できる（それ以外は ER_ACCES） | 実装済・未検証 |
 | `get_inf` | 行程統計 | 漢令 72（`kernel/proc/term.mkn`）。`P_INFO` {etime 秒, utime ms, stime ms, tmem（実行に必要な全体のメモリ＝窓の大きさ）, wmem（張られているページのバイト数）, resv[11]} 64 B。utime は EL0 で走っていて刻（25 ms）が進んだ回数×25、stime は刻では測れず 0、tmem は原文の説明が欠落しているので民の窓に張られているページのバイト数（実装依存）。`ER_NOPRC`/`ER_ADR` | 部分適合（stime が刻では測れず常に 0） |
-| `cre_tsk` / `ext_tsk` / `ter_tsk` | 副タスク | なし（行程のみ） | 未実装 |
+| `cre_tsk` / `ext_tsk` / `ter_tsk` | 副タスク | なし（行程のみ） | 未実装（設計: [design-subtask.md](../design-subtask.md)） |
 | `slp_tsk` / `wup_tsk` / `can_wup` | 眠り・起床・起床要求の取消 | 漢令 73〜75。タスクは主タスク 1 つだけなので、`slp_tsk`（ms、-1 は無期限、0 や他の負は `ER_PAR`）は時間切れの `ER_NONE` で戻り、`wup_tsk` は自分も他も `ER_ID`、`can_wup` は自分なら 0・他は `ER_ID` | 部分適合（副タスクが無いので起こされる経路が無い） |
 | `dly_tsk` | 遅延（0 は譲渡） | 漢令 76。ms を刻（25 ms）に切り上げて待つ。0 は譲渡、負は `ER_PAR` | 実装済・未検証（`ER_MINTR` は無し） |
 | `get_tid` | 自タスク ID | `user/btron/proc.mkn` の `get_tid`（`識別` 番21 に写す）。試験 `識試` で識別との一致と正値を確認 | 実装済・未検証（試験は QEMU 上の 2 項目のみ。副タスク・エラー規定なし） |
