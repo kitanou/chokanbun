@@ -211,7 +211,7 @@
   | 67 | 利用者変 | `x0`=P_USER（窓内の 148 B） | 0／`-EINVAL`（level が 0〜15 外、net_level が 1〜15 外）・`-EACCES`（level 0 の行程以外。原文は「システムプロセスのみ」で、レベル 0 をそれとみなす暫定）・`-EFAULT`。`chg_usr` |
   | 68 | 強終 | `x0`=pid（0 自分、-1 親、正）, `x1`=終了コード, `x2`=選（0=TERM_NRM、1=TERM_ALL） | 0／`-EDEADLK`（自分）・`-ESRCH`・`-EINVAL`（選が不正）・`-ENOTCAPABLE`（呼出側より上位の利用者レベルの行程）。TERM_ALL は子孫を深い順に終える。呼出側自身が終わるとき（親・祖先を対象にしたとき）は戻らない。BTRON3 流の対象の親へ MS_TERM `{pid, code}`（対象の分だけ）。`ter_prc` |
   | 69 | 行程状 | `x0`=pid, `x1`=P_STATE の書き先（12 B、0 可）, `x2`=名前の書き先（0 可） | 指定した行程の pid（正）／`-ESRCH`・`-EFAULT`。state は実行中 0x8000・実行可能 0x4000・待ち 0x2000、優先度は優先表の値（既定 128）、名前は空。`prc_sts` |
-  | 80 | 信送 | `x0`=宛先 pid（>0 その行程、0 自分、-1 親）, `x1`=MESSAGE（窓内）, `x2`=指定（WAIT=0 / NOWAIT=1。CONFM=2 は未対応） | 0／`-EINVAL`（型が 1〜31 外・不正な指定）・`-E2BIG`（本体が 1〜32 バイト外）・`-ESRCH`（宛先が無い・終了済み）・`-ENOSPC`（満杯で NOWAIT）・`-EFAULT`。満杯で WAIT なら眠り、空きができたら svc を再実行する。`snd_msg` |
+  | 80 | 信送 | `x0`=宛先 pid（>0 その行程、0 自分、-1 親）, `x1`=MESSAGE（窓内）, `x2`=指定（WAIT=0 / NOWAIT=1 / CONFM=2。CONFM は積んだあと相手が取り出すまで眠り、取り出されると 0、相手が終わると `-ESRCH`。自分宛の CONFM は `-EDEADLK`（ER_SELF）） | 0／`-EINVAL`（型が 1〜31 外・不正な指定）・`-E2BIG`（本体が 1〜32 バイト外）・`-ESRCH`（宛先が無い・終了済み）・`-ENOSPC`（満杯で NOWAIT）・`-EFAULT`。満杯で WAIT なら眠り、空きができたら svc を再実行する。`snd_msg` |
   | 81 | 信受 | `x0`=型マスク, `x1`=MESSAGE の書き先, `x2`=msgsz（8〜40）, `x3`=指定（NOWAIT=1、CHECK=2、WAIEVT=4、NOCLR=8。NOWAIT と WAIEVT の併用・定義外のビットは `-EINVAL`。型マスク 0 は WAIEVT のときだけ許す。WAIEVT は WAIT と同じに待ち、`brk_msg` は未実装） | 送り手の pid（自行程からなら 0。子の終了通知は終わった子の pid）／`-ENOMSG`（無くて NOWAIT）・`-E2BIG`（msgsz に入り切らない。入る分だけ写し、メッセージは残る）・`-EINVAL`・`-EFAULT`。無ければ眠り、届いたら svc を再実行する。`rcv_msg` |
   | 82 | 信消 | `x0`=型マスク, `x1`=最後マスク | 0／`-EINVAL`。`clr_msg` |
   | 83 | 時限要求 | `x0`=time（ms、正）, `x1`=code | 0／`-EINVAL`（time が 0 以下）・`-ENOSPC`（時限表 16 件が満杯）。time 後（25 ms の刻へ切り上げ）に MS_TMOUT {型 4, 大きさ 4, 本体=code} が自分のキューに積まれる（キューが満杯なら捨てる）。`req_tmg` |
@@ -225,7 +225,7 @@
   | 102 | 立フラグ | `x0`=ID, `x1`=パターン | 0／`-EBADR`・`-ENOENT`。`set_flg`（OR して、条件を満たす待ちを FIFO で起こす） |
   | 103 | 消フラグ | `x0`=ID, `x1`=残すビット | 0／`-EBADR`・`-ENOENT`。`clr_flg`（AND） |
   | 104 | 待フラグ | `x0`=ID, `x1`=パターン（>0）, `x2`=様式（WF_AND=0 / WF_OR=2、+NOCLR=8）, `x3`=時限 | 条件を満たした時のパターン／`-EINVAL`（ptn=0・不明な様式）・`-ETIMEDOUT`・`-EIDRM`・`-EBADR`・`-ENOENT`。`wai_flg` |
-  | 105 | 作緩 | `x0`=bufsz（1〜512）, `x1`=max（1〜min(256, bufsz-4)）, `x2`=指定（DELEXIT のみ） | ID／`-EINVAL`（bufsz=0 は未対応）・`-EMFILE`（4 個満杯）。`cre_mbf` |
+  | 105 | 作緩 | `x0`=bufsz（0〜512。0 は保存しない同期バッファ）, `x1`=max（1〜min(256, bufsz-4)。bufsz=0 は 1〜256）, `x2`=指定（DELEXIT のみ） | ID／`-EINVAL`・`-EMFILE`（4 個満杯）。`cre_mbf` |
   | 106 | 削緩 | `x0`=ID | 0／`-EBADR`・`-ENOENT`。待ちは `-EIDRM`。`del_mbf` |
   | 107 | 送緩 | `x0`=ID, `x1`=メッセージ, `x2`=大きさ（1〜max）, `x3`=時限 | 0／`-EINVAL`・`-EFAULT`・`-ETIMEDOUT`・`-EIDRM`。総量に空きが無ければ眠り、受信で空くと起きて再実行する。`snd_mbf` |
   | 108 | 受緩 | `x0`=ID, `x1`=書き先（max バイト以上の書込可能な窓内）, `x2`=時限 | 受け取った大きさ／`-ETIMEDOUT`・`-EFAULT`・`-EIDRM`。`rcv_mbf` |
@@ -254,6 +254,8 @@
   | 145 | リンクファイル生成 | `x0`=LINK（opt に応じ FS 指定／親／ID 指定。成功すると新しいリンクファイルの LINK が返る）, `x1`=F_LINK（132 B）, `x2`=opt（F_FLOAT 0・F_FIX 1・F_FILEID 2） | 0／`-ENOENT`・`-ENODEV`・`-EINVAL`（opt 不正・同じ FS を指す）・`-ENAMETOOLONG`（FS 名／ファイル名が空）・`-EEXIST`・`-EACCES`・`-EROFS`・`-EFAULT`。参照数は F_FIX で 1、他は 0。`cre_lnk` |
   | 151 | ファイル直接生成 | `x0`=LINK, `x1`=名前, `x2`=F_STATE（96 B。種別が 0 ならリンクファイル）, `x3`=F_LINK, `x4`=opt | 通常ファイルは記述子、リンクファイルは 0／`-EACCES`（レベル 0 でない）ほか cre_fil/cre_lnk と同じ。`gen_fil` |
   | 162 | リンクレコード検索 | `x0`=記述子, `x1`=mode（向き 0〜5 + F_SFILE 0x4000・F_SNAME 0x2000・F_SATR1〜5 0x1000〜0x0100）, `x2`=LINK（条件指定時）, `x3`=サブタイプ, `x4`=recnum の書き先（NULL 可） | 0／`-EBADF`・`-EINVAL`・`-EFAULT`・`-ENOEXEC`（見つからない = ER_REC）。`fnd_lnk` |
+  | 174 | レコード写像 | `x0`=記述子, `x1`=offset, `x2`=addr の書き先（8 B）, `x3`=size, `x4`=mode（F_READ 4・F_WRITE 2・F_EXECUTE 1・F_COMMON 0x1000・F_SYSTEM 0x2000） | 写像の ID（1〜16）／`-EBADF`（記述子・モードの食い違い）・`-ENOEXEC`（リンク）・`-ENODATA`（終端）・`-ETXTBSY`（他がロック）・`-EINVAL`・`-EFAULT`・`-EPFNOSUPPORT`（共有写像・空きなし）。窓の頁にファイルの頁を写す。`map_rec` |
+  | 175 | 写像解除 | `x0`=記述子, `x1`=写像の ID | 0／`-EBADF`・`-ENOENT`。`ump_rec` |
   | 171 | リンクファイル情報 | `x0`=LINK, `x1`=F_LINK の書き先（132 B、NULL 可） | リンクファイルの参照数／`-ENOLINK`（リンクファイルでない）・`-ENOENT`・`-ENODEV`・`-EFAULT`。`lnk_sts` |
   | 172 | リンクファイル同期 | `x0`=LINK, `x1`=opt（0 チェックのみ、≠0 更新） | 同期状態 0 一致・1 名前・2 生成日時・3 両方／`-ENOLINK`・`-ENOENT`・`-ENODEV`・`-EROFS`。`syn_lnk` |
   | 173 | 次のリンク取得 | `x0`=LINK（入力は開始ファイル、出力は次のファイル） | 取り出したファイルの参照数／`-ENOENT`（それより大きい ID が無い）・`-ENODEV`・`-EFAULT`。`get_nlk` |

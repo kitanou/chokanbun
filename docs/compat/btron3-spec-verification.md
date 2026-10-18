@@ -99,11 +99,11 @@
 | P3 | B | `chg_usr` | **システムプロセスのみ**。一般アプリは実行できない | 独自のレベル規則で一般プロセスも可 |
 | P4 | B | `prc_sts` | 戻り値は pid。`P_STATE`{state, priority, parpid}、name は実身名 | 要コード確認（優先度は優先表の値（既定 128）、name 空） |
 | P5 | A | `rcv_msg` の戻り値 | 送信元 pid（自分なら 0）。入り切らないときはエラー | 常に 0。入り切らないときは切って成功 |
-| P6 | B | `snd_msg` | 本体サイズ 0 以下も `ER_SZOVR`、`CONFM` 対応、`ER_SELF` | `CONFM` 未対応 |
+| P6 | B | `snd_msg` | 本体サイズ 0 以下も `ER_SZOVR`、`CONFM` 対応、`ER_SELF` | 実装済み（`CONFM` は取り出しまで待つ） |
 | P7 | C | メッセージ | `req_tmg`/`can_tmg`/`def_msg`/`ret_msg`/`brk_msg`、`WAIEVT`、`CHECK`、`MH_*` | `req_tmg`・`can_tmg`・`WAIEVT`・`CHECK` は実装済み。`def_msg`/`ret_msg`/`brk_msg`/`MH_*` は未実装（EL0 への上り呼びが要る） |
 | P8 | C | タスク | `cre_tsk`/`ext_tsk`/`ter_tsk`/`slp_tsk`/`wup_tsk`/`can_wup`/`dly_tsk`、`chg_pri`、`get_inf` | 未実装（`get_tid` と `待機` 相当のみ） |
 | P9 | B | `get_tod`/`set_tim` の ≦ 0 | `time` ≦ 0 が「現在／設定しない」 | 0 のときだけ |
-| P10 | C | 同期 | `bufsz`=0 の同期バッファ、`ER_MINTR` | 未実装 |
+| P10 | C | 同期 | `bufsz`=0 の同期バッファ、`ER_MINTR` | `bufsz`=0 は実装済み。`ER_MINTR` は未実装（ハンドラが要る） |
 | P11 | C | 1.10 | `def_exc`/`ret_exc` | 未実装（`get_ver`/`get_cnf` は M7c で実装、§6.8） |
 
 ### 4.3 文字コード
@@ -142,7 +142,7 @@ TAD（第1編 第3章）・フロッピー形式（第4章）・描画（第2編
 | F18 | **済** | リンクレコードの `wri_rec` は `offset`=0・`size`≧52 の `LINK` 全体を渡し、属性だけが書かれる。`rea_rec` は FS 名付きの `LINK` を返す |
 | F23 | **済** | `fil_sts` の `name` は 42 B（TNULL 終端）。`F_LOCATE` は 100 B で書く（M2） |
 | F24 | **済** | `cre_fil` の `F_FILEID` |
-| F6・F26 | **済（M3）** | リンクファイル、`cre_lnk`、`gen_fil`、`lnk_sts`、`syn_lnk`、`get_nlk`、`fnd_lnk`（§6.2）。`syn_fls`・`chg_fls`・`chg_fsm` は漢令 132〜134 で実装済み（原文 file.html の仕様どおり。`syn_fls` は書き戻す媒体が無いので常に 0、`chg_fls` は接続権 F と書込権 W、ルートファイルの名前も更新）。未実装は `map_rec`/`ump_rec` |
+| F6・F26 | **済（M3）** | リンクファイル、`cre_lnk`、`gen_fil`、`lnk_sts`、`syn_lnk`、`get_nlk`、`fnd_lnk`（§6.2）。`map_rec`/`ump_rec` は漢令 174・175 で実装済み（行程内の写像のみ）。`syn_fls`・`chg_fls`・`chg_fsm` は漢令 132〜134 で実装済み（原文 file.html の仕様どおり。`syn_fls` は書き戻す媒体が無いので常に 0、`chg_fls` は接続権 F と書込権 W、ルートファイルの名前も更新）。未実装は `map_rec`/`ump_rec` |
 | F8・F9・F11・F12・F14・F15・F23 | **済（M2）** | 下の §6.1 |
 | F16・F17・F19〜F22・F25 | **済（M4）** | §6.3 |
 
@@ -202,7 +202,7 @@ TAD（第1編 第3章）・フロッピー形式（第4章）・描画（第2編
 | P9 | `get_tod` の time と `set_tim` の time は ≦ 0 で「現在／設定しない」 |
 | C1 | `tools/gen-images.sh` が漢像名を JIS X 0208 の TC[20] にして像表に添える。SYS FS の像ファイル名はそれを使う（UCS-2 の暫定は廃止） |
 
-**未了（M5 の範囲で残したもの）**: P2（実行形式を実行プログラムレコードにする）、P6（`CONFM`・`ER_SELF`）、P7（`req_tmg` など）、P8（タスク API）、P10（`bufsz`=0 の同期バッファ）、P11（`def_exc`。`get_ver`・`get_cnf` は M7c で実装）、`rcv_msg` の `CHECK`・`WAIEVT`・`ER_MINTR`。1.5（メモリ）は M6、1.7（イベント）は M7a、1.8（デバイス）は M7b、1.10（システム）は M7c として実装（下記）。
+**未了（M5 の範囲で残したもの）**: P2（実行形式を実行プログラムレコードにする）、P7（`req_tmg` など）、P8（タスク API）、P10（`bufsz`=0 の同期バッファ）、P11（`def_exc`。`get_ver`・`get_cnf` は M7c で実装）、`rcv_msg` の `CHECK`・`WAIEVT`・`ER_MINTR`。1.5（メモリ）は M6、1.7（イベント）は M7a、1.8（デバイス）は M7b、1.10（システム）は M7c として実装（下記）。
 
 ## 6.5 段階 M6（1.5 メモリ管理、貯試 45 項目）
 
