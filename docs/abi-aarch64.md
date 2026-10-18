@@ -201,7 +201,7 @@
   | 31 | 頁残 | なし | 頁池の空きページ数（診断） |
   | 70 | 行程作成 | `x0`=LINK（SYS の像ファイル）, `x1`=優先度（0〜255、-1 は自行程と同じ）, `x2`=MESSAGE（NULL 可。8 B の見出し {W 型, W 大きさ} + 本体。型 0 のとき NUL 区切りが引数。本体は 255 B まで） | 子の識（正）／`-EDOM`（ER_PPRI）・`-E2BIG`（ER_SZOVR）・`-EFAULT`・`-ENOEXEC`（ER_REC。像ファイルでない）・`-ENOENT`・`-ENODEV`・`-EACCES`・`-EBUSY`・`-EAGAIN`・`-ENOMEM`。`cre_prc`。子は BTRON3 流（終了時に MS_EXIT、枠を即解放） |
   | 71 | 優先度変更 | `x0`=id（0=自分, -1=親, 正=行程。`P_TASK` なら 0 か自分の識）, `x1`=pri, `x2`=opt（P_ABS 0・P_REL 1・P_TASK 2） | 変更後の優先度（0〜255）／`-EDOM`（群の外・範囲外）・`-EINVAL`（opt）・`-ESRCH`・`-EBADR`（自分以外のタスク）。`chg_pri` |
-  | 72 | 行程統計 | `x0`=pid（0=自分, -1=親, 正）, `x1`=P_INFO の書き先（16 B） | 0／`-ESRCH`・`-EFAULT`。{etime 秒, utime ms, stime ms（常に 0）, tmem バイト}。`get_inf` |
+  | 72 | 行程統計 | `x0`=pid（0=自分, -1=親, 正）, `x1`=P_INFO の書き先（64 B: etime・utime・stime・tmem・wmem・resv[11]） | 0／`-ESRCH`・`-EFAULT`。{etime 秒, utime ms, stime ms（常に 0）, tmem バイト}。`get_inf` |
   | 73 | タスクの眠り | `x0`=time（ms。-1 は無期限） | 時間切れで `-ETIMEDOUT`（ER_NONE）／`-EINVAL`（0 と -1 以外の負）。`slp_tsk` |
   | 74 | タスクの起床 | `x0`=tskid | 常に `-EBADR`（ER_ID。副タスクが無い）。`wup_tsk` |
   | 75 | 起床要求の取消 | `x0`=tskid | 0（自分）／`-EBADR`。`can_wup` |
@@ -212,10 +212,11 @@
   | 68 | 強終 | `x0`=pid（0 自分、-1 親、正）, `x1`=終了コード, `x2`=選（0=TERM_NRM、1=TERM_ALL） | 0／`-EDEADLK`（自分）・`-ESRCH`・`-EINVAL`（選が不正）・`-ENOTCAPABLE`（呼出側より上位の利用者レベルの行程）。TERM_ALL は子孫を深い順に終える。呼出側自身が終わるとき（親・祖先を対象にしたとき）は戻らない。BTRON3 流の対象の親へ MS_TERM `{pid, code}`（対象の分だけ）。`ter_prc` |
   | 69 | 行程状 | `x0`=pid, `x1`=P_STATE の書き先（12 B、0 可）, `x2`=名前の書き先（0 可） | 指定した行程の pid（正）／`-ESRCH`・`-EFAULT`。state は実行中 0x8000・実行可能 0x4000・待ち 0x2000、優先度は優先表の値（既定 128）、名前は空。`prc_sts` |
   | 80 | 信送 | `x0`=宛先 pid（>0 その行程、0 自分、-1 親）, `x1`=MESSAGE（窓内）, `x2`=指定（WAIT=0 / NOWAIT=1 / CONFM=2。CONFM は積んだあと相手が取り出すまで眠り、取り出されると 0、相手が終わると `-ESRCH`。自分宛の CONFM は `-EDEADLK`（ER_SELF）） | 0／`-EINVAL`（型が 1〜31 外・不正な指定）・`-E2BIG`（本体が 1〜32 バイト外）・`-ESRCH`（宛先が無い・終了済み）・`-ENOSPC`（満杯で NOWAIT）・`-EFAULT`。満杯で WAIT なら眠り、空きができたら svc を再実行する。`snd_msg` |
-  | 81 | 信受 | `x0`=型マスク, `x1`=MESSAGE の書き先, `x2`=msgsz（8〜40）, `x3`=指定（NOWAIT=1、CHECK=2、WAIEVT=4、NOCLR=8。NOWAIT と WAIEVT の併用・定義外のビットは `-EINVAL`。型マスク 0 は WAIEVT のときだけ許す。WAIEVT は WAIT と同じに待ち、`brk_msg` は未実装） | 送り手の pid（自行程からなら 0。子の終了通知は終わった子の pid）／`-ENOMSG`（無くて NOWAIT）・`-E2BIG`（msgsz に入り切らない。入る分だけ写し、メッセージは残る）・`-EINVAL`・`-EFAULT`。無ければ眠り、届いたら svc を再実行する。`rcv_msg` |
+  | 81 | 信受 | `x0`=型マスク, `x1`=MESSAGE の書き先, `x2`=msgsz（8 以上。40 を超えても 40 までを見る）, `x3`=指定（NOWAIT=1、CHECK=2、WAIEVT=4、NOCLR=8。NOWAIT と WAIEVT の併用・定義外のビットは `-EINVAL`。型マスク 0 は WAIEVT のときだけ許す。WAIEVT は WAIT と同じに待ち、`brk_msg` は未実装） | 送り手の pid（自行程からなら 0。子の終了通知は終わった子の pid）／`-ENOMSG`（無くて NOWAIT）・`-E2BIG`（msgsz に入り切らない。入る分だけ写し、メッセージは残る）・`-EINVAL`・`-EFAULT`。無ければ眠り、届いたら svc を再実行する。`rcv_msg` |
   | 82 | 信消 | `x0`=型マスク, `x1`=最後マスク | 0／`-EINVAL`。`clr_msg` |
   | 83 | 時限要求 | `x0`=time（ms、正）, `x1`=code | 0／`-EINVAL`（time が 0 以下）・`-ENOSPC`（時限表 16 件が満杯）。time 後（25 ms の刻へ切り上げ）に MS_TMOUT {型 4, 大きさ 4, 本体=code} が自分のキューに積まれる（キューが満杯なら捨てる）。`req_tmg` |
   | 84 | 時限取消 | なし | 0。自分の要求を全部取り消す（キューにあるものは消さない）。`can_tmg` |
+  | 85 | 事象通知 | なし | 0。`WAIEVT` で `rcv_msg` の待ちに入っている行程（最後に入ったもの）の待ちを解き、その `rcv_msg` に `-ENOMEDIUM`（ER_NOME）を返させる。待つ行程が無ければ要求を 1 つ記録（次の `WAIEVT` が直ちに ER_NOME）。`brk_msg` |
   | 96 | 作セマ | `x0`=初期カウント, `x1`=指定（SEM_SYNC=0 / SEM_EXCL=0x4000、+DELEXIT=0x8000） | ID（正）／`-EINVAL`（排他で cnt≠1・同期で cnt<0・不明なビット）・`-EMFILE`（16 個満杯）。`cre_sem` |
   | 97 | 削セマ | `x0`=ID | 0／`-EBADR`（ID が不正）・`-ENOENT`（無い）。待っている行程は `-EIDRM` で起こす。`del_sem` |
   | 98 | 返セマ | `x0`=ID | 0／`-EBADR`・`-ENOENT`・`-EPROTO`（排他を持っていない）・`-EMFILE`（上限）。待ちがあれば先頭へ手渡す。`sig_sem` |
