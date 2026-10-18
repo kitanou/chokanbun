@@ -883,10 +883,10 @@ if [ -f "$OUT/kernel.elf" ]; then
             sed 's/^/      /' "$KLOG" 2>/dev/null | head -20
         fi
         # --- 篇藏の永続化 (docs/design-persistence.md): 書いて 篇同 → 再起動 → 読める。壊れたスロットは使わない -------
-        # 同じディスクイメージ (2304 区画) で 5 回起動し、そのたびに殻へ命令を流して 殻終 を待つ。
+        # 同じディスクイメージ (10370 区画以上。12288 区画) で 5 回起動し、そのたびに殻へ命令を流して 殻終 を待つ。
         PERSIST_IMG="$OUT/persist.img"
         PERSIST_PIPE="$OUT/persist_serial"
-        dd if=/dev/zero of="$PERSIST_IMG" bs=512 count=2304 2>/dev/null
+        dd if=/dev/zero of="$PERSIST_IMG" bs=512 count=12288 2>/dev/null
         pian_boot() {  # $1 = ログ、$2 = 殻に流す命令 (改行区切り)
             local plog="$1" pcmds="$2" pq pc pf
             rm -f "$PERSIST_PIPE.in" "$PERSIST_PIPE.out" "$plog"
@@ -916,43 +916,45 @@ if [ -f "$OUT/kernel.elf" ]; then
         persist_ok() {  # $1 = ログ、$2 = 「永試 」の後の目印。その行が成功 (…01) か
             grep -a "^永試 $2" "$1" 2>/dev/null | grep -q '0x0000000000000001$'
         }
-        pian_boot "$OUT/persist1.log" $'永試 W\n終\n'
+        pian_boot "$OUT/persist1.log" $'永試 F\n永試 W\n終\n'
         P1_HDR="$(od -An -v -tx1 -j 32768 -N 4 "$PERSIST_IMG" | tr -s ' ' | sed 's/^ //; s/ $//')"
-        if persist_ok "$OUT/persist1.log" 'W:' && [ "$P1_HDR" = "50 49 41 4e" ]; then
-            pass "kernel qemu: 篇同 で篇藏の状態がスロット A のヘッダ (PIAN) としてディスクに届く"
+        if persist_ok "$OUT/persist1.log" 'F:' && persist_ok "$OUT/persist1.log" 'W:' && [ "$P1_HDR" = "50 49 41 4e" ]; then
+            pass "kernel qemu: 録層に 13 バイトと 6000 バイト (2 頁) のファイルを作り、篇同 で篇藏と録層の状態がスロット A のヘッダ (PIAN) としてディスクに届く"
         else
             fail "kernel qemu: 篇同 の書込み (ヘッダ='$P1_HDR')"
             grep -a '永試' "$OUT/persist1.log" 2>/dev/null | sed 's/^/      /' | head -5
         fi
-        pian_boot "$OUT/persist2.log" $'永試 R\n永試 O\n終\n'
-        P2_HDR="$(od -An -v -tx1 -j 573440 -N 4 "$PERSIST_IMG" | tr -s ' ' | sed 's/^ //; s/ $//')"
-        if persist_ok "$OUT/persist2.log" 'R:' && grep -aq '篇戻 世代=0x0000000000000001' "$OUT/persist2.log" && persist_ok "$OUT/persist2.log" 'O:' && [ "$P2_HDR" = "50 49 41 4e" ]; then
-            pass "kernel qemu: 再起動のあとスロット A (世代 1) から戻り、書いた内容を読める。開いたままの 篇同 はスロット B (世代 2) へ"
+        pian_boot "$OUT/persist2.log" $'永試 R\n永試 G\n永試 O\n終\n'
+        P2_HDR="$(od -An -v -tx1 -j 2671104 -N 4 "$PERSIST_IMG" | tr -s ' ' | sed 's/^ //; s/ $//')"
+        if persist_ok "$OUT/persist2.log" 'R:' && grep -aq '篇戻 世代=0x0000000000000001' "$OUT/persist2.log" && persist_ok "$OUT/persist2.log" 'G:' && persist_ok "$OUT/persist2.log" 'O:' && [ "$P2_HDR" = "50 49 41 4e" ]; then
+            pass "kernel qemu: 再起動のあとスロット A (世代 1) から戻り、篇藏の内容と録層の 2 つのファイル (6000 バイト = 2 頁を含む) を読める。戻したあとに作った録層のファイルは新しい ID になる。開いたままの 篇同 はスロット B (世代 2) へ"
         else
             fail "kernel qemu: 再起動後の読み戻しとスロット B への書込み (ヘッダ='$P2_HDR')"
             grep -a '永試\|篇戻' "$OUT/persist2.log" 2>/dev/null | sed 's/^/      /' | head -6
         fi
-        pian_boot "$OUT/persist3.log" $'永試 R\n永試 D\n同\n終\n'
-        if persist_ok "$OUT/persist3.log" 'R:' && grep -aq '篇戻 世代=0x0000000000000002' "$OUT/persist3.log" && persist_ok "$OUT/persist3.log" 'D:' && grep -aq '殻同 保存した' "$OUT/persist3.log"; then
-            pass "kernel qemu: 世代 2 (スロット B) から戻り、開いたまま保存した篇も削れる (開数は保存した値が残らない)。殻の 同 で世代 3 をスロット A へ保存できる"
+        pian_boot "$OUT/persist3.log" $'永試 R\n永試 H\n永試 D\n同\n問安 日月\n終\n'
+        if persist_ok "$OUT/persist3.log" 'R:' && persist_ok "$OUT/persist3.log" 'H:' && grep -aq '^子行程起動 日月' "$OUT/persist3.log" && grep -aq '篇戻 世代=0x0000000000000002' "$OUT/persist3.log" && persist_ok "$OUT/persist3.log" 'D:' && grep -aq '殻同 保存した' "$OUT/persist3.log"; then
+            pass "kernel qemu: 世代 2 (スロット B) から戻り、開いたまま保存した篇も削れる (開数は保存した値が残らない)。戻したあとに作った録層のファイルも戻る。殻の 同 で世代 3 をスロット A へ保存でき、戻したあとも漢像 (問安) を起動できる"
         else
             fail "kernel qemu: 世代 2 の読み戻しと開数"
             grep -a '永試\|篇戻' "$OUT/persist3.log" 2>/dev/null | sed 's/^/      /' | head -6
         fi
-        # スロット B のヘッダは無傷のまま、データの区画 1 つ (表の先頭) を壊す → データのチェックサムが合わず、(殻の 同 で書いた) 世代 3 のスロット A から戻る
+        # 最新 (世代 3) のスロット A のヘッダは無傷のまま、録層の本体の区画 1 つ (最初のファイルの最初の区画) を壊す
+        # → データのチェックサムが合わず、世代 2 のスロット B から戻る (録層の区画の破損も検出する)
         printf '\377\377\377\377' | dd of="$PERSIST_IMG" bs=1 seek=$((1121 * 512)) conv=notrunc 2>/dev/null
-        pian_boot "$OUT/persist4.log" $'永試 R\n終\n'
-        if persist_ok "$OUT/persist4.log" 'R:' && grep -aq '篇戻 世代=0x0000000000000003' "$OUT/persist4.log"; then
-            pass "kernel qemu: ヘッダが無傷でもデータの区画が壊れたスロット B は使わず、世代 3 のスロット A から戻る (データのチェックサム)"
+        pian_boot "$OUT/persist4.log" $'永試 R\n永試 H\n終\n'
+        if persist_ok "$OUT/persist4.log" 'R:' && persist_ok "$OUT/persist4.log" 'H:' && grep -aq '篇戻 世代=0x0000000000000002' "$OUT/persist4.log"; then
+            pass "kernel qemu: ヘッダが無傷でも録層の区画が壊れた最新のスロット A は使わず、世代 2 のスロット B から戻る (データのチェックサム)"
         else
-            fail "kernel qemu: 壊れたデータのスロットを避けて戻れない"
+            fail "kernel qemu: 壊れた録層の区画を持つスロットを避けて戻れない"
             grep -a '永試\|篇戻' "$OUT/persist4.log" 2>/dev/null | sed 's/^/      /' | head -6
         fi
-        # スロット A のヘッダも壊す → どちらも使えず、初期化した状態で起動する
+        # スロット A のヘッダと、スロット B の篇の表の区画 (スロット先頭の 2 区画目) も壊す → どちらも使えず、初期化した状態で起動する
         dd if=/dev/zero of="$PERSIST_IMG" bs=512 seek=64 count=1 conv=notrunc 2>/dev/null
-        pian_boot "$OUT/persist5.log" $'永試 N\n終\n'
-        if persist_ok "$OUT/persist5.log" 'N:' && ! grep -aq '篇戻' "$OUT/persist5.log"; then
-            pass "kernel qemu: どのスロットも使えないときは初期化した状態で起動する (篇「永」は無い)"
+        printf '\377\377\377\377' | dd of="$PERSIST_IMG" bs=1 seek=$((5218 * 512)) conv=notrunc 2>/dev/null
+        pian_boot "$OUT/persist5.log" $'永試 N\n永試 M\n終\n'
+        if persist_ok "$OUT/persist5.log" 'N:' && persist_ok "$OUT/persist5.log" 'M:' && ! grep -aq '篇戻' "$OUT/persist5.log"; then
+            pass "kernel qemu: どのスロットも使えないときは初期化した状態で起動する (篇「永」も録層の pmem も無い)"
         else
             fail "kernel qemu: 両スロットが使えないときの起動"
             grep -a '永試\|篇戻' "$OUT/persist5.log" 2>/dev/null | sed 's/^/      /' | head -6
