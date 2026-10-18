@@ -810,6 +810,7 @@ if [ -f "$OUT/kernel.elf" ]; then
             fail "kernel qemu: 行程表 (不一致:$TBL_BAD)"
             grep -a '行程表' "$KLOG" 2>/dev/null | sed 's/^/      /'
         fi
+        # 注: 総数は、この実行で必ず virtio-blk を付けている (vda の環 2 ページが先に使われる) ことを前提にした 4094。
         K_TOTAL="$(tbl_val '頁池 総')"
         if [ "$K_TOTAL" = "$(printf '0x%016x' 4094)" ]; then
             pass "kernel qemu: 頁池 16 MiB (4096 ページ = 空き + 行程の棧 2 ページ × 8 + vda の環 2 ページ。総数は vda の 2 ページを除く)"
