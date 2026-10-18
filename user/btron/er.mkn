@@ -52,6 +52,20 @@
 常「ER_TRON」之無符六四 為 0xFFFFFFFFFFFF0029
 常「ER_XFS」之無符六四 為 0xFFFFFFFFFFFF002A
 
+註 【選択の記録: EX_*】実身／仮身マネージャ (OS 仕様編 3.8) のエラー名 EX_* も、原文は名称だけで数値を規定しない (この章に定義が無い)。
+註   外殻のエラーを核の ER_* と取り違えないよう、別の eclass (-2 = 0xFFFE) の通し番号にする (原文は、核のエラーはそのまま戻りうるとする
+註   ので、oreg_vob の ER_NOFS のように ER_* が戻る場合と値が重ならないことが要る)。EX_x = (0xFFFE << 16) | 通し番号。名称が増えるときは末尾に足す。
+註   表示だけの EG_GID (描画環境が無い) は、表示装置の段階 (F7) で別に決める。
+常「EX_ADR」之無符六四 為 0xFFFFFFFFFFFE0001
+常「EX_LIMIT」之無符六四 為 0xFFFFFFFFFFFE0002
+常「EX_NOSPC」之無符六四 為 0xFFFFFFFFFFFE0003
+常「EX_PAR」之無符六四 為 0xFFFFFFFFFFFE0004
+常「EX_WID」之無符六四 為 0xFFFFFFFFFFFE0005
+常「EX_VID」之無符六四 為 0xFFFFFFFFFFFE0006
+常「EX_VOBJ」之無符六四 為 0xFFFFFFFFFFFE0007
+常「EX_NOEXS」之無符六四 為 0xFFFFFFFFFFFE0008
+常「EX_PWD」之無符六四 為 0xFFFFFFFFFFFE0009
+
 註 漢令の誤り番号 (x0 の負の errno、abi-aarch64.md) を ER_* に変える。0 以上はそのまま返す。
 註 対応が定まらないものは ER_PAR にする (ER_PAR = 引数が不正)。対応表は次の表のとおり。
 註   -ENOENT(2) → ER_NOEXS   -EBADF(9) → ER_FD    -ENOMEM(12) → ER_NOMEM  -EBUSY(16) → ER_BUSY
