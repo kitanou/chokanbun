@@ -206,8 +206,10 @@
   | 68 | 強終 | `x0`=pid（0 自分、-1 親、正）, `x1`=終了コード, `x2`=選（0=TERM_NRM、1=TERM_ALL） | 0／`-EDEADLK`（自分）・`-ESRCH`・`-EINVAL`（選が不正）・`-ENOTCAPABLE`（呼出側より上位の利用者レベルの行程）。TERM_ALL は子孫を深い順に終える。呼出側自身が終わるとき（親・祖先を対象にしたとき）は戻らない。BTRON3 流の対象の親へ MS_TERM `{pid, code}`（対象の分だけ）。`ter_prc` |
   | 69 | 行程状 | `x0`=pid, `x1`=P_STATE の書き先（12 B、0 可）, `x2`=名前の書き先（0 可） | 指定した行程の pid（正）／`-ESRCH`・`-EFAULT`。state は実行中 0x8000・実行可能 0x4000・待ち 0x2000、優先度は 128 固定、名前は空。`prc_sts` |
   | 80 | 信送 | `x0`=宛先 pid（>0 その行程、0 自分、-1 親）, `x1`=MESSAGE（窓内）, `x2`=指定（WAIT=0 / NOWAIT=1。CONFM=2 は未対応） | 0／`-EINVAL`（型が 1〜31 外・不正な指定）・`-E2BIG`（本体が 1〜32 バイト外）・`-ESRCH`（宛先が無い・終了済み）・`-ENOSPC`（満杯で NOWAIT）・`-EFAULT`。満杯で WAIT なら眠り、空きができたら svc を再実行する。`snd_msg` |
-  | 81 | 信受 | `x0`=型マスク, `x1`=MESSAGE の書き先, `x2`=msgsz（8〜40）, `x3`=指定（NOWAIT=1、NOCLR=8。WAIEVT・CHECK は未対応） | 送り手の pid（自行程からなら 0。子の終了通知は終わった子の pid）／`-ENOMSG`（無くて NOWAIT）・`-E2BIG`（msgsz に入り切らない。入る分だけ写し、メッセージは残る）・`-EINVAL`・`-EFAULT`。無ければ眠り、届いたら svc を再実行する。`rcv_msg` |
+  | 81 | 信受 | `x0`=型マスク, `x1`=MESSAGE の書き先, `x2`=msgsz（8〜40）, `x3`=指定（NOWAIT=1、CHECK=2、WAIEVT=4、NOCLR=8。NOWAIT と WAIEVT の併用・定義外のビットは `-EINVAL`。型マスク 0 は WAIEVT のときだけ許す。WAIEVT は WAIT と同じに待ち、`brk_msg` は未実装） | 送り手の pid（自行程からなら 0。子の終了通知は終わった子の pid）／`-ENOMSG`（無くて NOWAIT）・`-E2BIG`（msgsz に入り切らない。入る分だけ写し、メッセージは残る）・`-EINVAL`・`-EFAULT`。無ければ眠り、届いたら svc を再実行する。`rcv_msg` |
   | 82 | 信消 | `x0`=型マスク, `x1`=最後マスク | 0／`-EINVAL`。`clr_msg` |
+  | 83 | 時限要求 | `x0`=time（ms、正）, `x1`=code | 0／`-EINVAL`（time が 0 以下）・`-ENOSPC`（時限表 16 件が満杯）。time 後（25 ms の刻へ切り上げ）に MS_TMOUT {型 4, 大きさ 4, 本体=code} が自分のキューに積まれる（キューが満杯なら捨てる）。`req_tmg` |
+  | 84 | 時限取消 | なし | 0。自分の要求を全部取り消す（キューにあるものは消さない）。`can_tmg` |
   | 96 | 作セマ | `x0`=初期カウント, `x1`=指定（SEM_SYNC=0 / SEM_EXCL=0x4000、+DELEXIT=0x8000） | ID（正）／`-EINVAL`（排他で cnt≠1・同期で cnt<0・不明なビット）・`-EMFILE`（16 個満杯）。`cre_sem` |
   | 97 | 削セマ | `x0`=ID | 0／`-EBADR`（ID が不正）・`-ENOENT`（無い）。待っている行程は `-EIDRM` で起こす。`del_sem` |
   | 98 | 返セマ | `x0`=ID | 0／`-EBADR`・`-ENOENT`・`-EPROTO`（排他を持っていない）・`-EMFILE`（上限）。待ちがあれば先頭へ手渡す。`sig_sem` |

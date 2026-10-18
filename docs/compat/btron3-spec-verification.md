@@ -100,7 +100,7 @@
 | P4 | B | `prc_sts` | 戻り値は pid。`P_STATE`{state, priority, parpid}、name は実身名 | 要コード確認（優先度は 128 固定、name 空） |
 | P5 | A | `rcv_msg` の戻り値 | 送信元 pid（自分なら 0）。入り切らないときはエラー | 常に 0。入り切らないときは切って成功 |
 | P6 | B | `snd_msg` | 本体サイズ 0 以下も `ER_SZOVR`、`CONFM` 対応、`ER_SELF` | `CONFM` 未対応 |
-| P7 | C | メッセージ | `req_tmg`/`can_tmg`/`def_msg`/`ret_msg`/`brk_msg`、`WAIEVT`、`CHECK`、`MH_*` | 未実装 |
+| P7 | C | メッセージ | `req_tmg`/`can_tmg`/`def_msg`/`ret_msg`/`brk_msg`、`WAIEVT`、`CHECK`、`MH_*` | `req_tmg`・`can_tmg`・`WAIEVT`・`CHECK` は実装済み。`def_msg`/`ret_msg`/`brk_msg`/`MH_*` は未実装（EL0 への上り呼びが要る） |
 | P8 | C | タスク | `cre_tsk`/`ext_tsk`/`ter_tsk`/`slp_tsk`/`wup_tsk`/`can_wup`/`dly_tsk`、`chg_pri`、`get_inf` | 未実装（`get_tid` と `待機` 相当のみ） |
 | P9 | B | `get_tod`/`set_tim` の ≦ 0 | `time` ≦ 0 が「現在／設定しない」 | 0 のときだけ |
 | P10 | C | 同期 | `bufsz`=0 の同期バッファ、`ER_MINTR` | 未実装 |

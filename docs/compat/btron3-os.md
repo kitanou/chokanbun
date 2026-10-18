@@ -77,11 +77,11 @@
 | API | 要点 | 既存実装 | 状態 |
 |---|---|---|---|
 | `snd_msg` | 送信（`WAIT`/`NOWAIT`、宛先 pid / 0 / -1） | `user/btron/msg.mkn` → 漢令 信送 80（`kernel/proc/msg.mkn`）。8 件のキュー、満杯で WAIT は眠る。`CONFM` は `ER_PAR`（未対応） | 部分適合（`CONFM` 未実装） |
-| `rcv_msg` | 受信（型マスク、`NOWAIT`/`NOCLR`） | 漢令 信受 81。最古の該当を返す。`WAIEVT`/`CHECK` は `ER_PAR`（未対応） | 部分適合（`WAIEVT`/`CHECK` 未実装） |
+| `rcv_msg` | 受信（型マスク、`NOWAIT`/`NOCLR`/`CHECK`/`WAIEVT`） | 漢令 信受 81。最古の該当を返す。`CHECK`（2）は合う型が無くても別の型があれば先頭 8 バイトを返す。`WAIEVT`（4）は `WAIT` と同じに待つ（型マスク 0 可、`NOWAIT` と併用は `ER_PAR`） | 部分適合（`brk_msg` で待ちを解く `ER_NOME`・`ER_MINTR`・`CONFM` が未実装） |
 | `clr_msg` | 消去 | 漢令 信消 82 | 実装済・未検証 |
-| `req_tmg` / `can_tmg` | タイムアウトメッセージ | なし | 未実装 |
+| `req_tmg` / `can_tmg` | タイムアウトメッセージ | 漢令 83・84（`kernel/proc/msg.mkn` の時限表 16 件。刻 25 ms へ切り上げ、`覚醒` が `MS_TMOUT` を積む） | 実装済 |
 | `def_msg` / `ret_msg` / `brk_msg` | ハンドラ定義・復帰・中断 | なし。EL0 への非同期上り呼びが必要 | 未実装 |
-| `req_tmg` / `can_tmg` | タイムアウトメッセージ | なし（`待機` のみ） | 未実装 |
+| `req_tmg` / `can_tmg` | タイムアウトメッセージ | 上の行（漢令 83・84） | 実装済 |
 | `def_msg` / `ret_msg` / `brk_msg` | ハンドラ定義・復帰・中断 | なし。EL0 への非同期上り呼びの仕組み（シグナル相当）が必要 | 未実装 |
 
 **方針メモ**: ハンドラは EL0 へ非同期に割り込む機構が要り、POSIX シグナルより先に必要になる。終了通知（型 1–3）が `cre_prc`/`ext_prc` の適合の前提なので、**1.1 の適合は 1.2 に依存する**。
