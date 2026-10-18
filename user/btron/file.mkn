@@ -19,11 +19,8 @@
 常「F_UPDATE」之無符六四 為 0x0006
 常「F_EXCL」之無符六四 為 0x0100
 常「F_EXECUTE」之無符六四 為 0x0001   註 map_rec のアクセス種別 (実行)
-常「F_COMMON」之無符六四 為 0x1000    註 map_rec: 共通メモリへ (この実装では ER_NOSPT。値は実装依存)
-常「F_SYSTEM」之無符六四 為 0x2000    註 map_rec: システムメモリへ (同上)
-常「F_EXECUTE」之無符六四 為 0x0001   註 map_rec のアクセス種別 (実行)
-常「F_COMMON」之無符六四 為 0x1000    註 map_rec: 共通メモリへ (この実装では ER_NOSPT。値は実装依存)
-常「F_SYSTEM」之無符六四 為 0x2000    註 map_rec: システムメモリへ (同上)
+常「F_COMMON」之無符六四 為 0x0100    註 map_rec: 共有メモリー空間へ (この実装では ER_NOSPT)
+常「F_SYSTEM」之無符六四 為 0x0300    註 map_rec: システムメモリー空間へ (同上)
 常「F_WEXCL」之無符六四 為 0x0200
 常「F_FILE」之無符六四 為 0x1000
 常「F_RONLY」之無符六四 為 0x0010
