@@ -79,12 +79,24 @@
   要素0〜2 は全行程で同一。要素3 は全行程でその行程の**レベル3 表**への
   テーブル記述子である。
 - レベル3（行程ごと、4 KiB ページ）: 民の窓 `0x40600000`–`0x407FFFFF` を
-  512 枚の 4 KiB ページで覆う。**デマンドページング**: 起動時に張るのは民の棧の
+  512 枚の 4 KiB ページで覆う。窓の頁の編成 (BTRON3 1.5 メモリ管理
+  [compat/btron3-spec-verification.md](compat/btron3-spec-verification.md) §6.5):
+
+  | 頁 | 用途 |
+  |---|---|
+  | 0〜7 | 民の棧 (頭 `0x40608000` = 窓の先頭から 32 KiB) |
+  | 8〜247 | ローカル塊域 (240 頁。`get_mbk` のローカル塊は昇順 first-fit で割当。物理頁は需要供給に委ねる) |
+  | 248〜255 | 共有・システム塊域 (8 頁。共有・システム塊は連続物理頁を全行程に同一 VA・同一物理頁で写像し、降順 first-fit。`窓清` はこの域の頁を頁池へ返さない) |
+  | 256〜510 | データ域 (デマンドページング) |
+  | 511 | 引数頁 (`0x407FF000`。argv を `0x407FF008` に置く) |
+
+  **デマンドページング**: 起動時に張るのは民の棧の
   先頭 2 ページだけで、残りは EL0 が触れた時に `漢令處理`（`svc_dispatch`）が
   下位EL データアボート（EC=36）を捕らえ、`頁取`（動的頁域 `頁元` 0x40800000
   のビットマップ割当）で物理ページを与えて同じ命令を再試行する。仮想アドレスは
-  全行程で共通（民の棧の頭 `0x40608000`＝窓の先頭から 32 KiB、データ `0x40700000`）だが物理ページが
-  異なるため、行程間で互いの書き込みは見えない。
+  全行程で共通（民の棧の頭 `0x40608000`、データ `0x40700000`）だが物理ページが
+  異なるため、行程間で互いの書き込みは見えない。ただし共有・システム塊域
+  （頁 248〜255）は例外で、塊を取った物理ページが全行程の表に同じ VA で張られる。
 - 変換表（1 行程あたり 12 KiB = レベル1 + レベル2 + レベル3）は機械漢文
   （`設頁表`）が構築し、システムレジスタ設定のみ `kernel/sysreg.S` に委譲する
   （`enable_mmu` で起動、`set_ttbr0` で切替）。
@@ -129,6 +141,8 @@
   | `-ENODEV` | 19 | ファイルシステムが接続されていない（ER_NOFS） |
   | `-ENAMETOOLONG` | 36 | パス・名前が不正（ER_FNAME） |
   | `-EBADR` | 53 | 同期物の ID が不正（ER_ID） |
+  | `-EBADRQC` | 54 | 属性・権限が合わない操作（ER_CTX。`M_SYSTEM` の取得をレベル 0 以外が行うなど） |
+  | `-EBADSLT` | 55 | メモリ塊のアドレスが不正（ER_MPTR。窓外・非整列・塊途中・未登録） |
   | `-EIDRM` | 43 | 待っている間に同期物が削除された（ER_DLT） |
   | `-EPROTO` | 71 | 対象の状態に合わない操作（ER_OBJ） |
   | `-ETIMEDOUT` | 110 | 待てない・時間切れ（ER_NONE） |
@@ -185,14 +199,14 @@
   | 32 | 章移 | `x0`=パス, `x1`=長 | 0／`-ENOENT`・`-ENOTDIR`・`-EACCES`（現在章を変える） |
   | 33 | 章名 | `x0`=書き先, `x1`=長 | 現在章の絶対パス（`天地/…`）の長さ。書き先には長さまで写す |
   | 31 | 頁残 | なし | 頁池の空きページ数（診断） |
-  | 70 | 行程作成 | `x0`=LINK（SYS の像ファイル）, `x1`=優先度（0〜255）, `x2`=MESSAGE（NULL 可。8 B の見出し {W 型, W 大きさ} + 本体。型 0 のとき NUL 区切りが引数。本体は 255 B まで） | 子の識（正）／`-EDOM`（ER_PPRI）・`-E2BIG`（ER_SZOVR）・`-EFAULT`・`-ENOEXEC`（ER_REC。像ファイルでない）・`-ENOENT`・`-ENODEV`・`-EACCES`・`-EBUSY`・`-EAGAIN`・`-ENOMEM`。`cre_prc`。子は BTRON3 流（終了時に MS_EXIT、枠を即解放） |
+  | 70 | 行程作成 | `x0`=LINK（SYS の像ファイル）, `x1`=優先度（0〜255、-1 は自行程と同じ）, `x2`=MESSAGE（NULL 可。8 B の見出し {W 型, W 大きさ} + 本体。型 0 のとき NUL 区切りが引数。本体は 255 B まで） | 子の識（正）／`-EDOM`（ER_PPRI）・`-E2BIG`（ER_SZOVR）・`-EFAULT`・`-ENOEXEC`（ER_REC。像ファイルでない）・`-ENOENT`・`-ENODEV`・`-EACCES`・`-EBUSY`・`-EAGAIN`・`-ENOMEM`。`cre_prc`。子は BTRON3 流（終了時に MS_EXIT、枠を即解放） |
   | 64 | 生BTRON | `x0`=名前, `x1`=名前長, `x2`=引数, `x3`=引数長（17 と同じ） | 子の識／17 と同じ誤り。子は BTRON3 流: 終了時（`終行程` など）に親のキューへ MS_EXIT `{pid, code}` を積み、僵にならず枠を即解放する（`待行程` では回収できず `-ECHILD`）。互換層の `cre_prc`（暫定形）が使う |
   | 66 | 利用者取 | `x0`=pid（0 自分、-1 親、正 その行程）, `x1`=P_USER の書き先（窓内の書込可能な 148 B） | 0／`-ESRCH`・`-EFAULT`。`get_usr` |
-  | 67 | 利用者変 | `x0`=P_USER（窓内の 148 B） | 0／`-EINVAL`（level が 0〜15 外、net_level が 1〜15 外、level 0 以外の行程が level を小さくしようとした）・`-EFAULT`。`chg_usr` |
+  | 67 | 利用者変 | `x0`=P_USER（窓内の 148 B） | 0／`-EINVAL`（level が 0〜15 外、net_level が 1〜15 外）・`-EACCES`（level 0 の行程以外。原文は「システムプロセスのみ」で、レベル 0 をそれとみなす暫定）・`-EFAULT`。`chg_usr` |
   | 68 | 強終 | `x0`=pid（0 自分、-1 親、正）, `x1`=終了コード, `x2`=選（0=TERM_NRM、1=TERM_ALL） | 0／`-EDEADLK`（自分）・`-ESRCH`・`-EINVAL`（選が不正）・`-ENOTCAPABLE`（呼出側より上位の利用者レベルの行程）。TERM_ALL は子孫を深い順に終える。呼出側自身が終わるとき（親・祖先を対象にしたとき）は戻らない。BTRON3 流の対象の親へ MS_TERM `{pid, code}`（対象の分だけ）。`ter_prc` |
-  | 69 | 行程状 | `x0`=pid, `x1`=P_STATE の書き先（12 B、0 可）, `x2`=名前の書き先（0 可） | 0／`-ESRCH`・`-EFAULT`。state は実行中 0x8000・実行可能 0x4000・待ち 0x2000、優先度は 128 固定。`prc_sts` |
+  | 69 | 行程状 | `x0`=pid, `x1`=P_STATE の書き先（12 B、0 可）, `x2`=名前の書き先（0 可） | 指定した行程の pid（正）／`-ESRCH`・`-EFAULT`。state は実行中 0x8000・実行可能 0x4000・待ち 0x2000、優先度は 128 固定、名前は空。`prc_sts` |
   | 80 | 信送 | `x0`=宛先 pid（>0 その行程、0 自分、-1 親）, `x1`=MESSAGE（窓内）, `x2`=指定（WAIT=0 / NOWAIT=1。CONFM=2 は未対応） | 0／`-EINVAL`（型が 1〜31 外・不正な指定）・`-E2BIG`（本体が 1〜32 バイト外）・`-ESRCH`（宛先が無い・終了済み）・`-ENOSPC`（満杯で NOWAIT）・`-EFAULT`。満杯で WAIT なら眠り、空きができたら svc を再実行する。`snd_msg` |
-  | 81 | 信受 | `x0`=型マスク, `x1`=MESSAGE の書き先, `x2`=msgsz（8〜40）, `x3`=指定（NOWAIT=1、NOCLR=8。WAIEVT・CHECK は未対応） | 0／`-ENOMSG`（無くて NOWAIT）・`-EINVAL`・`-EFAULT`。無ければ眠り、届いたら svc を再実行する。`rcv_msg` |
+  | 81 | 信受 | `x0`=型マスク, `x1`=MESSAGE の書き先, `x2`=msgsz（8〜40）, `x3`=指定（NOWAIT=1、NOCLR=8。WAIEVT・CHECK は未対応） | 送り手の pid（自行程からなら 0。子の終了通知は終わった子の pid）／`-ENOMSG`（無くて NOWAIT）・`-E2BIG`（msgsz に入り切らない。入る分だけ写し、メッセージは残る）・`-EINVAL`・`-EFAULT`。無ければ眠り、届いたら svc を再実行する。`rcv_msg` |
   | 82 | 信消 | `x0`=型マスク, `x1`=最後マスク | 0／`-EINVAL`。`clr_msg` |
   | 96 | 作セマ | `x0`=初期カウント, `x1`=指定（SEM_SYNC=0 / SEM_EXCL=0x4000、+DELEXIT=0x8000） | ID（正）／`-EINVAL`（排他で cnt≠1・同期で cnt<0・不明なビット）・`-EMFILE`（16 個満杯）。`cre_sem` |
   | 97 | 削セマ | `x0`=ID | 0／`-EBADR`（ID が不正）・`-ENOENT`（無い）。待っている行程は `-EIDRM` で起こす。`del_sem` |
@@ -216,6 +230,9 @@
   | 112 | 名作 | `x0`=名前（TC 配列、TNULL 終端、先頭 8 文字）, `x1`=値（下位 32 ビット）, `x2`=指定（0=N_CREATE / 1=N_MODIFY / 2=N_FORCE、+0x8000=DELEXIT） | 0／`-EEXIST`（N_CREATE で既存）・`-ENOENT`（N_MODIFY で無い）・`-ENOSPC`（16 件満杯）・`-EINVAL`（空の名前・不正な指定）・`-EFAULT`。BTRON3 互換層 `cre_nam`（[btron3-compat-layer.md](compat/btron3-compat-layer.md)） |
   | 113 | 名削 | `x0`=名前 | 0／`-ENOENT`・`-EINVAL`・`-EFAULT`。`del_nam` |
   | 114 | 名取 | `x0`=名前, `x1`=値の書き先（窓内の書込可能な 4 バイト） | 0／`-ENOENT`・`-EINVAL`・`-EFAULT`。`get_nam` |
+  | 120 | 塊取 | `x0`=獲得アドレスの書き先（VP*）, `x1`=頁数（正）, `x2`=属性（`M_COMMON`=1 / `M_SYSTEM`=3、+`M_RESIDENT`=0x4000・`DELEXIT`=0x8000） | 0（ローカル = 頁 8〜247 の昇順 first-fit、共有・システム = 頁 248〜255 の降順 first-fit。窓内の正アドレス。共有・システム塊は全行程に同一 VA・同一物理頁で写像する）／`-EINVAL`（余計ビット・頁数≦0）・`-EMFILE`（塊表 32 項が満杯・共有域が詰まる）・`-ENOMEM`（ローカルの頁が足りない）・`-EBADRQC`（`M_SYSTEM` はレベル 0 の行程のみ）。`get_mbk` |
+  | 121 | 塊放 | `x0`=塊の先頭アドレス | 0／`-EBADSLT`（非整列・塊途中・塊表に無い・持ち主でない）・`-EBADRQC`（他人の共有塊の解放は持ち主のみ。`M_SYSTEM` はレベル 0 のみ）。`rel_mbk`。ローカル塊は需要で張った頁を頁池へ返し 0 に、共有塊は全行程から写像解除して物理頁を解放する |
+  | 122 | 塊状 | `x0`=M_STATE の書き先（12 B: blksz, total, free） | 0／`-EFAULT`。blksz=4096、total=4096、free=空き物理頁数（参考値）。`mbk_sts` |
   | 128 | 接続 | `x0`=装置名（TC、8 文字まで）, `x1`=接続名（TC、8 文字まで）, `x2`=LINK の書き先（52 B）, `x3`=モード（0=SYNC, 1=RONLY, 2=ASYN） | 0／`-ENXIO`（装置が無い）・`-EBUSY`（接続済み）・`-EEXIST`（接続名が使用中）・`-ENAMETOOLONG`（空の名前）・`-EINVAL`・`-EFAULT`。`att_fls`（[btron3-file-design.md](compat/btron3-file-design.md)） |
   | 129 | 切断 | `x0`=装置名, `x1`=取り出し（無視） | 0／`-ENOENT`・`-ENODEV`（接続されていない）・`-EBUSY`（作業ファイルとして使用中）。`det_fls` |
   | 130 | 接続一覧 | `x0`=F_ATTACH の配列（32 B ずつ）, `x1`=個数 | 接続中の数／`-EINVAL`（個数が負）・`-EFAULT`。`lst_fls` |
@@ -223,22 +240,27 @@
   | 136 | リンク取 | `x0`=パス（TC、256 文字まで。NULL は基準のファイルそのもの）, `x1`=LINK（52 B、F_BASED では基準として入力も）, `x2`=方式（0=F_NORM, 1=F_BASED, +2=F_DIRECT） | 0／`-ENOENT`・`-ENODEV`・`-ENAMETOOLONG`（パス・名前が不正）・`-EACCES`（途中のファイルに E 権が無い）・`-EINVAL`・`-EFAULT`。`get_lnk`。絶対パスは先頭が `/`（TC_FDLM）+ 接続名。先頭の `≡`（TC_FOWN）と NULL は作業ファイル |
   | 137 | 作業変 | `x0`=LINK（52 B）。NULL は作業ファイルを未定義にする | 0／`-ENODEV`・`-ENOENT`・`-EACCES`（E 権）・`-EFAULT`。`chg_wrk`。作業ファイルは子が継ぐ。最初の行程は未定義 |
   | 144 | ファイル作成 | `x0`=LINK（F_FLOAT: FS の指定のみ。F_FIX: 親ファイル。F_FILEID: ID 指定。成功で新しいファイルの LINK に置き換わる）, `x1`=名前（TC）, `x2`=A_MODE（NULL 可）, `x3`=atype, `x4`=opt（0=F_FLOAT, 1=F_FIX, 2=F_FILEID） | 記述子（正）／`-ENOENT`・`-ENODEV`・`-EROFS`・`-ENAMETOOLONG`・`-EINVAL`・`-EFAULT`・`-EMFILE`・`-ENOSPC`・`-E2BIG`・`-EEXIST`（ID が既にある）・`-EACCES`・`-EBUSY`。`cre_fil`。F_FLOAT は固定リンクを作らず参照数 0、F_FIX は親の末尾に固定リンクを足して参照数 1 |
-  | 145 | （欠番） | `cre_lnk`（リンクファイルの生成）は段階 M3 まで未実装 | `-ENOSYS` |
+  | 145 | リンクファイル生成 | `x0`=LINK（opt に応じ FS 指定／親／ID 指定。成功すると新しいリンクファイルの LINK が返る）, `x1`=F_LINK（132 B）, `x2`=opt（F_FLOAT 0・F_FIX 1・F_FILEID 2） | 0／`-ENOENT`・`-ENODEV`・`-EINVAL`（opt 不正・同じ FS を指す）・`-ENAMETOOLONG`（FS 名／ファイル名が空）・`-EEXIST`・`-EACCES`・`-EROFS`・`-EFAULT`。参照数は F_FIX で 1、他は 0。`cre_lnk` |
+  | 151 | ファイル直接生成 | `x0`=LINK, `x1`=名前, `x2`=F_STATE（96 B。種別が 0 ならリンクファイル）, `x3`=F_LINK, `x4`=opt | 通常ファイルは記述子、リンクファイルは 0／`-EACCES`（レベル 0 でない）ほか cre_fil/cre_lnk と同じ。`gen_fil` |
+  | 162 | リンクレコード検索 | `x0`=記述子, `x1`=mode（向き 0〜5 + F_SFILE 0x4000・F_SNAME 0x2000・F_SATR1〜5 0x1000〜0x0100）, `x2`=LINK（条件指定時）, `x3`=サブタイプ, `x4`=recnum の書き先（NULL 可） | 0／`-EBADF`・`-EINVAL`・`-EFAULT`・`-ENOEXEC`（見つからない = ER_REC）。`fnd_lnk` |
+  | 171 | リンクファイル情報 | `x0`=LINK, `x1`=F_LINK の書き先（132 B、NULL 可） | リンクファイルの参照数／`-ENOLINK`（リンクファイルでない）・`-ENOENT`・`-ENODEV`・`-EFAULT`。`lnk_sts` |
+  | 172 | リンクファイル同期 | `x0`=LINK, `x1`=opt（0 チェックのみ、≠0 更新） | 同期状態 0 一致・1 名前・2 生成日時・3 両方／`-ENOLINK`・`-ENOENT`・`-ENODEV`・`-EROFS`。`syn_lnk` |
+  | 173 | 次のリンク取得 | `x0`=LINK（入力は開始ファイル、出力は次のファイル） | 取り出したファイルの参照数／`-ENOENT`（それより大きい ID が無い）・`-ENODEV`・`-EFAULT`。`get_nlk` |
   | 146 | ファイル削除 | `x0`=親 LINK（NULL 可）, `x1`=LINK, `x2`=force | 含んでいたリンクの先で参照数が 0 になった数／`-ENOENT`・`-EBUSY`（開いている・作業ファイル・参照数≠0（親なし）・親が排他で開かれている・他の fd の現在レコード）・`-EPERM`（削除不可）・`-ENOEXEC`（ER_REC。リンクを含む）・`-EROFS`・`-EACCES`（親の W）・`-ETXTBSY`（リンクレコードがロックされている）・`-EFAULT`・`-EINVAL`。`del_fil`。親ありは親から固定リンクを 1 つ消して参照数 -1、0 になれば本体も消す。親なしは参照数 0 のときだけ |
   | 147 | ファイル開 | `x0`=LINK, `x1`=モード（4=READ, 2=WRITE, 6=UPDATE, 0x100=EXCL, 0x200=WEXCL）, `x2`=パスワード（NULL 可） | 記述子（正）／`-ENOENT`・`-ENODEV`・`-EBUSY`・`-EROFS`・`-EINVAL`・`-EFAULT`・`-EMFILE`。`opn_fil` |
   | 148 | ファイル閉 | `x0`=記述子 | 0／`-EBADF`。`cls_fil`。行程の終了で自動的に閉じる |
   | 149 | ファイル状態 | `x0`=LINK, `x1`=名前の書き先（42 B）, `x2`=F_STATE（96 B）, `x3`=F_LOCATE（100 B） | 参照数／`-ENOENT`・`-ENODEV`・`-EINVAL`・`-EFAULT`。`fil_sts` |
   | 150 | 開ファイル状態 | `x0`=記述子, `x1`〜`x3` は 149 と同じ | 参照数／`-EBADF`・`-ENOENT`・`-EINVAL`・`-EFAULT`。`ofl_sts` |
   | 152 | レコード移動 | `x0`=記述子, `x1`=offset, `x2`=mode（0=現在から相対, 正=offset が番号, 負=終端から相対）, `x3`=recnum の書き先（NULL 可） | 0／`-EBADF`・`-ENOEXEC`（ER_REC）・`-EFAULT`。`see_rec`。W の引数は下位 32 ビットが効く |
-  | 153 | レコード検索 | `x0`=記述子, `x1`=mode（0=F_FWD, 1=F_NFWD）, `x2`=typemask, `x3`=subtype, `x4`=recnum の書き先 | 0／`-EBADF`・`-ENOEXEC`・`-EINVAL`・`-EFAULT`。`fnd_rec` |
-  | 154 | レコード読み | `x0`=記述子, `x1`=offset, `x2`=buf, `x3`=size, `x4`=r_size の書き先, `x5`=subtype の書き先 | 型（0〜31）／`-EBADF`・`-ENODATA`（ER_ENDR）・`-ETXTBSY`（ER_LOCK）・`-EINVAL`・`-EFAULT`。`rea_rec` |
+  | 153 | レコード検索 | `x0`=記述子, `x1`=mode（0=F_FWD, 1=F_NFWD, 2=F_BWD, 3=F_NBWD, 4=F_TOPEND, 5=F_ENDTOP）, `x2`=typemask, `x3`=subtype, `x4`=recnum の書き先 | 見つけたレコードの型／`-EBADF`・`-ENOEXEC`・`-EINVAL`・`-EFAULT`。`fnd_rec` |
+  | 154 | レコード読み | `x0`=記述子, `x1`=offset, `x2`=buf, `x3`=size, `x4`=r_size（レコードサイズ − offset）の書き先, `x5`=subtype の書き先 | 型（0〜31）／`-EBADF`・`-ENODATA`（ER_ENDR）・`-ETXTBSY`（ER_LOCK）・`-EINVAL`・`-EFAULT`。`rea_rec` |
   | 155 | レコード書き | 154 と同じ並び（offset=-1 は追記, subtype は読み先）。`units` は渡さない | 0／`-EBADF`・`-ENODATA`・`-ETXTBSY`・`-EINVAL`・`-E2BIG`（ER_SZOVR）・`-EFAULT`。`wri_rec` |
   | 156 | レコード挿入 | `x0`=記述子, `x1`=buf, `x2`=size, `x3`=type（0=リンク, 1〜31）, `x4`=subtype, `x5`=units（無視） | 0／`-EBADF`・`-EINVAL`・`-E2BIG`・`-ENOENT`・`-ENODEV`・`-EMFILE`（ER_LIMIT）・`-EFAULT`。`ins_rec`。現在レコードの前 |
   | 157 | レコード追加 | 156 と同じ引数 | 0／156 と同じ。`apd_rec`。末尾 |
-  | 158 | レコード削除 | `x0`=記述子 | 参照数が 0 になれば 1、そうでなければ 0／`-EBADF`・`-ENODATA`・`-ETXTBSY`。`del_rec` |
+  | 158 | レコード削除 | `x0`=記述子 | 参照数が 0 になれば 1、そうでなければ 0／`-EBADF`・`-ENODATA`・`-ETXTBSY`・`-EBUSY`（他のオープンの現在レコード）。`del_rec` |
   | 159 | レコード切詰 | `x0`=記述子, `x1`=size | 0／`-EBADF`・`-ENODATA`・`-ETXTBSY`・`-ENOEXEC`（リンク）・`-EINVAL`。`trc_rec` |
-  | 160 | レコードロック | `x0`=記述子, `x1`=mode（0=解除, 1=F_LOCK, 2=F_TSLOCK, 3=F_CKLOCK） | 0／`-EBADF`・`-ENODATA`・`-ETXTBSY`・`-EMFILE`（別のレコードを既にロック）・`-EINVAL`。`loc_rec`。F_LOCK は待たない |
-  | 161 | ファイル交換 | `x0`=記述子 1, `x1`=記述子 2 | 0／`-EBADF`・`-EINVAL`（同じファイル）・`-EXDEV`（ER_XFS）・`-ETXTBSY`。`xch_fil` |
+  | 160 | レコードロック | `x0`=記述子, `x1`=mode（0=解除, 1=F_LOCK, 2=F_TSLOCK, 3=F_CKLOCK） | 0／`-EBADF`・`-ENODATA`・`-ETXTBSY`・`-EMFILE`（別のレコードを既にロック）・`-EINVAL`。`loc_rec`。F_LOCK は他の行程のロックが外れるまで眠って待つ（`svc` を再実行。待ちの順は行程番号順）。自行程の別の記述子のロックは `-ETXTBSY` |
+  | 161 | ファイル交換 | `x0`=記述子 1, `x1`=記述子 2 | 0／`-EBADF`・`-EINVAL`（同じファイル）・`-EXDEV`（ER_XFS）・`-ETXTBSY`。両方が F_UPDATE\|F_EXCL で開かれていなければ `-EBADF`。`xch_fil` |
   | 163 | ファイル検査 | `x0`=LINK, `x1`=mode（0=F_EXIST, 1=E, 2=W, 4=R の組み合わせ。F_PASWD(8) は戻り値の欄で、指定すると `-EINVAL`）, `x2`=パスワード（NULL 可） | mode=0 は情報の欄（ビット 0〜2=呼出側の E・W・R, 3=パスワード有り, 4〜7=O・P・A・B）、それ以外は 0／`-EACCES`・`-ENOKEY`（ER_PWD）・`-EROFS`・`-ENOENT`・`-EINVAL`・`-EFAULT`。`chk_fil` |
   | 164 | アクセス変更 | `x0`=LINK, `x1`=A_MODE（8 B: 所有者, グループ番号, グループ, 公開。各欄 0x8000 は変更なし） | 0／`-EACCES`・`-EROFS`・`-EINVAL`・`-EFAULT`。`chg_fmd` |
   | 165 | 属性変更 | `x0`=LINK, `x1`=1〜8（SETRONLY, RSTRONLY, SETPERM, RSTPERM, SETA1, RSTA1, SETA2, RSTA2） | 0／`-EACCES`・`-EROFS`・`-EINVAL`。`chg_fat` |
@@ -249,7 +271,7 @@
   | 170 | 既定モード設定 | `x0`=DA_MODE（16 B: 所有者, グループ, 公開, グループ番号, f_gacc×4） | 0／`-EINVAL`・`-EFAULT`。`set_dfm` |
   | 176 | 時刻取 | `x0`=STIME の書き先（窓内の書込可能な 4 B）, `x1`=TIMEZONE の書き先（12 B） | 0／`-EFAULT`。QEMU virt の PL031 RTC を 1985-01-01 起点の秒数に換算。`get_tim` |
   | 177 | 複写出 | `x0`=宛（書込可能な窓内）, `x1`=元（窓内）, `x2`=長（`令長限` 以下） | 0／`-EFAULT`（何も書かない）。構造体を民へ返すときの複製検査の共通部品（互換層が作業域で組み立てて呼ぶ） |
-  | 178 | 時刻設 | `x0`=STIME（0 なら変えない）, `x1`=TIMEZONE（0 なら変えない。12 B） | 0／`-EACCES`（利用者レベルが 0 でない）・`-EINVAL`（adjust が ±43200、dst_adj が ±720 の外）・`-EFAULT`。検査を終えてから書く。`set_tim` |
+  | 178 | 時刻設 | `x0`=STIME（≦ 0 なら変えない）, `x1`=TIMEZONE（0 なら変えない。12 B） | 0／`-EACCES`（利用者レベルが 0 でない）・`-EINVAL`（adjust が ±43200、dst_adj が ±720 の外）・`-EFAULT`。検査を終えてから書く。`set_tim` |
 - `読込`（番10）は**書込系漢令**の最初の例で、UART 受信 FIFO（`UART_FR` の RXFE
   ビットで空きを判定し `UART_DR` を読む）から、今ある分だけを検証済みの民の窓
   バッファへ書く。殻（シェル）の入力経路になる。呼び出し側は改行まで繰り返し

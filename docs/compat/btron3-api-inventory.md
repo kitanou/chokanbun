@@ -15,25 +15,25 @@
 
 | 章 | 節 | ページ | 関数数 | 状態 |
 |---|---|---|---|---|
-| 2 ドローイングプリミティブ | 2.3 基本関数（描画環境・色・クリップ・座標） | dp/basic_func | 37 | 未実装 |
+| 2 ディスプレイプリミティブ | 2.3 基本関数（描画環境・色・クリップ・座標） | dp/basic_func | 37 | 未実装 |
 | | 2.4 図形描画関数 | dp/figure_func | 42 | 未実装 |
 | | 2.5 文字（列）描画関数 | dp/character_func | 20 | 未実装 |
 | | 2.6 ポインタ制御関数 | dp/pointer_func | 6 | 未実装 |
 | | 2.1 概要・2.2 基本概念 | dp/intro, basic_concept | （関数なし。データ型・概念） | 未調査 |
-| 3 シェル | 3.1 ウィンドウマネージャ | shell/window | 51 | 未実装 |
+| 3 外殻（シェル） | 3.1 ウィンドウマネージャ | shell/window | 51 | 未実装 |
 | | 3.2 メニューマネージャ | shell/menu | 15 | 未実装 |
 | | 3.3 パーツマネージャ | shell/parts | 33 | 未実装 |
 | | 3.4 パネルマネージャ | shell/panel | 12 | 未実装 |
-| | 3.5 トレイマネージャ | shell/tray | 10 | 未実装 |
+| | 3.5 トレーマネージャ | shell/tray | 10 | 未実装 |
 | | 3.6 データマネージャ | shell/data | 7 | 未実装 |
-| | 3.7 テキスト入力パーツ | shell/tip | 8 | 未実装 |
-| | 3.8 アプリケーションマネージャ（仮身・実身） | shell/omgr | 60 | 未実装 |
+| | 3.7 テキスト入力プリミティブ | shell/tip | 8 | 未実装 |
+| | 3.8 実身／仮身マネージャ（仮身・実身） | shell/omgr | 60 | 未実装 |
 | | 3.9 フォントマネージャ | shell/font_mgr | 14 | 未実装 |
 | | 3.10 TCP/IP マネージャ | shell/tcpip | 28 | 未実装 |
-| | 3.11 プリントマネージャ | shell/printmgr | 9 | 未実装 |
+| | 3.11 印刷マネージャ | shell/printmgr | 9 | 未実装 |
 | **合計** | | | **約 352** | |
 
-## 第2章 ドローイングプリミティブ
+## 第2章 ディスプレイプリミティブ
 
 ### 2.3 基本関数（37）
 
@@ -93,7 +93,7 @@
 
 `pcre_pnl` `popn_pnl` `pdel_pnl` `pact_pnl` `pget_itm` `pset_itm` `psel_box` `pget_gid` `pact_err` `pdsp_msg` `pdsp_tim` `pact_msg`
 
-### 3.5 トレイマネージャ（10）
+### 3.5 トレーマネージャ（10）
 
 `topn_tra` `tcls_tra` `tpsh_dat` `tpop_dat` `tdel_dat` `tsel_dat` `tmov_dat` `tget_sts` `tset_dat` `tget_dat`
 
@@ -101,11 +101,11 @@
 
 `dopn_dat` `dcls_dat` `dget_dtp` `dget_siz` `dget_num` `ddef_dat` `ddef_ldt`
 
-### 3.7 テキスト入力パーツ（8）
+### 3.7 テキスト入力プリミティブ（8）
 
 `ichg_mod` `ichg_lrn` `iopn_tip` `icls_tip` `iput_key` `iput_str` `ichg_blk` `idsp_car`
 
-### 3.8 アプリケーションマネージャ（60）
+### 3.8 実身／仮身マネージャ（60）
 
 | 群 | 関数 |
 |---|---|
@@ -126,7 +126,7 @@
 
 `so_start` `so_finish` `so_socket` `so_bind` `so_listen` `so_accept` `so_connect` `so_close` `so_shutdown` `so_read` `so_write` `so_recv` `so_recvfrom` `so_recvmsg` `so_send` `so_sendto` `so_sendmsg` `so_select` `so_fcntl` `so_ioctl` `so_getsockopt` `so_setsockopt` `so_getsockname` `so_getpeername` `so_gethostbyname` `so_gethostbyaddr` `so_gethostname` `so_sethostname`
 
-### 3.11 プリントマネージャ（9）
+### 3.11 印刷マネージャ（9）
 
 `rset_par` `rprn_fil` `rout_fil` `rpvw_fil` `rcan_ent` `rget_ent` `rlst_prn` `rget_cnf` `rset_cnf`
 

@@ -197,7 +197,12 @@ sh tools/mkimage.sh user/pian_test.mkn "$OUT/pian_test.zo" "$OUT" 2>"$OUT/user_p
         fail "user: 篇藏の試験 篇試 を漢像にビルド"
         sed 's/^/      /' "$OUT/user_pian_test.build.log" | head -10
     }
-sh tools/gen-images.sh "$OUT/kernel_images.S" 問安="$OUT/hello.zo" 數="$OUT/count.zo" 識試="$OUT/btron_gtid.zo" 名試="$OUT/btron_gname.zo" 時試="$OUT/btron_clk.zo" 信試="$OUT/btron_msg.zo" 利試="$OUT/btron_usr.zo" 強試="$OUT/btron_term.zo" 同試="$OUT/btron_sync.zo" 緩試="$OUT/btron_comm.zo" 録試="$OUT/btron_file.zo" 篇試="$OUT/pian_test.zo" \
+sh tools/mkimage.sh user/btron_mem.mkn "$OUT/btron_mem.zo" "$OUT" 2>"$OUT/user_btron_mem.build.log" \
+    && pass "user: BTRON3 互換層の試験 貯試 (1.5 メモリ管理 get_mbk/rel_mbk/mbk_sts) を漢像にビルド" || {
+        fail "user: BTRON3 互換層の試験 貯試 を漢像にビルド"
+        sed 's/^/      /' "$OUT/user_btron_mem.build.log" | head -10
+    }
+sh tools/gen-images.sh "$OUT/kernel_images.S" 問安="$OUT/hello.zo" 數="$OUT/count.zo" 識試="$OUT/btron_gtid.zo" 名試="$OUT/btron_gname.zo" 時試="$OUT/btron_clk.zo" 信試="$OUT/btron_msg.zo" 利試="$OUT/btron_usr.zo" 強試="$OUT/btron_term.zo" 同試="$OUT/btron_sync.zo" 緩試="$OUT/btron_comm.zo" 録試="$OUT/btron_file.zo" 篇試="$OUT/pian_test.zo" 貯試="$OUT/btron_mem.zo" \
     && "$CLANG" --target=aarch64-none-elf -c "$OUT/kernel_images.S" -o "$OUT/kernel_images.o" \
         >"$OUT/kernel_images.log" 2>&1 \
     && pass "kernel: 漢像の埋め込み (像表)" || fail "kernel: 漢像の埋め込み (像表)"
@@ -279,12 +284,13 @@ if [ -f "$OUT/kernel.elf" ]; then
         # Then feed 殻 (shell) commands once 甲 has read that line (M4).
         ( printf 'KANBUN\n' > "$PIPE.in"
           for _ in $(seq 1 60); do grep -q "甲得" "$KLOG" 2>/dev/null && break; sleep 0.25; done
-          printf '響 天下太平\n讀 史記\n怪\n讀 無題\n目\n書 筆記 天地玄黄\n讀 筆記\n書 一二三四五六七八九十壱 x\n書 筆記\n目\n削 筆記\n讀 筆記\n目\n削 筆記\n書 新稿 草\n目\n問安 日月\n數 一 二 三\n識試\n名試\n時試\n信試\n利試\n強試\n同試\n緩試\n録試\n篇試\n章 天地/家/殻章\n移 天地/家/殻章\n在\n書 甲 一二\n改 甲 乙\n讀 乙\n改 甲\n移 ..\n在\n移 天地/典/史記\n移 天地/典\n在\n存在せず 子\n助\n終\n' > "$PIPE.in" ) &
+          printf '響 天下太平\n讀 史記\n怪\n讀 無題\n目\n書 筆記 天地玄黄\n讀 筆記\n書 一二三四五六七八九十壱 x\n書 筆記\n目\n削 筆記\n讀 筆記\n目\n削 筆記\n書 新稿 草\n目\n問安 日月\n數 一 二 三\n識試\n名試\n時試\n信試\n利試\n強試\n同試\n緩試\n録試\n篇試\n貯試\n章 天地/家/殻章\n移 天地/家/殻章\n在\n書 甲 一二\n改 甲 乙\n讀 乙\n改 甲\n移 ..\n在\n移 天地/典/史記\n移 天地/典\n在\n存在せず 子\n助\n終\n' > "$PIPE.in" ) &
         FEEDPID=$!
-        # Wait up to ~30s for the final marker, then stop QEMU.  The generic
-        # timer fires five times (5 × CNTFRQ/40 ≈ 125 ms); the long part is the
-        # BTRON3 file-management test (録試), which grows with every stage.
-        for _ in $(seq 1 60); do
+        # Wait up to ~40s for the final marker, then stop QEMU.  The generic
+        # timer fires five times (5 × CNTFRQ/40 ≈ 125 ms); the long parts are the
+        # BTRON3 file-management test (録試) and the memory test (貯試), which
+        # grows with every stage (3 つの子を起動して回収する).
+        for _ in $(seq 1 80); do
             grep -q "殻終" "$KLOG" 2>/dev/null && grep -q "民務終了 行程=0x0000000000000000" "$KLOG" 2>/dev/null && break
             sleep 0.5
         done
@@ -582,11 +588,11 @@ if [ -f "$OUT/kernel.elf" ]; then
             grep -a '子行程\|異常' "$KLOG" 2>/dev/null | sed 's/^/      /' | head
         fi
         K_CH="$(grep -ac '子行程起動' "$KLOG" 2>/dev/null)"
-        # 子の出力 = 検証 21 + 殻の 問安 1 + 篇試 が術のパスで起動する 問安 1
-        if [ "${K_CH:-0}" -eq 23 ]; then
-            pass "kernel qemu: 起動・回収を 20 回繰り返しても頁が漏れず、毎回子が走る (子の出力 23 回 = 検証 21 + 殻 1 + 篇試 1)"
+        # 子の出力 = 検証 21 + 殻の 問安 1 + 篇試 が術のパスで起動する 問安 1 + 貯試 が起動する 3 役
+        if [ "${K_CH:-0}" -eq 26 ]; then
+            pass "kernel qemu: 起動・回収を 20 回繰り返しても頁が漏れず、毎回子が走る (子の出力 26 回 = 検証 21 + 殻 1 + 篇試 1 + 貯試 3)"
         else
-            fail "kernel qemu: 起動・回収の繰り返し (子の出力=${K_CH:-0} 回、期待 23)"
+            fail "kernel qemu: 起動・回収の繰り返し (子の出力=${K_CH:-0} 回、期待 26)"
         fi
         # --- M5/P2: 殻が外部命令を起動する (引数 argc/argv と柄の継承) ----------------
         if grep -aq '^子行程起動 日月' "$KLOG" 2>/dev/null; then
@@ -618,6 +624,15 @@ if [ -f "$OUT/kernel.elf" ]; then
             fail "kernel qemu: BTRON3 互換層 (不一致:$BTRON_BAD)"
             grep -a '識試' "$KLOG" 2>/dev/null | sed 's/^/      /'
         fi
+        # --- #42 M6: メモリ管理 (1.5) get_mbk / rel_mbk / mbk_sts ----------------------
+        MB_N="$(grep -ac '^貯試 ' "$KLOG" 2>/dev/null)"
+        MB_BAD="$(grep -a '^貯試 ' "$KLOG" 2>/dev/null | grep -vc '0x0000000000000001$')"
+        if [ "${MB_N:-0}" -eq 45 ] && [ "${MB_BAD:-1}" -eq 0 ]; then
+            pass "kernel qemu: BTRON3 互換層 メモリ管理 (get_mbk・rel_mbk・mbk_sts・malloc 族・共有・システム・DELEXIT 権限・枯渇の ${MB_N} 項目)"
+        else
+            fail "kernel qemu: BTRON3 互換層 メモリ管理 (項目=${MB_N:-0}/45、失敗=${MB_BAD:-?})"
+            grep -a '^貯試 ' "$KLOG" 2>/dev/null | sed 's/^/      /'
+        fi
         # --- 篇藏 F1〜F3 (#6): 篇ID・屬、章とパス、名替、權・志・器・術・法 ---------------
         PF_N="$(grep -ac '^篇試 ' "$KLOG" 2>/dev/null)"
         PF_BAD="$(grep -a '^篇試 ' "$KLOG" 2>/dev/null | grep -vc '0x0000000000000001$')"
@@ -635,10 +650,10 @@ if [ -f "$OUT/kernel.elf" ]; then
         # --- #42 1.6 B1: ファイル管理の接続とパス解決 ----------------------------------
         FL_N="$(grep -ac '^録試 ' "$KLOG" 2>/dev/null)"
         FL_BAD="$(grep -a '^録試 ' "$KLOG" 2>/dev/null | grep -vc '0x0000000000000001$')"
-        if [ "${FL_N:-0}" -eq 86 ] && [ "${FL_BAD:-1}" -eq 0 ]; then
+        if [ "${FL_N:-0}" -eq 96 ] && [ "${FL_BAD:-1}" -eq 0 ]; then
             pass "kernel qemu: BTRON3 互換層 ファイル管理 B1・B2 (接続・get_lnk・chg_wrk・作成・削除・開閉・状態の ${FL_N} 項目)"
         else
-            fail "kernel qemu: BTRON3 互換層 ファイル管理 B1 (項目=${FL_N:-0}/86、失敗=${FL_BAD:-?})"
+            fail "kernel qemu: BTRON3 互換層 ファイル管理 B1 (項目=${FL_N:-0}/96、失敗=${FL_BAD:-?})"
             grep -a '^録試 ' "$KLOG" 2>/dev/null | sed 's/^/      /'
         fi
         # --- #42 G6b: メッセージバッファとランデブポート (1.3) ------------------------
