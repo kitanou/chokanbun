@@ -660,10 +660,10 @@ if [ -f "$OUT/kernel.elf" ]; then
         # --- M7b: デバイス管理 (1.8) 漢令 212〜220 -----------------------------------
         DV_N="$(grep -ac '^設試 ' "$KLOG" 2>/dev/null)"
         DV_BAD="$(grep -a '^設試 ' "$KLOG" 2>/dev/null | grep -vc '0x0000000000000001$')"
-        if [ "${DV_N:-0}" -eq 90 ] && [ "${DV_BAD:-1}" -eq 0 ]; then
+        if [ "${DV_N:-0}" -eq 93 ] && [ "${DV_BAD:-1}" -eq 0 ]; then
             pass "kernel qemu: BTRON3 互換層 デバイス管理 (opn_dev・cls_dev・rea_dev・wri_dev・chg_dmd・dev_sts・get_dev・lst_dev・sus_dev の ${DV_N} 項目)"
         else
-            fail "kernel qemu: BTRON3 互換層 デバイス管理 (項目=${DV_N:-0}/90、失敗=${DV_BAD:-?})"
+            fail "kernel qemu: BTRON3 互換層 デバイス管理 (項目=${DV_N:-0}/93、失敗=${DV_BAD:-?})"
             grep -a '^設試 ' "$KLOG" 2>/dev/null | grep -av '0x0000000000000001$' | sed 's/^/      /' | head -40
         fi
         # --- M7c: システム管理 (1.10) 漢令 179〜180 ----------------------------------
@@ -692,10 +692,10 @@ if [ -f "$OUT/kernel.elf" ]; then
         # --- #42 1.6 B1: ファイル管理の接続とパス解決 ----------------------------------
         FL_N="$(grep -ac '^録試 ' "$KLOG" 2>/dev/null)"
         FL_BAD="$(grep -a '^録試 ' "$KLOG" 2>/dev/null | grep -vc '0x0000000000000001$')"
-        if [ "${FL_N:-0}" -eq 114 ] && [ "${FL_BAD:-1}" -eq 0 ]; then
+        if [ "${FL_N:-0}" -eq 115 ] && [ "${FL_BAD:-1}" -eq 0 ]; then
             pass "kernel qemu: BTRON3 互換層 ファイル管理 B1・B2 (接続・get_lnk・chg_wrk・作成・削除・開閉・状態の ${FL_N} 項目)"
         else
-            fail "kernel qemu: BTRON3 互換層 ファイル管理 B1 (項目=${FL_N:-0}/114、失敗=${FL_BAD:-?})"
+            fail "kernel qemu: BTRON3 互換層 ファイル管理 B1 (項目=${FL_N:-0}/115、失敗=${FL_BAD:-?})"
             grep -a '^録試 ' "$KLOG" 2>/dev/null | sed 's/^/      /'
         fi
         # --- #42 G6b: メッセージバッファとランデブポート (1.3) ------------------------
