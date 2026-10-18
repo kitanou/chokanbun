@@ -51,10 +51,11 @@ test: $(BIN)
 
 run: test
 	@echo "=== Running QEMU (漢極 kernel) ==="
-	@test -f tests/output/disk.img || dd if=/dev/zero of=tests/output/disk.img bs=512 count=64 2>/dev/null
+	@# 殻の 同 で篇藏を保存すると、再起動で戻る。make test が作り直さないイメージ (make clean で消える)。
+	@test -f tests/output/run-disk.img || dd if=/dev/zero of=tests/output/run-disk.img bs=512 count=4096 2>/dev/null
 	qemu-system-aarch64 -M virt,gic-version=2 -cpu cortex-a57 -nographic -serial mon:stdio \
 		-global virtio-mmio.force-legacy=false \
-		-drive file=tests/output/disk.img,if=none,format=raw,id=hd0 -device virtio-blk-device,drive=hd0 \
+		-drive file=tests/output/run-disk.img,if=none,format=raw,id=hd0 -device virtio-blk-device,drive=hd0 \
 		-kernel tests/output/kernel.elf
 
 clean:

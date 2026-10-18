@@ -197,6 +197,11 @@ sh tools/mkimage.sh user/pian_test.mkn "$OUT/pian_test.zo" "$OUT" 2>"$OUT/user_p
         fail "user: 篇藏の試験 篇試 を漢像にビルド"
         sed 's/^/      /' "$OUT/user_pian_test.build.log" | head -10
     }
+sh tools/mkimage.sh user/pian_persist.mkn "$OUT/pian_persist.zo" "$OUT" 2>"$OUT/user_pian_persist.build.log" \
+    && pass "user: 篇藏の永続化の試験 永試 を漢像にビルド" || {
+        fail "user: 篇藏の永続化の試験 永試 を漢像にビルド"
+        sed 's/^/      /' "$OUT/user_pian_persist.build.log" | head -10
+    }
 sh tools/mkimage.sh user/btron_mem.mkn "$OUT/btron_mem.zo" "$OUT" 2>"$OUT/user_btron_mem.build.log" \
     && pass "user: BTRON3 互換層の試験 貯試 (1.5 メモリ管理 get_mbk/rel_mbk/mbk_sts) を漢像にビルド" || {
         fail "user: BTRON3 互換層の試験 貯試 を漢像にビルド"
@@ -217,7 +222,7 @@ sh tools/mkimage.sh user/btron_sys.mkn "$OUT/btron_sys.zo" "$OUT" 2>"$OUT/user_b
         fail "user: BTRON3 互換層の試験 系試 を漢像にビルド"
         sed 's/^/      /' "$OUT/user_btron_sys.build.log" | head -10
     }
-sh tools/gen-images.sh "$OUT/kernel_images.S" 問安="$OUT/hello.zo" 數="$OUT/count.zo" 識試="$OUT/btron_gtid.zo" 名試="$OUT/btron_gname.zo" 時試="$OUT/btron_clk.zo" 信試="$OUT/btron_msg.zo" 利試="$OUT/btron_usr.zo" 強試="$OUT/btron_term.zo" 同試="$OUT/btron_sync.zo" 緩試="$OUT/btron_comm.zo" 録試="$OUT/btron_file.zo" 篇試="$OUT/pian_test.zo" 貯試="$OUT/btron_mem.zo" 件試="$OUT/btron_evt.zo" 設試="$OUT/btron_dev.zo" 系試="$OUT/btron_sys.zo" \
+sh tools/gen-images.sh "$OUT/kernel_images.S" 問安="$OUT/hello.zo" 數="$OUT/count.zo" 識試="$OUT/btron_gtid.zo" 名試="$OUT/btron_gname.zo" 時試="$OUT/btron_clk.zo" 信試="$OUT/btron_msg.zo" 利試="$OUT/btron_usr.zo" 強試="$OUT/btron_term.zo" 同試="$OUT/btron_sync.zo" 緩試="$OUT/btron_comm.zo" 録試="$OUT/btron_file.zo" 篇試="$OUT/pian_test.zo" 永試="$OUT/pian_persist.zo" 貯試="$OUT/btron_mem.zo" 件試="$OUT/btron_evt.zo" 設試="$OUT/btron_dev.zo" 系試="$OUT/btron_sys.zo" \
     && "$CLANG" --target=aarch64-none-elf -c "$OUT/kernel_images.S" -o "$OUT/kernel_images.o" \
         >"$OUT/kernel_images.log" 2>&1 \
     && pass "kernel: 漢像の埋め込み (像表)" || fail "kernel: 漢像の埋め込み (像表)"
@@ -876,6 +881,81 @@ if [ -f "$OUT/kernel.elf" ]; then
         else
             fail "kernel qemu: 両行程が 終行程 で終了し EL1 へ復歸"
             sed 's/^/      /' "$KLOG" 2>/dev/null | head -20
+        fi
+        # --- 篇藏の永続化 (docs/design-persistence.md): 書いて 篇同 → 再起動 → 読める。壊れたスロットは使わない -------
+        # 同じディスクイメージ (2304 区画) で 5 回起動し、そのたびに殻へ命令を流して 殻終 を待つ。
+        PERSIST_IMG="$OUT/persist.img"
+        PERSIST_PIPE="$OUT/persist_serial"
+        dd if=/dev/zero of="$PERSIST_IMG" bs=512 count=2304 2>/dev/null
+        pian_boot() {  # $1 = ログ、$2 = 殻に流す命令 (改行区切り)
+            local plog="$1" pcmds="$2" pq pc pf
+            rm -f "$PERSIST_PIPE.in" "$PERSIST_PIPE.out" "$plog"
+            mkfifo "$PERSIST_PIPE.in" "$PERSIST_PIPE.out"
+            cat "$PERSIST_PIPE.out" > "$plog" &
+            pc=$!
+            qemu-system-aarch64 -M virt,gic-version=2 -cpu cortex-a57 -nographic \
+                -global virtio-mmio.force-legacy=false \
+                -drive file="$PERSIST_IMG",if=none,format=raw,id=hd0 -device virtio-blk-device,drive=hd0 \
+                -serial "pipe:$PERSIST_PIPE" -kernel "$OUT/kernel.elf" \
+                >"$OUT/persist_qemu.console.log" 2>&1 &
+            pq=$!
+            ( printf 'KANBUN\n' > "$PERSIST_PIPE.in"
+              for _ in $(seq 1 60); do grep -q "甲得" "$plog" 2>/dev/null && break; sleep 0.25; done
+              printf '%s' "$pcmds" > "$PERSIST_PIPE.in" ) &
+            pf=$!
+            for _ in $(seq 1 80); do
+                grep -q "殻終" "$plog" 2>/dev/null && break
+                sleep 0.5
+            done
+            kill "$pq" 2>/dev/null
+            wait "$pq" 2>/dev/null
+            wait "$pc" 2>/dev/null
+            kill "$pf" 2>/dev/null
+            wait "$pf" 2>/dev/null
+        }
+        persist_ok() {  # $1 = ログ、$2 = 「永試 」の後の目印。その行が成功 (…01) か
+            grep -a "^永試 $2" "$1" 2>/dev/null | grep -q '0x0000000000000001$'
+        }
+        pian_boot "$OUT/persist1.log" $'永試 W\n終\n'
+        P1_HDR="$(od -An -v -tx1 -j 32768 -N 4 "$PERSIST_IMG" | tr -s ' ' | sed 's/^ //; s/ $//')"
+        if persist_ok "$OUT/persist1.log" 'W:' && [ "$P1_HDR" = "50 49 41 4e" ]; then
+            pass "kernel qemu: 篇同 で篇藏の状態がスロット A のヘッダ (PIAN) としてディスクに届く"
+        else
+            fail "kernel qemu: 篇同 の書込み (ヘッダ='$P1_HDR')"
+            grep -a '永試' "$OUT/persist1.log" 2>/dev/null | sed 's/^/      /' | head -5
+        fi
+        pian_boot "$OUT/persist2.log" $'永試 R\n永試 O\n終\n'
+        P2_HDR="$(od -An -v -tx1 -j 573440 -N 4 "$PERSIST_IMG" | tr -s ' ' | sed 's/^ //; s/ $//')"
+        if persist_ok "$OUT/persist2.log" 'R:' && grep -aq '篇戻 世代=0x0000000000000001' "$OUT/persist2.log" && persist_ok "$OUT/persist2.log" 'O:' && [ "$P2_HDR" = "50 49 41 4e" ]; then
+            pass "kernel qemu: 再起動のあとスロット A (世代 1) から戻り、書いた内容を読める。開いたままの 篇同 はスロット B (世代 2) へ"
+        else
+            fail "kernel qemu: 再起動後の読み戻しとスロット B への書込み (ヘッダ='$P2_HDR')"
+            grep -a '永試\|篇戻' "$OUT/persist2.log" 2>/dev/null | sed 's/^/      /' | head -6
+        fi
+        pian_boot "$OUT/persist3.log" $'永試 R\n永試 D\n同\n終\n'
+        if persist_ok "$OUT/persist3.log" 'R:' && grep -aq '篇戻 世代=0x0000000000000002' "$OUT/persist3.log" && persist_ok "$OUT/persist3.log" 'D:' && grep -aq '殻同 保存した' "$OUT/persist3.log"; then
+            pass "kernel qemu: 世代 2 (スロット B) から戻り、開いたまま保存した篇も削れる (開数は保存した値が残らない)。殻の 同 で世代 3 をスロット A へ保存できる"
+        else
+            fail "kernel qemu: 世代 2 の読み戻しと開数"
+            grep -a '永試\|篇戻' "$OUT/persist3.log" 2>/dev/null | sed 's/^/      /' | head -6
+        fi
+        # スロット B のヘッダは無傷のまま、データの区画 1 つ (表の先頭) を壊す → データのチェックサムが合わず、(殻の 同 で書いた) 世代 3 のスロット A から戻る
+        printf '\377\377\377\377' | dd of="$PERSIST_IMG" bs=1 seek=$((1121 * 512)) conv=notrunc 2>/dev/null
+        pian_boot "$OUT/persist4.log" $'永試 R\n終\n'
+        if persist_ok "$OUT/persist4.log" 'R:' && grep -aq '篇戻 世代=0x0000000000000003' "$OUT/persist4.log"; then
+            pass "kernel qemu: ヘッダが無傷でもデータの区画が壊れたスロット B は使わず、世代 3 のスロット A から戻る (データのチェックサム)"
+        else
+            fail "kernel qemu: 壊れたデータのスロットを避けて戻れない"
+            grep -a '永試\|篇戻' "$OUT/persist4.log" 2>/dev/null | sed 's/^/      /' | head -6
+        fi
+        # スロット A のヘッダも壊す → どちらも使えず、初期化した状態で起動する
+        dd if=/dev/zero of="$PERSIST_IMG" bs=512 seek=64 count=1 conv=notrunc 2>/dev/null
+        pian_boot "$OUT/persist5.log" $'永試 N\n終\n'
+        if persist_ok "$OUT/persist5.log" 'N:' && ! grep -aq '篇戻' "$OUT/persist5.log"; then
+            pass "kernel qemu: どのスロットも使えないときは初期化した状態で起動する (篇「永」は無い)"
+        else
+            fail "kernel qemu: 両スロットが使えないときの起動"
+            grep -a '永試\|篇戻' "$OUT/persist5.log" 2>/dev/null | sed 's/^/      /' | head -6
         fi
     else
         echo "SKIP: kernel qemu (qemu-system-aarch64 not found)"
