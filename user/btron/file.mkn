@@ -117,6 +117,14 @@
 常「F_SFILE」之無符六四 為 0x4000
 常「F_SNAME」之無符六四 為 0x2000
 常「F_SATR1」之無符六四 為 0x1000
+常「F_SATR2」之無符六四 為 0x0800
+常「F_SATR3」之無符六四 為 0x0400
+常「F_SATR4」之無符六四 為 0x0200
+常「F_SATR5」之無符六四 為 0x0100
+常「F_GETDEV」之無符六四 為 0xFFFFFFFF   註 lst_fls: 接続名からデバイス名 (W の -1)
+常「F_GETNAM」之無符六四 為 0xFFFFFFFE   註 lst_fls: デバイス名から接続名 (W の -2)
+常「F_JPN」之無符六四 為 0x0021          註 FS_STATE の fs_lang (日本語)
+常「F_ENG」之無符六四 為 0x0080          註 同 (英語)
 常「F_TOPEND」之無符六四 為 0x0004
 常「F_BWD」之無符六四 為 0x0002
 常「F_NBWD」之無符六四 為 0x0003
