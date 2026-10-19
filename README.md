@@ -109,6 +109,8 @@ qemu-system-aarch64 -M virt,gic-version=2 -cpu cortex-a57 -nographic \
 
 ## 設計文書
 
+- [操作マニュアル（試作版）](docs/operation-manual.md)
+
 - [全体構成](docs/architecture.md)
 - [機械漢文言語仕様草案](docs/language-spec.md)
 - [AArch64 ABI・ブート方針・漢令一覧](docs/abi-aarch64.md)
