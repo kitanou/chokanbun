@@ -702,10 +702,10 @@ if [ -f "$OUT/kernel.elf" ]; then
         # --- 3.8 実身／仮身マネージャ (docs/design-object-model.md) V1a: 登録簿 -----------------
         OM_N="$(grep -ac '^実試 ' "$KLOG" 2>/dev/null)"
         OM_BAD="$(grep -a '^実試 ' "$KLOG" 2>/dev/null | grep -vc '0x0000000000000001$')"
-        if [ "${OM_N:-0}" -eq 48 ] && [ "${OM_BAD:-1}" -eq 0 ]; then
+        if [ "${OM_N:-0}" -eq 49 ] && [ "${OM_BAD:-1}" -eq 0 ]; then
             pass "kernel qemu: BTRON3 互換層 実身／仮身マネージャの登録簿・実身の操作・続柄 (oreg_vob ほか V1a・V1b・V2・V3・V4a の ${OM_N} 項目)"
         else
-            fail "kernel qemu: BTRON3 互換層 実身／仮身マネージャの登録簿と実身の操作 (項目=${OM_N:-0}/48、失敗=${OM_BAD:-?})"
+            fail "kernel qemu: BTRON3 互換層 実身／仮身マネージャの登録簿と実身の操作 (項目=${OM_N:-0}/49、失敗=${OM_BAD:-?})"
             grep -a '^実試 ' "$KLOG" 2>/dev/null | grep -av '0x0000000000000001$' | sed 's/^/      /' | head -40
         fi
         SV_N="$(grep -ac '^系試 ' "$KLOG" 2>/dev/null)"
