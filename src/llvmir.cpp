@@ -4,6 +4,8 @@
 #include <sstream>
 #include <cstring>
 #include <cctype>
+#include <cstdint>
+#include <limits>
 
 namespace chokanbun {
 
@@ -35,6 +37,29 @@ static std::string fnSymbol(const FunctionDecl& fn) {
 static std::string valueOnly(const std::string& v) {
     auto p = v.find(' ');
     return p == std::string::npos ? v : v.substr(p + 1);
+}
+
+// Integer-constant helpers. A constant is kept as its low `bits` bits; signed
+// formatting/division sign-extends it from the declared integer width.
+static uint64_t intMask(unsigned bits) {
+    return bits >= 64 ? ~uint64_t(0) : ((uint64_t(1) << bits) - 1);
+}
+
+static unsigned intBits(const TypePtr& t) {
+    if (!t || !t->isInteger()) return 64;
+    unsigned bits = static_cast<unsigned>(t->sizeBytes() * 8);
+    return bits == 0 ? 64 : bits;
+}
+
+static uint64_t truncBits(uint64_t v, const TypePtr& t) {
+    return v & intMask(intBits(t));
+}
+
+static int64_t signExtendBits(uint64_t v, unsigned bits) {
+    v &= intMask(bits);
+    if (bits >= 64) return static_cast<int64_t>(v);
+    uint64_t sign = uint64_t(1) << (bits - 1);
+    return static_cast<int64_t>((v ^ sign) - sign);
 }
 
 static std::string escapeIrBytes(const std::string& s) {
@@ -528,10 +553,10 @@ std::string LLVMIRGen::genUnaryOp(const ExprPtr& e) {
     std::string operand = genExpr(e->operand);
     if (e->unaryOp == "負") {
         std::string result = freshName("neg");
-        // Determine if signed or unsigned
-        // For now, use neg (which works for both in LLVM)
-        emit("%" + result + " = neg " + operand);
-        return operand.substr(0, operand.find(' ')) + " %" + result;
+        // LLVM has no `neg` instruction. Negation is 0 - operand.
+        std::string type = operand.substr(0, operand.find(' '));
+        emit("%" + result + " = sub " + type + " 0, " + valueOnly(operand));
+        return type + " %" + result;
     }
     if (e->unaryOp == "非") {
         std::string result = freshName("not");
@@ -733,16 +758,171 @@ void LLVMIRGen::genAlias(const AliasDecl& a) {
 }
 
 void LLVMIRGen::genConstant(const ConstantDecl& c) {
-    // Fold simple constant literals so 常 can be used in expressions.
-    std::string lit = "0";
-    if (c.value) {
-        if (c.value->kind == Expr::Kind::IntegerLit) {
-            lit = (c.value->isNegative ? "-" : "") + std::to_string(c.value->intValue);
-        } else if (c.value->kind == Expr::Kind::BoolLit) {
-            lit = c.value->boolValue ? "true" : "false";
+    // Fold integer, boolean, and null constant expressions at compile time so
+    // `常` can be used from any function without emitting an initializer.
+    uint64_t bits = 0;
+    std::string lit;
+    if (c.value && evalConst(c.value, bits)) {
+        lit = constLiteral(c.type, bits);
+    } else {
+        if (c.value) {
+            error(c.line, c.col, "E0001",
+                "constant " + c.name + " is not an integer, boolean, or null constant expression");
         }
+        lit = constLiteral(c.type, 0);
     }
     constants_[c.name] = {c.type, lit};
+}
+
+bool LLVMIRGen::evalConst(const ExprPtr& e, uint64_t& out, int depth) const {
+    if (!e || depth > 128) return false;
+
+    switch (e->kind) {
+        case Expr::Kind::IntegerLit: {
+            uint64_t v = e->intValue;
+            if (e->isNegative) v = 0 - v;
+            out = truncBits(v, typeOfExpr(e));
+            return true;
+        }
+        case Expr::Kind::BoolLit:
+            out = e->boolValue ? 1 : 0;
+            return true;
+        case Expr::Kind::NullLit:
+            out = 0;
+            return true;
+        case Expr::Kind::Ident: {
+            auto it = constDecls_.find(e->identName);
+            if (it == constDecls_.end() || !it->second || !it->second->value) return false;
+            return evalConst(it->second->value, out, depth + 1);
+        }
+        case Expr::Kind::UnaryOp: {
+            uint64_t v = 0;
+            if (!evalConst(e->operand, v, depth + 1)) return false;
+            TypePtr t = typeOfExpr(e);
+            if (e->unaryOp == "負") {
+                out = truncBits(0 - v, t);
+                return true;
+            }
+            if (e->unaryOp == "位非") {
+                out = truncBits(~v, t);
+                return true;
+            }
+            if (e->unaryOp == "非") {
+                out = (v == 0) ? 1 : 0;
+                return true;
+            }
+            return false;
+        }
+        case Expr::Kind::BinOp: {
+            uint64_t a = 0, b = 0;
+            if (!evalConst(e->left, a, depth + 1)) return false;
+            if (!evalConst(e->right, b, depth + 1)) return false;
+
+            const std::string& op = e->opText;
+            TypePtr t = typeOfExpr(e);
+            TypePtr ot = typeOfExpr(e->left);
+            unsigned bits = intBits(ot);
+
+            if (op == "且" || op == "或") {
+                bool av = a != 0, bv = b != 0;
+                out = (op == "且") ? (av && bv) : (av || bv);
+                return true;
+            }
+
+            if (op == "等於" || op == "不等" || op == "小於" ||
+                op == "小等" || op == "大於" || op == "大等") {
+                a = truncBits(a, ot);
+                b = truncBits(b, ot);
+                bool c = false;
+                if (op == "等於") c = a == b;
+                else if (op == "不等") c = a != b;
+                else if (ot && ot->isSigned()) {
+                    int64_t sa = signExtendBits(a, bits);
+                    int64_t sb = signExtendBits(b, bits);
+                    if (op == "小於") c = sa < sb;
+                    else if (op == "小等") c = sa <= sb;
+                    else if (op == "大於") c = sa > sb;
+                    else c = sa >= sb;
+                } else {
+                    if (op == "小於") c = a < b;
+                    else if (op == "小等") c = a <= b;
+                    else if (op == "大於") c = a > b;
+                    else c = a >= b;
+                }
+                out = c ? 1 : 0;
+                return true;
+            }
+
+            uint64_t r = 0;
+            if (op == "加") r = a + b;
+            else if (op == "減") r = a - b;
+            else if (op == "乘") r = a * b;
+            else if (op == "位與") r = a & b;
+            else if (op == "位異") r = a ^ b;
+            else if (op == "位或") r = a | b;
+            else if (op == "除" || op == "餘") {
+                if (b == 0) return false;
+                if (ot && ot->isSigned()) {
+                    int64_t sa = signExtendBits(a, bits);
+                    int64_t sb = signExtendBits(b, bits);
+                    if (sb == -1 && sa == std::numeric_limits<int64_t>::min()) return false;
+                    r = (op == "除") ? static_cast<uint64_t>(sa / sb)
+                                     : static_cast<uint64_t>(sa % sb);
+                } else {
+                    r = (op == "除") ? (a / b) : (a % b);
+                }
+            } else if (op == "左移" || op == "右移") {
+                unsigned n = static_cast<unsigned>(b);
+                if (n >= bits) return false;
+                if (op == "左移") r = a << n;
+                else if (ot && ot->isSigned()) {
+                    r = static_cast<uint64_t>(signExtendBits(a, bits) >> n);
+                } else {
+                    r = a >> n;
+                }
+            } else {
+                return false;
+            }
+            out = truncBits(r, t);
+            return true;
+        }
+        case Expr::Kind::Cast: {
+            uint64_t v = 0;
+            if (!evalConst(e->castFrom, v, depth + 1)) return false;
+            if (e->castTo && e->castTo->isInteger()) {
+                out = truncBits(v, e->castTo);
+                return true;
+            }
+            return false;
+        }
+        case Expr::Kind::StrLen: {
+            const Expr* target = e->index.get();
+            if (target && target->kind == Expr::Kind::AddrOf && target->addend) {
+                target = target->addend.get();
+            }
+            if (target && target->kind == Expr::Kind::StringLit) {
+                out = target->strValue.size();
+                return true;
+            }
+            return false;
+        }
+        default:
+            return false;
+    }
+}
+
+std::string LLVMIRGen::constLiteral(const TypePtr& t, uint64_t bits) const {
+    if (t) {
+        if (t->kind == Type::Kind::Bool) return bits ? "true" : "false";
+        if (t->kind == Type::Kind::Pointer) return "null";
+        if (t->isInteger()) {
+            unsigned width = intBits(t);
+            bits &= intMask(width);
+            if (t->isSigned()) return std::to_string(signExtendBits(bits, width));
+            return std::to_string(bits);
+        }
+    }
+    return std::to_string(bits);
 }
 
 void LLVMIRGen::genStruct(const StructDecl& s) {
@@ -768,6 +948,14 @@ std::string LLVMIRGen::generate(const Module& mod, const TypeChecker& tc) {
                 break;
             default:
                 break;
+        }
+    }
+
+    // Register constants before folding so a constant may refer to a later one.
+    constDecls_.clear();
+    for (auto& d : mod.decls) {
+        if (d.kind == Decl::Kind::Constant && d.constant) {
+            constDecls_[d.constant->name] = d.constant.get();
         }
     }
 

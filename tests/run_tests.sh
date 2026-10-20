@@ -1083,6 +1083,19 @@ for f in tests/lang/err/*.mkn; do
         sed 's/^/      /' "$OUT/lang_err_$name.log" | head -5
     fi
 done
+# 定数式の畳み込みと単項 負 が、LLVM の正しい IR (neg ではない) になること。
+if "$LLC" -march=aarch64 -filetype=obj "$OUT/lang_consts.ll" -o "$OUT/lang_consts.o" \
+        >"$OUT/lang_consts.llc.log" 2>&1 \
+    && grep -q 'sub i64 0, 7' "$OUT/lang_consts.ll" \
+    && grep -q -- '-147244780800' "$OUT/lang_consts.ll" \
+    && grep -q 'add i64 7, -5' "$OUT/lang_consts.ll" \
+    && ! grep -qE '(^|[[:space:]])neg[[:space:]]' "$OUT/lang_consts.ll"; then
+    pass "lang ok: consts (定数式の畳み込み・単項 負 -> AArch64 object)"
+else
+    fail "lang ok: consts (定数式の畳み込み・単項 負 -> AArch64 object)"
+    sed 's/^/      /' "$OUT/lang_consts.llc.log" | head -10
+    grep -nE 'neg|147244780800|add i64 7' "$OUT/lang_consts.ll" | sed 's/^/      /' | head -10
+fi
 # 全キーワードが golden テストのどこかで実際に使われていること (言語仕様 §10 条件 1)
 : >"$OUT/lang_tokens.txt"
 for f in tests/lang/ok/*.mkn; do "$BIN" "$f" -tokens 2>/dev/null | awk '{print $2}' >>"$OUT/lang_tokens.txt"; done
