@@ -261,6 +261,7 @@
 
 黄帝紀元（Issue #47）は BTRON3 の外部仕様を置き換えず、その上に置く表示・換算層とする。
 起点・暦規則・Unix 変換・壁時計と単調時計・新漢令 221〜223 は [../design-time.md](../design-time.md) で定義する。
+T1 の純粋な変換・書式化・解析ライブラリ（`user/time.mkn`）と `時元試` 53 項目は実装・検証済み。
 BTRON3 の `get_tim`・`get_tod`・`set_tim`・`set_tod` の STIME と `DATE_TIM` は変更しない。
 **要確認**: ずれの符号の向き（原文要約では「減算」）、`DATE_TIM` の各項目の範囲検査。
 
