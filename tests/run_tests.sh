@@ -163,8 +163,8 @@ sh tools/mkimage.sh user/btron_clk.mkn "$OUT/btron_clk.zo" "$OUT" 2>"$OUT/user_b
         sed 's/^/      /' "$OUT/user_btron_clk.build.log" | head -10
     }
 sh tools/mkimage.sh user/time_test.mkn "$OUT/time_test.zo" "$OUT" 2>"$OUT/user_time_test.build.log" \
-    && pass "user: 黄帝紀元の変換・書式化の試験 時元試 を漢像にビルド" || {
-        fail "user: 黄帝紀元の変換・書式化の試験 時元試 を漢像にビルド"
+    && pass "user: 黄帝紀元の変換・書式化・壁時計の試験 時元試 を漢像にビルド" || {
+        fail "user: 黄帝紀元の変換・書式化・壁時計の試験 時元試 を漢像にビルド"
         sed 's/^/      /' "$OUT/user_time_test.build.log" | head -10
     }
 sh tools/mkimage.sh user/btron_msg.mkn "$OUT/btron_msg.zo" "$OUT" 2>"$OUT/user_btron_msg.build.log" \
@@ -821,10 +821,10 @@ if [ -f "$OUT/kernel.elf" ]; then
         # --- #47 T1: 黄帝紀元の純粋な変換・書式化・解析 ---------------------------
         TN_N="$(grep -ac '^時元試 ' "$KLOG" 2>/dev/null)"
         TN_BAD="$(grep -a '^時元試 ' "$KLOG" 2>/dev/null | grep -vc '0x0000000000000001$')"
-        if [ "${TN_N:-0}" -eq 53 ] && [ "${TN_BAD:-1}" -eq 0 ]; then
-            pass "kernel qemu: 黄帝紀元の変換・書式化・解析 (下限・負の秒・閏年・往復・ER_* の ${TN_N} 項目)"
+        if [ "${TN_N:-0}" -eq 70 ] && [ "${TN_BAD:-1}" -eq 0 ]; then
+            pass "kernel qemu: 黄帝紀元の変換・書式化・解析と壁時計 (下限・負の秒・閏年・往復・ER_*・漢令 221〜223 の ${TN_N} 項目)"
         else
-            fail "kernel qemu: 黄帝紀元の変換・書式化・解析 (項目=${TN_N:-0}/53、失敗=${TN_BAD:-?})"
+            fail "kernel qemu: 黄帝紀元の変換・書式化・解析と壁時計 (項目=${TN_N:-0}/70、失敗=${TN_BAD:-?})"
             grep -a '^時元試 ' "$KLOG" 2>/dev/null | sed 's/^/      /'
         fi
         # --- #42 G1: グローバル名 (cre_nam / del_nam / get_nam) -------------------
