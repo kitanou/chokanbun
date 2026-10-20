@@ -118,6 +118,7 @@ qemu-system-aarch64 -M virt,gic-version=2 -cpu cortex-a57 -nographic \
 - [POSIX 互換方針](docs/posix-compat.md)
 - [行程・外部命令・パイプ・exec/fork の設計](docs/design-process-exec.md)
 - [篇藏 v0.1（ファイル体系）の設計](docs/design-pianfs.md)
+- [時刻体系の設計（黄帝紀元・壁時計・単調時計）](docs/design-time.md)
 - [漢殻コマンド一覧](docs/shell-commands.md)
 - [実装メモ](docs/implementation-notes.md)
 - [開発ロードマップ](docs/roadmap.md)

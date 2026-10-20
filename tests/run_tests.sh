@@ -218,9 +218,14 @@ sh tools/mkimage.sh user/btron_dev.mkn "$OUT/btron_dev.zo" "$OUT" 2>"$OUT/user_b
         sed 's/^/      /' "$OUT/user_btron_dev.build.log" | head -10
     }
 sh tools/mkimage.sh user/btron_omgr.mkn "$OUT/btron_omgr.zo" "$OUT" 2>"$OUT/user_btron_omgr.build.log" \
-    && pass "user: BTRON3 互換層の試験 実試 (3.8 実身／仮身マネージャの登録簿) を漢像にビルド" || {
+    && pass "user: BTRON3 互換層の試験 実試 (3.8 実身／仮身マネージャの登録簿・起動) を漢像にビルド" || {
         fail "user: BTRON3 互換層の試験 実試 を漢像にビルド"
         sed 's/^/      /' "$OUT/user_btron_omgr.build.log" | head -10
+    }
+sh tools/mkimage.sh user/obj_app.mkn "$OUT/obj_app.zo" "$OUT" 2>"$OUT/user_obj_app.build.log" \
+    && pass "user: 起動プロトコルの試験用アプリ objapp を漢像にビルド" || {
+        fail "user: 起動プロトコルの試験用アプリ objapp を漢像にビルド"
+        sed 's/^/      /' "$OUT/user_obj_app.build.log" | head -10
     }
 sh tools/mkimage.sh user/obj.mkn "$OUT/obj.zo" "$OUT" 2>"$OUT/user_obj.build.log" \
     && pass "user: 実身・仮身の漢殻の命令 (実作・仮置・実削・実目・実名) を漢像にビルド" || {
@@ -232,7 +237,7 @@ sh tools/mkimage.sh user/btron_sys.mkn "$OUT/btron_sys.zo" "$OUT" 2>"$OUT/user_b
         fail "user: BTRON3 互換層の試験 系試 を漢像にビルド"
         sed 's/^/      /' "$OUT/user_btron_sys.build.log" | head -10
     }
-sh tools/gen-images.sh "$OUT/kernel_images.S" 問安="$OUT/hello.zo" 數="$OUT/count.zo" 識試="$OUT/btron_gtid.zo" 名試="$OUT/btron_gname.zo" 時試="$OUT/btron_clk.zo" 信試="$OUT/btron_msg.zo" 利試="$OUT/btron_usr.zo" 強試="$OUT/btron_term.zo" 同試="$OUT/btron_sync.zo" 緩試="$OUT/btron_comm.zo" 録試="$OUT/btron_file.zo" 篇試="$OUT/pian_test.zo" 永試="$OUT/pian_persist.zo" 貯試="$OUT/btron_mem.zo" 件試="$OUT/btron_evt.zo" 設試="$OUT/btron_dev.zo" 系試="$OUT/btron_sys.zo" 実試="$OUT/btron_omgr.zo" 実作="$OUT/obj.zo" 仮置="$OUT/obj.zo" 実削="$OUT/obj.zo" 実目="$OUT/obj.zo" 実名="$OUT/obj.zo" \
+sh tools/gen-images.sh "$OUT/kernel_images.S" 問安="$OUT/hello.zo" 數="$OUT/count.zo" 識試="$OUT/btron_gtid.zo" 名試="$OUT/btron_gname.zo" 時試="$OUT/btron_clk.zo" 信試="$OUT/btron_msg.zo" 利試="$OUT/btron_usr.zo" 強試="$OUT/btron_term.zo" 同試="$OUT/btron_sync.zo" 緩試="$OUT/btron_comm.zo" 録試="$OUT/btron_file.zo" 篇試="$OUT/pian_test.zo" 永試="$OUT/pian_persist.zo" 貯試="$OUT/btron_mem.zo" 件試="$OUT/btron_evt.zo" 設試="$OUT/btron_dev.zo" 系試="$OUT/btron_sys.zo" 実試="$OUT/btron_omgr.zo" 実作="$OUT/obj.zo" 仮置="$OUT/obj.zo" 実削="$OUT/obj.zo" 実目="$OUT/obj.zo" 実名="$OUT/obj.zo" objapp="$OUT/obj_app.zo" \
     && "$CLANG" --target=aarch64-none-elf -c "$OUT/kernel_images.S" -o "$OUT/kernel_images.o" \
         >"$OUT/kernel_images.log" 2>&1 \
     && pass "kernel: 漢像の埋め込み (像表)" || fail "kernel: 漢像の埋め込み (像表)"
@@ -318,14 +323,17 @@ if [ -f "$OUT/kernel.elf" ]; then
         # Then feed 殻 (shell) commands once 甲 has read that line (M4).
         ( printf 'KANBUN\n' > "$PIPE.in"
           for _ in $(seq 1 60); do grep -q "甲得" "$KLOG" 2>/dev/null && break; sleep 0.25; done
-          printf '響 天下太平\n讀 史記\n怪\n讀 無題\n目\n書 筆記 天地玄黄\n讀 筆記\n書 一二三四五六七八九十壱 x\n書 筆記\n目\n削 筆記\n讀 筆記\n目\n削 筆記\n書 新稿 草\n目\n問安 日月\n數 一 二 三\n識試\n名試\n時試\n信試\n利試\n強試\n同試\n緩試\n録試\n篇試\n貯試\n件試\n設試\n系試\n実試\n章 天地/家/殻章\n移 天地/家/殻章\n在\n書 甲 一二\n改 甲 乙\n讀 乙\n改 甲\n移 ..\n在\n移 天地/典/史記\n移 天地/典\n在\n存在せず 子\n\n終了\n   \n実作 oa\n実作 ob\n実作 abcdefghijklmnopqrst\n実作 abcdefghijklmnopqrstu\n実作 日本\n実作 a/b\n実目\n仮置 oa ob\n実目\n実削 oa\n実目\n実名 ob oc\n実目\n実削 oc\n実目\n助\n終\n' > "$PIPE.in" ) &
+          printf '響 天下太平\n讀 史記\n怪\n讀 無題\n目\n書 筆記 天地玄黄\n讀 筆記\n書 一二三四五六七八九十壱 x\n書 筆記\n目\n削 筆記\n讀 筆記\n目\n削 筆記\n書 新稿 草\n目\n問安 日月\n數 一 二 三\n識試\n名試\n時試\n信試\n利試\n強試\n同試\n緩試\n録試\n篇試\n貯試\n件試\n設試\n系試\n実試\n章 天地/家/殻章\n移 天地/家/殻章\n在\n書 甲 一二\n改 甲 乙\n讀 乙\n改 甲\n移 ..\n在\n移 天地/典/史記\n移 天地/典\n在\n存在せず 子\n\n終了\n   \n実作 oa\n実作 ob\n実作 abcdefghijklmnopqrst\n実作 abcdefghijklmnopqrstu\n実作 日本\n実作 a/b\n実目\n仮置 oa ob\n実目\n実削 oa\n実目\n実名 ob oc\n実目\n実削 oc\n実目\n助\n終\n響 再起\n終\n' > "$PIPE.in" ) &
         FEEDPID=$!
         # Wait up to ~40s for the final marker, then stop QEMU.  The generic
         # timer fires five times (5 × CNTFRQ/40 ≈ 125 ms); the long parts are the
         # BTRON3 file-management test (録試) and the memory test (貯試), which
         # grows with every stage (3 つの子を起動して回収する).
+        # 終 は殻を終えるだけで殻行程 (乙、init 兼殻) は終了しないため、再起動後の
+        # 殻起動・殻響 と 2 回目の 殻終 を最終マーカーにする。
         for _ in $(seq 1 80); do
-            grep -q "殻終" "$KLOG" 2>/dev/null && grep -q "民務終了 行程=0x0000000000000000" "$KLOG" 2>/dev/null && break
+            [ "$(grep -ac "殻終" "$KLOG" 2>/dev/null)" -ge 2 ] 2>/dev/null && \
+                grep -q "殻響:再起" "$KLOG" 2>/dev/null && break
             sleep 0.5
         done
         kill "$QPID" 2>/dev/null
@@ -702,10 +710,10 @@ if [ -f "$OUT/kernel.elf" ]; then
         # --- 3.8 実身／仮身マネージャ (docs/design-object-model.md) V1a: 登録簿 -----------------
         OM_N="$(grep -ac '^実試 ' "$KLOG" 2>/dev/null)"
         OM_BAD="$(grep -a '^実試 ' "$KLOG" 2>/dev/null | grep -vc '0x0000000000000001$')"
-        if [ "${OM_N:-0}" -eq 49 ] && [ "${OM_BAD:-1}" -eq 0 ]; then
-            pass "kernel qemu: BTRON3 互換層 実身／仮身マネージャの登録簿・実身の操作・続柄 (oreg_vob ほか V1a・V1b・V2・V3・V4a の ${OM_N} 項目)"
+        if [ "${OM_N:-0}" -eq 55 ] && [ "${OM_BAD:-1}" -eq 0 ]; then
+            pass "kernel qemu: BTRON3 互換層 実身／仮身マネージャの登録簿・実身の操作・続柄・起動 (oreg_vob ほか V1a・V1b・V2・V3・V4a・V4b-1 の ${OM_N} 項目)"
         else
-            fail "kernel qemu: BTRON3 互換層 実身／仮身マネージャの登録簿と実身の操作 (項目=${OM_N:-0}/49、失敗=${OM_BAD:-?})"
+            fail "kernel qemu: BTRON3 互換層 実身／仮身マネージャの登録簿と実身の操作 (項目=${OM_N:-0}/55、失敗=${OM_BAD:-?})"
             grep -a '^実試 ' "$KLOG" 2>/dev/null | grep -av '0x0000000000000001$' | sed 's/^/      /' | head -40
         fi
         SV_N="$(grep -ac '^系試 ' "$KLOG" 2>/dev/null)"
@@ -822,7 +830,7 @@ if [ -f "$OUT/kernel.elf" ]; then
             fail "kernel qemu: 像の無い命令は 殻不明 (件数=${K_UNK:-0}、期待 3。殻誤=${K_SERR:-0}、期待 3)"
         fi
         # --- 実身・仮身の漢殻の命令 (docs/design-object-model.md V5): 実作・仮置・実削・実目・実名 -------
-        OB_LAST="$(awk '/^実目 ID=0 /{buf=""} /^実目 /{buf=buf $0 "\n"} END{printf "%s", buf}' "$KLOG" 2>/dev/null)"
+        OB_LAST="$(LC_ALL=C awk '/^実目 ID=0 /{buf=""} /^実目 /{buf=buf $0 "\n"} END{printf "%s", buf}' "$KLOG" 2>/dev/null)"
         OB_OK=1
         [ "$(grep -ac '^実作 完 ID=[0-9]* 参照=1$' "$KLOG" 2>/dev/null)" -eq 3 ] || OB_OK=0
         [ "$(grep -ac '^実誤 実作 ' "$KLOG" 2>/dev/null)" -eq 3 ] || OB_OK=0
@@ -914,11 +922,13 @@ if [ -f "$OUT/kernel.elf" ]; then
             fail "kernel qemu: 待機と起床 (甲忙終='${K_SL1:-none}' 甲醒='${K_SL2:-none}' 乙忙終='${K_SL3:-none}')"
             sed 's/^/      /' "$KLOG" 2>/dev/null | head -20
         fi
+        K_BOOT="$(grep -ac "殻起動" "$KLOG" 2>/dev/null)"
         if grep -q "民務終了 行程=0x0000000000000000" "$KLOG" 2>/dev/null && \
-           grep -q "民務終了 行程=0x0000000000000001" "$KLOG" 2>/dev/null; then
-            pass "kernel qemu: 両行程が 終行程 で終了し EL1 へ復歸"
+           ! grep -q "民務終了 行程=0x0000000000000001" "$KLOG" 2>/dev/null && \
+           [ "${K_BOOT:-0}" -ge 2 ] && grep -q "殻響:再起" "$KLOG" 2>/dev/null; then
+            pass "kernel qemu: 甲は 終行程 で終了し、殻行程 (乙) は 終 のあと殻を再起動 (殻起動 ${K_BOOT} 回)"
         else
-            fail "kernel qemu: 両行程が 終行程 で終了し EL1 へ復歸"
+            fail "kernel qemu: 甲は 終行程 で終了し、殻行程 (乙) は 終 のあと殻を再起動 (殻起動 ${K_BOOT:-0} 回)"
             sed 's/^/      /' "$KLOG" 2>/dev/null | head -20
         fi
         # --- 篇藏の永続化 (docs/design-persistence.md): 書いて 篇同 → 再起動 → 読める。壊れたスロットは使わない -------
