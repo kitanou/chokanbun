@@ -75,6 +75,11 @@ private:
     TypePtr typeOfExpr(const ExprPtr& e) const;
     // Materialize an integer literal with the given LLVM type.
     std::string intLiteral(const ExprPtr& e, const TypePtr& t);
+    // Fold an integer/bool/null constant expression. Returns false when the
+    // expression is not a compile-time constant (or is unsupported).
+    bool evalConst(const ExprPtr& e, uint64_t& out, int depth = 0) const;
+    // Format a folded constant for the LLVM IR value in `constants_`.
+    std::string constLiteral(const TypePtr& t, uint64_t bits) const;
 
     // State
     std::string ir_;
@@ -91,6 +96,8 @@ private:
     std::map<std::string, std::pair<TypePtr, std::string>> params_; // name -> (type, ssa)
     std::map<std::string, std::pair<TypePtr, std::string>> globals_; // name -> (type, ssa)
     std::map<std::string, std::pair<TypePtr, std::string>> constants_;
+    // All constant declarations, for forward references while folding.
+    std::map<std::string, const ConstantDecl*> constDecls_;
     std::map<std::string, std::pair<TypePtr, std::string>> strings_; // string literal -> (type, ssa)
     std::map<std::string, std::pair<TypePtr, std::string>> structFields_; // "struct.field" -> (type, offset info)
 
