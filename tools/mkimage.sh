@@ -17,5 +17,11 @@ sh "$ROOT/tools/kernel-expand.sh" "$src" "$work/user_$name.all.mkn"
 "$BIN" "$work/user_$name.all.mkn" -ir -o "$work/user_$name.ll" 2>"$work/user_$name.gen.log"
 "$LLVM_BIN/llc" -march=aarch64 -filetype=obj "$work/user_$name.ll" -o "$work/user_$name.o"
 "$LLVM_BIN/clang" --target=aarch64-none-elf -c "$ROOT/user/crt0.S" -o "$work/user_crt0.o"
-"$LLD_BIN/ld.lld" -T "$ROOT/user/user.lds" "$work/user_crt0.o" "$work/user_$name.o" -o "$work/user_$name.elf"
+aux="$ROOT/user/${name}_aux.S"
+if [ -f "$aux" ]; then
+    "$LLVM_BIN/clang" --target=aarch64-none-elf -c "$aux" -o "$work/user_${name}_aux.o"
+    "$LLD_BIN/ld.lld" -T "$ROOT/user/user.lds" "$work/user_crt0.o" "$work/user_${name}_aux.o" "$work/user_$name.o" -o "$work/user_$name.elf"
+else
+    "$LLD_BIN/ld.lld" -T "$ROOT/user/user.lds" "$work/user_crt0.o" "$work/user_$name.o" -o "$work/user_$name.elf"
+fi
 "$LLVM_BIN/llvm-objcopy" -O binary "$work/user_$name.elf" "$out"

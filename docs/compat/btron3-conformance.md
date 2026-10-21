@@ -32,7 +32,7 @@
 | 入力 | UART 受信 + 漢令 `読込`、1.7 イベント管理（漢令 192〜211） | キーボード・ポインティングデバイスは核内の模型（押下状態・自動リピート・PD 位置）。UART とは独立 |
 | 装置（デバイス） | 核内の模型デバイス 5 ユニット（`rda`/`rom`/`con`/`prn`/`mem`）と、QEMU に virtio-blk を付けたときの `vda`+ 1.8 デバイス管理（漢令 212〜220） | 器表・器類表・属性データ・路を核内に持つ。実機（ディスク・コンソール・印刷）は繋がず、板は核内の緩。UART/タイマー/GIC は個別実装のまま |
 | メモリ | 頁池 16 MiB、デマンドページング + 1.5 メモリ管理（漢令 120〜122、塊表・共有塊・`malloc` 族） | 行程間で共有する塊の写像・DELEXIT の自動解放まで実装済（[詳細](btron3-os.md)） |
-| システム（版・構成情報） | 1.10 システム管理（漢令 179 版取・180 構取） | `T_VER` と構成情報（項目名は実装依存）を核内で組み立てて返す。`def_exc`/`ret_exc` は未実装 |
+| システム（版・構成情報・例外） | 1.10 システム管理（漢令 179 版取・180 構取・181 例外定義・182 例外復帰） | `T_VER` と構成情報（項目名は実装依存）を核内で組み立てて返す。`def_exc`/`ret_exc` は EL0 の同期例外ハンドラへ配送する |
 | 時計 | 汎用タイマー | 時計管理 API とは未照合 |
 | 表示・GUI | なし | 描画・ウィンドウ等は未着手 |
 | メッセージ／名前／同期通信 | なし | 未着手 |
@@ -67,15 +67,15 @@
 | § | 項目 | 参照 | 関連する既存実装 | 状態 |
 |---|---|---|---|---|
 | 1.1 | プロセス／タスク管理（状態、優先度、スケジューリング、ユーザー情報、生成、定数、システムコール） | kernel/proc.html | `kernel/proc/`、協調+タイマープリエンプション | 部分適合（機能のみ・API不一致、[詳細](btron3-os.md)） |
-| 1.2 | メッセージ管理（メッセージ、ハンドラ、システムコール） | kernel/message.html | なし | 部分適合（基本部・`CHECK`・`WAIEVT`・`req_tmg`/`can_tmg`・`CONFM` まで。ハンドラ（`def_msg`/`ret_msg`）が未実装、[詳細](btron3-os.md)） |
-| 1.3 | プロセス／タスク同期通信管理 | kernel/taskcomm.html | なし | 実装済・未検証（`bufsz`=0 の同期バッファを含む。`ER_MINTR` はハンドラ待ち、[詳細](btron3-os.md)） |
+| 1.2 | メッセージ管理（メッセージ、ハンドラ、システムコール） | kernel/message.html | なし | 部分適合（基本部・`CHECK`・`WAIEVT`・`req_tmg`/`can_tmg`・`CONFM`・`brk_msg` まで。メッセージ用ハンドラ（`def_msg`/`ret_msg`）が未実装。同期例外の upcall 基盤は `def_exc` で実装済み、[詳細](btron3-os.md)） |
+| 1.3 | プロセス／タスク同期通信管理 | kernel/taskcomm.html | なし | 実装済・未検証（`bufsz`=0 の同期バッファを含む。`ER_MINTR` はメッセージ用ハンドラ待ち、[詳細](btron3-os.md)） |
 | 1.4 | グローバル名管理 | kernel/gname.html | `kernel/proc/gname.mkn`、`user/btron/gname.mkn` | 実装済・未検証（[詳細](btron3-os.md)） |
 | 1.5 | メモリ管理（概要、定数、システムコール、ライブラリ） | kernel/memory.html | 頁池・MMU、`user/btron/mem.mkn`（漢令 120〜122） | 実装済・未検証（[詳細](btron3-os.md)） |
 | 1.6 | ファイル管理（構成、構造、アクセス制御、操作、詳細情報、システムコール） | kernel/file.html | `kernel/vfs/`、篇藏設計 | 部分適合（B1〜B5 と接続系の `syn_fls`/`chg_fls`/`chg_fsm` まで実装済・未検証。`F_SYSTEM`（民の行程から使えない空間）への写像と永続化が未実装、[詳細](btron3-os.md)） |
 | 1.7 | イベント管理（イベント、キーボード、ポインティングデバイス） | kernel/event.html | `kernel/proc/evt.mkn`、`user/btron/evt.mkn`（漢令 192〜211） | 実装済・未検証（[詳細](btron3-os.md)） |
 | 1.8 | デバイス管理 | kernel/device.html | `kernel/proc/dev.mkn`、`user/btron/dev.mkn`（漢令 212〜220） | 実装済・未検証（[詳細](btron3-os.md)） |
 | 1.9 | 時計管理 | kernel/clk.html | 汎用タイマー | 部分適合（取得系のみ、[詳細](btron3-os.md)） |
-| 1.10 | システム管理 | kernel/system.html | `kernel/proc/sys.mkn`、`user/btron/sys.mkn`（漢令 179〜180。`get_ver`/`get_cnf`。`def_exc`/`ret_exc` は未実装） | 部分適合（[詳細](btron3-os.md)） |
+| 1.10 | システム管理 | kernel/system.html | `kernel/proc/sys.mkn`、`kernel/proc/exc.mkn`、`user/btron/sys.mkn`、`user/btron/exc.mkn`（漢令 179〜182。`get_ver`/`get_cnf`/`def_exc`/`ret_exc`） | 部分適合（[詳細](btron3-os.md)） |
 
 ### 第2章 ディスプレイプリミティブ
 
@@ -120,7 +120,7 @@ API 一覧: [btron3-api-inventory.md](btron3-api-inventory.md)（約 247 関数�
 | 第2編 第3章 シェル | 11 節・約 247 関数 | 0 | 0 | 0 | 11 節 | 0 |
 
 - 節単位の状態は最も低い API に引きずられるため、実質の進捗は第1章の API 単位表（[btron3-os.md](btron3-os.md)）で見る。
-- **適合確認済は 0**。合否基準と既存試験の対応は [btron3-test-plan.md](btron3-test-plan.md)（互換層の QEMU 試験 14 種・610 項目（1.5 メモリの `貯試` 45 項目、1.7 イベントの `件試` 73 項目、1.8 デバイスの `設試` 97 項目、1.10 システムの `系試` 38 項目を含む）を規範項目に紐付け済み）。
+- **適合確認済は 0**。合否基準と既存試験の対応は [btron3-test-plan.md](btron3-test-plan.md)（互換層の QEMU 試験 15 種・626 項目（1.5 メモリの `貯試` 45 項目、1.7 イベントの `件試` 73 項目、1.8 デバイスの `設試` 97 項目、1.10 システムの `系試` 38 項目と `例試` 16 項目を含む）を規範項目に紐付け済み）。
 - 1.6 は篇藏 F0〜F3 と録層 B5（作成・削除・開閉・状態・レコード操作・ロック・属性・アクセス制御・パスワード・SYS の像ファイルと `cre_prc` の LINK 版。`gen_fil`・`fnd_lnk` ほか M3 のリンク系、接続系の `syn_fls`/`chg_fls`/`chg_fsm` を含む）まで実装済み。B6（写像・永続化）が次。
 
 ## 次の作業（Phase 0 の残り）
