@@ -247,7 +247,12 @@ sh tools/mkimage.sh user/btron_sys.mkn "$OUT/btron_sys.zo" "$OUT" 2>"$OUT/user_b
         fail "user: BTRON3 互換層の試験 系試 を漢像にビルド"
         sed 's/^/      /' "$OUT/user_btron_sys.build.log" | head -10
     }
-sh tools/gen-images.sh "$OUT/kernel_images.S" 問安="$OUT/hello.zo" 數="$OUT/count.zo" 識試="$OUT/btron_gtid.zo" 名試="$OUT/btron_gname.zo" 時試="$OUT/btron_clk.zo" 時元試="$OUT/time_test.zo" 時="$OUT/time_cmd.zo" 信試="$OUT/btron_msg.zo" 利試="$OUT/btron_usr.zo" 強試="$OUT/btron_term.zo" 同試="$OUT/btron_sync.zo" 緩試="$OUT/btron_comm.zo" 録試="$OUT/btron_file.zo" 篇試="$OUT/pian_test.zo" 永試="$OUT/pian_persist.zo" 貯試="$OUT/btron_mem.zo" 件試="$OUT/btron_evt.zo" 設試="$OUT/btron_dev.zo" 系試="$OUT/btron_sys.zo" 実試="$OUT/btron_omgr.zo" 実作="$OUT/obj.zo" 仮置="$OUT/obj.zo" 実削="$OUT/obj.zo" 実目="$OUT/obj.zo" 実名="$OUT/obj.zo" objapp="$OUT/obj_app.zo" \
+sh tools/mkimage.sh user/btron_exc.mkn "$OUT/btron_exc.zo" "$OUT" 2>"$OUT/user_btron_exc.build.log" \
+    && pass "user: BTRON3 互換層の試験 例試 (1.10 def_exc・ret_exc) を漢像にビルド" || {
+        fail "user: BTRON3 互換層の試験 例試 を漢像にビルド"
+        sed 's/^/      /' "$OUT/user_btron_exc.build.log" | head -10
+    }
+sh tools/gen-images.sh "$OUT/kernel_images.S" 問安="$OUT/hello.zo" 數="$OUT/count.zo" 識試="$OUT/btron_gtid.zo" 名試="$OUT/btron_gname.zo" 時試="$OUT/btron_clk.zo" 時元試="$OUT/time_test.zo" 時="$OUT/time_cmd.zo" 信試="$OUT/btron_msg.zo" 利試="$OUT/btron_usr.zo" 強試="$OUT/btron_term.zo" 同試="$OUT/btron_sync.zo" 緩試="$OUT/btron_comm.zo" 録試="$OUT/btron_file.zo" 篇試="$OUT/pian_test.zo" 永試="$OUT/pian_persist.zo" 貯試="$OUT/btron_mem.zo" 件試="$OUT/btron_evt.zo" 設試="$OUT/btron_dev.zo" 系試="$OUT/btron_sys.zo" 例試="$OUT/btron_exc.zo" 実試="$OUT/btron_omgr.zo" 実作="$OUT/obj.zo" 仮置="$OUT/obj.zo" 実削="$OUT/obj.zo" 実目="$OUT/obj.zo" 実名="$OUT/obj.zo" objapp="$OUT/obj_app.zo" \
     && "$CLANG" --target=aarch64-none-elf -c "$OUT/kernel_images.S" -o "$OUT/kernel_images.o" \
         >"$OUT/kernel_images.log" 2>&1 \
     && pass "kernel: 漢像の埋め込み (像表)" || fail "kernel: 漢像の埋め込み (像表)"
@@ -333,7 +338,7 @@ if [ -f "$OUT/kernel.elf" ]; then
         # Then feed 殻 (shell) commands once 甲 has read that line (M4).
         ( printf 'KANBUN\n' > "$PIPE.in"
           for _ in $(seq 1 60); do grep -q "甲得" "$KLOG" 2>/dev/null && break; sleep 0.25; done
-          printf '響 天下太平\n讀 史記\n怪\n讀 無題\n目\n書 筆記 天地玄黄\n讀 筆記\n書 一二三四五六七八九十壱 x\n書 筆記\n目\n削 筆記\n讀 筆記\n目\n削 筆記\n書 新稿 草\n目\n問安 日月\n數 一 二 三\n識試\n名試\n時試\n時元試\n時\n時 史記\n信試\n利試\n強試\n同試\n緩試\n録試\n篇試\n貯試\n件試\n設試\n系試\n実試\n章 天地/家/殻章\n移 天地/家/殻章\n在\n書 甲 一二\n改 甲 乙\n讀 乙\n改 甲\n移 ..\n在\n移 天地/典/史記\n移 天地/典\n在\n存在せず 子\n\n終了\n   \n実作 oa\n実作 ob\n実作 abcdefghijklmnopqrst\n実作 abcdefghijklmnopqrstu\n実作 日本\n実作 a/b\n実目\n仮置 oa ob\n実目\n実削 oa\n実目\n実名 ob oc\n実目\n実削 oc\n実目\n助\n終\n響 再起\n終\n' > "$PIPE.in" ) &
+          printf '響 天下太平\n讀 史記\n怪\n讀 無題\n目\n書 筆記 天地玄黄\n讀 筆記\n書 一二三四五六七八九十壱 x\n書 筆記\n目\n削 筆記\n讀 筆記\n目\n削 筆記\n書 新稿 草\n目\n問安 日月\n數 一 二 三\n識試\n名試\n時試\n時元試\n時\n時 史記\n信試\n利試\n強試\n同試\n緩試\n録試\n篇試\n貯試\n件試\n設試\n系試\n例試\n実試\n章 天地/家/殻章\n移 天地/家/殻章\n在\n書 甲 一二\n改 甲 乙\n讀 乙\n改 甲\n移 ..\n在\n移 天地/典/史記\n移 天地/典\n在\n存在せず 子\n\n終了\n   \n実作 oa\n実作 ob\n実作 abcdefghijklmnopqrst\n実作 abcdefghijklmnopqrstu\n実作 日本\n実作 a/b\n実目\n仮置 oa ob\n実目\n実削 oa\n実目\n実名 ob oc\n実目\n実削 oc\n実目\n助\n終\n響 再起\n終\n' > "$PIPE.in" ) &
         FEEDPID=$!
         # Wait up to ~40s for the final marker, then stop QEMU.  The generic
         # timer fires five times (5 × CNTFRQ/40 ≈ 125 ms); the long parts are the
@@ -733,6 +738,14 @@ if [ -f "$OUT/kernel.elf" ]; then
         else
             fail "kernel qemu: BTRON3 互換層 システム管理 (項目=${SV_N:-0}/38、失敗=${SV_BAD:-?})"
             grep -a '^系試 ' "$KLOG" 2>/dev/null | grep -av '0x0000000000000001$' | sed 's/^/      /' | head -40
+        fi
+        EX_N="$(grep -ac '^例試 ' "$KLOG" 2>/dev/null)"
+        EX_BAD="$(grep -a '^例試 ' "$KLOG" 2>/dev/null | grep -vc '0x0000000000000001$')"
+        if [ "${EX_N:-0}" -eq 16 ] && [ "${EX_BAD:-1}" -eq 0 ]; then
+            pass "kernel qemu: BTRON3 互換層 例外ハンドラ (def_exc・ret_exc・EL0 上り呼びの ${EX_N} 項目)"
+        else
+            fail "kernel qemu: BTRON3 互換層 例外ハンドラ (項目=${EX_N:-0}/16、失敗=${EX_BAD:-?})"
+            grep -a '^例試 ' "$KLOG" 2>/dev/null | grep -av '0x0000000000000001$' | sed 's/^/      /' | head -40
         fi
         # --- 篇藏 F1〜F3 (#6): 篇ID・屬、章とパス、名替、權・志・器・術・法 ---------------
         PF_N="$(grep -ac '^篇試 ' "$KLOG" 2>/dev/null)"

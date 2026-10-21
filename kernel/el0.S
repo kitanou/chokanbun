@@ -28,6 +28,25 @@ svc_call:
     svc #0
     ret
 
+// Exception-handler return trampoline.  例外飛 sets a handler's x30 to this
+// address; a handler that returns without calling ret_exc is treated as
+// ret_exc(0) and resumes the interrupted instruction.  The first SVC should
+// never return for ret=0, so the loop is only a guard.
+    .globl exc_return_stub
+exc_return_stub:
+    mov x0, #0
+    mov x8, #182
+    svc #0
+1:  b 1b
+
+// exc_return_stub_addr(): EL0 address of exc_return_stub (kernel code is mapped
+// EL0 RO+X, so the trampoline is executable from the user handler).
+    .globl exc_return_stub_addr
+exc_return_stub_addr:
+    adrp x0, exc_return_stub
+    add  x0, x0, :lo12:exc_return_stub
+    ret
+
 // user_entry_addr(): return the address of the EL0 task entry (view: user_main).
     .globl user_entry_addr
 user_entry_addr:

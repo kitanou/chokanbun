@@ -1,0 +1,28 @@
+註 BTRON3 互換層 1.10 システム管理の例外ハンドラ (docs/compat/btron3-os.md §1.10)。
+註 核側 kernel/proc/exc.mkn の漢令 181 例外定義 (def_exc)・182 例外復帰 (ret_exc) を呼ぶ。
+註 要: lib.mkn、btron/er.mkn を先に取込む。
+註
+註 原典は ERR def_exc(W exckind, FP exchdr) と VOID ret_exc(W ret)。要因番号は
+註 インプリメント依存なので、核と同じ 8 種をここで公開する。
+註 ハンドラは EL0 で x0=要因, x1=ESR, x2=例外の起きた命令のアドレス, x3=FAR を受ける。
+註 ret_exc(0) は例外位置から再開し、この関数は戻らない。ret_exc(0 以外) は
+註 ハンドラの ret_exc 呼出しの直後へ戻る。
+
+常「EXC_BRK」之無符六四 為 0          註 ブレーク命令 (BRK)
+常「EXC_DATA_ABORT」之無符六四 為 1   註 データ異常
+常「EXC_INSTR_ABORT」之無符六四 為 2  註 命令異常
+常「EXC_ALIGN」之無符六四 為 3        註 PC/SP の整列異常
+常「EXC_UNDEF」之無符六四 為 4        註 未定義命令・不正な実行状態
+常「EXC_FP」之無符六四 為 5           註 浮動小数点例外
+常「EXC_RESERVED」之無符六四 為 6     註 予約
+常「EXC_OTHER」之無符六四 為 7        註 その他の同期例外
+
+註 def_exc(W exckind, FP exchdr): 0 または負の ER_*。exchdr=0 で解除。
+公開 記號「def_exc」 術曰「BTRON例外定義」 受「因」之無符六四 受「手」之無符六四 返 無符六四
+    歸 呼「錯換」以(呼「奏令」以(181, 因 位與 0xFFFFFFFF, 手, 0, 0, 0, 0))
+終術
+
+註 ret_exc(W ret): 0 なら例外位置から再開 (戻らない)。0 以外ならハンドラへ戻る。
+公開 記號「ret_exc」 術曰「BTRON例外復帰」 受「値」之無符六四 返 無符六四
+    歸 呼「錯換」以(呼「奏令」以(182, 値 位與 0xFFFFFFFF, 0, 0, 0, 0, 0))
+終術
