@@ -167,6 +167,11 @@ sh tools/mkimage.sh user/time_test.mkn "$OUT/time_test.zo" "$OUT" 2>"$OUT/user_t
         fail "user: 黄帝紀元の変換・書式化・壁時計の試験 時元試 を漢像にビルド"
         sed 's/^/      /' "$OUT/user_time_test.build.log" | head -10
     }
+sh tools/mkimage.sh user/time_cmd.mkn "$OUT/time_cmd.zo" "$OUT" 2>"$OUT/user_time_cmd.build.log" \
+    && pass "user: 漢殻命令 時 (現在日時・篇時刻) を漢像にビルド" || {
+        fail "user: 漢殻命令 時 を漢像にビルド"
+        sed 's/^/      /' "$OUT/user_time_cmd.build.log" | head -10
+    }
 sh tools/mkimage.sh user/btron_msg.mkn "$OUT/btron_msg.zo" "$OUT" 2>"$OUT/user_btron_msg.build.log" \
     && pass "user: BTRON3 互換層の試験 信試 (メッセージ) を漢像にビルド" || {
         fail "user: BTRON3 互換層の試験 信試 を漢像にビルド"
@@ -242,7 +247,7 @@ sh tools/mkimage.sh user/btron_sys.mkn "$OUT/btron_sys.zo" "$OUT" 2>"$OUT/user_b
         fail "user: BTRON3 互換層の試験 系試 を漢像にビルド"
         sed 's/^/      /' "$OUT/user_btron_sys.build.log" | head -10
     }
-sh tools/gen-images.sh "$OUT/kernel_images.S" 問安="$OUT/hello.zo" 數="$OUT/count.zo" 識試="$OUT/btron_gtid.zo" 名試="$OUT/btron_gname.zo" 時試="$OUT/btron_clk.zo" 時元試="$OUT/time_test.zo" 信試="$OUT/btron_msg.zo" 利試="$OUT/btron_usr.zo" 強試="$OUT/btron_term.zo" 同試="$OUT/btron_sync.zo" 緩試="$OUT/btron_comm.zo" 録試="$OUT/btron_file.zo" 篇試="$OUT/pian_test.zo" 永試="$OUT/pian_persist.zo" 貯試="$OUT/btron_mem.zo" 件試="$OUT/btron_evt.zo" 設試="$OUT/btron_dev.zo" 系試="$OUT/btron_sys.zo" 実試="$OUT/btron_omgr.zo" 実作="$OUT/obj.zo" 仮置="$OUT/obj.zo" 実削="$OUT/obj.zo" 実目="$OUT/obj.zo" 実名="$OUT/obj.zo" objapp="$OUT/obj_app.zo" \
+sh tools/gen-images.sh "$OUT/kernel_images.S" 問安="$OUT/hello.zo" 數="$OUT/count.zo" 識試="$OUT/btron_gtid.zo" 名試="$OUT/btron_gname.zo" 時試="$OUT/btron_clk.zo" 時元試="$OUT/time_test.zo" 時="$OUT/time_cmd.zo" 信試="$OUT/btron_msg.zo" 利試="$OUT/btron_usr.zo" 強試="$OUT/btron_term.zo" 同試="$OUT/btron_sync.zo" 緩試="$OUT/btron_comm.zo" 録試="$OUT/btron_file.zo" 篇試="$OUT/pian_test.zo" 永試="$OUT/pian_persist.zo" 貯試="$OUT/btron_mem.zo" 件試="$OUT/btron_evt.zo" 設試="$OUT/btron_dev.zo" 系試="$OUT/btron_sys.zo" 実試="$OUT/btron_omgr.zo" 実作="$OUT/obj.zo" 仮置="$OUT/obj.zo" 実削="$OUT/obj.zo" 実目="$OUT/obj.zo" 実名="$OUT/obj.zo" objapp="$OUT/obj_app.zo" \
     && "$CLANG" --target=aarch64-none-elf -c "$OUT/kernel_images.S" -o "$OUT/kernel_images.o" \
         >"$OUT/kernel_images.log" 2>&1 \
     && pass "kernel: 漢像の埋め込み (像表)" || fail "kernel: 漢像の埋め込み (像表)"
@@ -328,7 +333,7 @@ if [ -f "$OUT/kernel.elf" ]; then
         # Then feed 殻 (shell) commands once 甲 has read that line (M4).
         ( printf 'KANBUN\n' > "$PIPE.in"
           for _ in $(seq 1 60); do grep -q "甲得" "$KLOG" 2>/dev/null && break; sleep 0.25; done
-          printf '響 天下太平\n讀 史記\n怪\n讀 無題\n目\n書 筆記 天地玄黄\n讀 筆記\n書 一二三四五六七八九十壱 x\n書 筆記\n目\n削 筆記\n讀 筆記\n目\n削 筆記\n書 新稿 草\n目\n問安 日月\n數 一 二 三\n識試\n名試\n時試\n時元試\n信試\n利試\n強試\n同試\n緩試\n録試\n篇試\n貯試\n件試\n設試\n系試\n実試\n章 天地/家/殻章\n移 天地/家/殻章\n在\n書 甲 一二\n改 甲 乙\n讀 乙\n改 甲\n移 ..\n在\n移 天地/典/史記\n移 天地/典\n在\n存在せず 子\n\n終了\n   \n実作 oa\n実作 ob\n実作 abcdefghijklmnopqrst\n実作 abcdefghijklmnopqrstu\n実作 日本\n実作 a/b\n実目\n仮置 oa ob\n実目\n実削 oa\n実目\n実名 ob oc\n実目\n実削 oc\n実目\n助\n終\n響 再起\n終\n' > "$PIPE.in" ) &
+          printf '響 天下太平\n讀 史記\n怪\n讀 無題\n目\n書 筆記 天地玄黄\n讀 筆記\n書 一二三四五六七八九十壱 x\n書 筆記\n目\n削 筆記\n讀 筆記\n目\n削 筆記\n書 新稿 草\n目\n問安 日月\n數 一 二 三\n識試\n名試\n時試\n時元試\n時\n時 史記\n信試\n利試\n強試\n同試\n緩試\n録試\n篇試\n貯試\n件試\n設試\n系試\n実試\n章 天地/家/殻章\n移 天地/家/殻章\n在\n書 甲 一二\n改 甲 乙\n讀 乙\n改 甲\n移 ..\n在\n移 天地/典/史記\n移 天地/典\n在\n存在せず 子\n\n終了\n   \n実作 oa\n実作 ob\n実作 abcdefghijklmnopqrst\n実作 abcdefghijklmnopqrstu\n実作 日本\n実作 a/b\n実目\n仮置 oa ob\n実目\n実削 oa\n実目\n実名 ob oc\n実目\n実削 oc\n実目\n助\n終\n響 再起\n終\n' > "$PIPE.in" ) &
         FEEDPID=$!
         # Wait up to ~40s for the final marker, then stop QEMU.  The generic
         # timer fires five times (5 × CNTFRQ/40 ≈ 125 ms); the long parts are the
@@ -821,11 +826,19 @@ if [ -f "$OUT/kernel.elf" ]; then
         # --- #47 T1: 黄帝紀元の純粋な変換・書式化・解析 ---------------------------
         TN_N="$(grep -ac '^時元試 ' "$KLOG" 2>/dev/null)"
         TN_BAD="$(grep -a '^時元試 ' "$KLOG" 2>/dev/null | grep -vc '0x0000000000000001$')"
-        if [ "${TN_N:-0}" -eq 70 ] && [ "${TN_BAD:-1}" -eq 0 ]; then
-            pass "kernel qemu: 黄帝紀元の変換・書式化・解析と壁時計 (下限・負の秒・閏年・往復・ER_*・漢令 221〜223 の ${TN_N} 項目)"
+        if [ "${TN_N:-0}" -eq 82 ] && [ "${TN_BAD:-1}" -eq 0 ]; then
+            pass "kernel qemu: 黄帝紀元の変換・書式化・解析と壁時計 (下限・負の秒・閏年・往復・ER_*・漢令 221〜223・篇時 34 の ${TN_N} 項目)"
         else
-            fail "kernel qemu: 黄帝紀元の変換・書式化・解析と壁時計 (項目=${TN_N:-0}/70、失敗=${TN_BAD:-?})"
+            fail "kernel qemu: 黄帝紀元の変換・書式化・解析と壁時計 (項目=${TN_N:-0}/82、失敗=${TN_BAD:-?})"
             grep -a '^時元試 ' "$KLOG" 2>/dev/null | sed 's/^/      /'
+        fi
+        # --- #47 T3: 漢殻命令 時 (現在日時・篇の作時/改時) ------------------------
+        if grep -Eq '^時 黄紀 [0-9]+年[0-9][0-9]月[0-9][0-9]日 [0-9][0-9]:[0-9][0-9]:[0-9][0-9] UTC\?? Unix -?[0-9]+ 単調 [0-9]+ ms$' "$KLOG" 2>/dev/null \
+           && grep -Eq '^時 史記 作 黄紀 [0-9]+年[0-9][0-9]月[0-9][0-9]日 [0-9][0-9]:[0-9][0-9]:[0-9][0-9] UTC 改 黄紀 ' "$KLOG" 2>/dev/null; then
+            pass "kernel qemu: 漢殻命令 時 (現在の黄紀・Unix 秒・単調時計、篇 史記 の作時・改時)"
+        else
+            fail "kernel qemu: 漢殻命令 時 (現在日時・篇時刻)"
+            grep -a '^時 ' "$KLOG" 2>/dev/null | sed 's/^/      /' | head -20
         fi
         # --- #42 G1: グローバル名 (cre_nam / del_nam / get_nam) -------------------
         GN_N="$(grep -ac '^名試 ' "$KLOG" 2>/dev/null)"
@@ -946,7 +959,7 @@ if [ -f "$OUT/kernel.elf" ]; then
             sed 's/^/      /' "$KLOG" 2>/dev/null | head -20
         fi
         # --- 篇藏の永続化 (docs/design-persistence.md): 書いて 篇同 → 再起動 → 読める。壊れたスロットは使わない -------
-        # 同じディスクイメージ (10370 区画以上。12288 区画) で 5 回起動し、そのたびに殻へ命令を流して 殻終 を待つ。
+        # 同じディスクイメージ (10378 区画以上。12288 区画) で 5 回起動し、そのたびに殻へ命令を流して 殻終 を待つ。
         PERSIST_IMG="$OUT/persist.img"
         PERSIST_PIPE="$OUT/persist_serial"
         dd if=/dev/zero of="$PERSIST_IMG" bs=512 count=12288 2>/dev/null
@@ -981,26 +994,31 @@ if [ -f "$OUT/kernel.elf" ]; then
         }
         pian_boot "$OUT/persist1.log" $'永試 F\n永試 W\n終\n'
         P1_HDR="$(od -An -v -tx1 -j 32768 -N 4 "$PERSIST_IMG" | tr -s ' ' | sed 's/^ //; s/ $//')"
-        if persist_ok "$OUT/persist1.log" 'F:' && persist_ok "$OUT/persist1.log" 'W:' && [ "$P1_HDR" = "50 49 41 4e" ]; then
-            pass "kernel qemu: 録層に 13 バイトと 6000 バイト (2 頁) のファイルを作り、篇同 で篇藏と録層の状態がスロット A のヘッダ (PIAN) としてディスクに届く"
+        P1_VER="$(od -An -v -tu4 -j 32772 -N 4 "$PERSIST_IMG" | tr -s ' ' | sed 's/^ //; s/ $//')"
+        P1_TM_W="$(grep -a '^永試 時作 ' "$OUT/persist1.log" 2>/dev/null | head -1 | grep -oE '0x[0-9a-f]{16}')"
+        if persist_ok "$OUT/persist1.log" 'F:' && persist_ok "$OUT/persist1.log" 'W:' && [ "$P1_HDR" = "50 49 41 4e" ] && [ "$P1_VER" = "3" ]; then
+            pass "kernel qemu: 録層に 13 バイトと 6000 バイト (2 頁) のファイルを作り、篇同 で篇藏と録層の状態がスロット A のヘッダ (PIAN・版 3) としてディスクに届く"
         else
-            fail "kernel qemu: 篇同 の書込み (ヘッダ='$P1_HDR')"
-            grep -a '永試' "$OUT/persist1.log" 2>/dev/null | sed 's/^/      /' | head -5
+            fail "kernel qemu: 篇同 の書込み (ヘッダ='$P1_HDR' 版='$P1_VER')"
+            grep -a '永試' "$OUT/persist1.log" 2>/dev/null | sed 's/^/      /' | head -8
         fi
         pian_boot "$OUT/persist2.log" $'永試 R\n永試 G\n永試 O\n終\n'
-        P2_HDR="$(od -An -v -tx1 -j 2671104 -N 4 "$PERSIST_IMG" | tr -s ' ' | sed 's/^ //; s/ $//')"
-        if persist_ok "$OUT/persist2.log" 'R:' && grep -aq '篇戻 世代=0x0000000000000001' "$OUT/persist2.log" && persist_ok "$OUT/persist2.log" 'G:' && persist_ok "$OUT/persist2.log" 'O:' && [ "$P2_HDR" = "50 49 41 4e" ]; then
-            pass "kernel qemu: 再起動のあとスロット A (世代 1) から戻り、篇藏の内容と録層の 2 つのファイル (6000 バイト = 2 頁を含む) を読める。戻したあとに作った録層のファイルは新しい ID になる。開いたままの 篇同 はスロット B (世代 2) へ"
+        P2_HDR="$(od -An -v -tx1 -j 2673152 -N 4 "$PERSIST_IMG" | tr -s ' ' | sed 's/^ //; s/ $//')"
+        P2_TM_W="$(grep -a '^永試 時作 ' "$OUT/persist2.log" 2>/dev/null | head -1 | grep -oE '0x[0-9a-f]{16}')"
+        P2_TM_C="$(grep -a '^永試 時改 ' "$OUT/persist2.log" 2>/dev/null | head -1 | grep -oE '0x[0-9a-f]{16}')"
+        if persist_ok "$OUT/persist2.log" 'R:' && grep -aq '篇戻 世代=0x0000000000000001' "$OUT/persist2.log" && persist_ok "$OUT/persist2.log" 'G:' && persist_ok "$OUT/persist2.log" 'O:' && [ "$P2_HDR" = "50 49 41 4e" ] && [ -n "$P1_TM_W" ] && [ "$P1_TM_W" = "$P2_TM_W" ] && [ -n "$P2_TM_C" ]; then
+            pass "kernel qemu: 再起動のあとスロット A (世代 1) から戻り、篇藏の内容・録層の 2 つのファイル・篇「永」の作時を読める。戻したあとに作った録層のファイルは新しい ID になる。開いたままの 篇同 はスロット B (世代 2) へ"
         else
-            fail "kernel qemu: 再起動後の読み戻しとスロット B への書込み (ヘッダ='$P2_HDR')"
-            grep -a '永試\|篇戻' "$OUT/persist2.log" 2>/dev/null | sed 's/^/      /' | head -6
+            fail "kernel qemu: 再起動後の読み戻しとスロット B への書込み (ヘッダ='$P2_HDR' 作時='$P1_TM_W'/'$P2_TM_W')"
+            grep -a '永試\|篇戻' "$OUT/persist2.log" 2>/dev/null | sed 's/^/      /' | head -10
         fi
         pian_boot "$OUT/persist3.log" $'永試 R\n永試 H\n永試 D\n同\n問安 日月\n終\n'
-        if persist_ok "$OUT/persist3.log" 'R:' && persist_ok "$OUT/persist3.log" 'H:' && grep -aq '^子行程起動 日月' "$OUT/persist3.log" && grep -aq '篇戻 世代=0x0000000000000002' "$OUT/persist3.log" && persist_ok "$OUT/persist3.log" 'D:' && grep -aq '殻同 保存した' "$OUT/persist3.log"; then
-            pass "kernel qemu: 世代 2 (スロット B) から戻り、開いたまま保存した篇も削れる (開数は保存した値が残らない)。戻したあとに作った録層のファイルも戻る。殻の 同 で世代 3 をスロット A へ保存でき、戻したあとも漢像 (問安) を起動できる"
+        P3_TM_W="$(grep -a '^永試 時作 ' "$OUT/persist3.log" 2>/dev/null | head -1 | grep -oE '0x[0-9a-f]{16}')"
+        if persist_ok "$OUT/persist3.log" 'R:' && persist_ok "$OUT/persist3.log" 'H:' && grep -aq '^子行程起動 日月' "$OUT/persist3.log" && grep -aq '篇戻 世代=0x0000000000000002' "$OUT/persist3.log" && persist_ok "$OUT/persist3.log" 'D:' && grep -aq '殻同 保存した' "$OUT/persist3.log" && [ -n "$P3_TM_W" ] && [ "$P1_TM_W" = "$P3_TM_W" ]; then
+            pass "kernel qemu: 世代 2 (スロット B) から戻り、開いたまま保存した篇も削れる (開数は保存した値が残らない)。篇「永」の作時も保たれる。戻したあとに作った録層のファイルも戻る。殻の 同 で世代 3 をスロット A へ保存でき、戻したあとも漢像 (問安) を起動できる"
         else
-            fail "kernel qemu: 世代 2 の読み戻しと開数"
-            grep -a '永試\|篇戻' "$OUT/persist3.log" 2>/dev/null | sed 's/^/      /' | head -6
+            fail "kernel qemu: 世代 2 の読み戻しと開数 (作時='$P1_TM_W'/'$P3_TM_W')"
+            grep -a '永試\|篇戻' "$OUT/persist3.log" 2>/dev/null | sed 's/^/      /' | head -10
         fi
         # 最新 (世代 3) のスロット A のヘッダは無傷のまま、録層の本体の区画 1 つ (最初のファイルの最初の区画) を壊す
         # → データのチェックサムが合わず、世代 2 のスロット B から戻る (録層の区画の破損も検出する)
@@ -1014,13 +1032,48 @@ if [ -f "$OUT/kernel.elf" ]; then
         fi
         # スロット A のヘッダと、スロット B の篇の表の区画 (スロット先頭の 2 区画目) も壊す → どちらも使えず、初期化した状態で起動する
         dd if=/dev/zero of="$PERSIST_IMG" bs=512 seek=64 count=1 conv=notrunc 2>/dev/null
-        printf '\377\377\377\377' | dd of="$PERSIST_IMG" bs=1 seek=$((5218 * 512)) conv=notrunc 2>/dev/null
+        printf '\377\377\377\377' | dd of="$PERSIST_IMG" bs=1 seek=$((5222 * 512)) conv=notrunc 2>/dev/null
         pian_boot "$OUT/persist5.log" $'永試 N\n永試 M\n終\n'
         if persist_ok "$OUT/persist5.log" 'N:' && persist_ok "$OUT/persist5.log" 'M:' && ! grep -aq '篇戻' "$OUT/persist5.log"; then
             pass "kernel qemu: どのスロットも使えないときは初期化した状態で起動する (篇「永」も録層の pmem も無い)"
         else
             fail "kernel qemu: 両スロットが使えないときの起動"
             grep -a '永試\|篇戻' "$OUT/persist5.log" 2>/dev/null | sed 's/^/      /' | head -6
+        fi
+        # --- #47 T4: RTC を 1970-01-01 に固定した起動。PL031 が 0 を返し、時計は無効になる ----
+        RTC_IMG="$OUT/rtc_off_serial"
+        rm -f "$RTC_IMG.in" "$RTC_IMG.out" "$OUT/rtc_off.log"
+        mkfifo "$RTC_IMG.in" "$RTC_IMG.out"
+        cat "$RTC_IMG.out" > "$OUT/rtc_off.log" &
+        RTC_CAT=$!
+        qemu-system-aarch64 -M virt,gic-version=2 -cpu cortex-a57 -nographic \
+            -rtc base=1970-01-01T00:00:00 \
+            -global virtio-mmio.force-legacy=false \
+            -serial "pipe:$RTC_IMG" -kernel "$OUT/kernel.elf" \
+            >"$OUT/rtc_off.console.log" 2>&1 &
+        RTC_QEMU=$!
+        ( printf 'KANBUN\n' > "$RTC_IMG.in"
+          for _ in $(seq 1 60); do grep -q "甲得" "$OUT/rtc_off.log" 2>/dev/null && break; sleep 0.25; done
+          printf '時元試 無効\n時\n終\n' > "$RTC_IMG.in" ) &
+        RTC_FEED=$!
+        for _ in $(seq 1 50); do
+            grep -q '^時元試 T4: 削 時元 ' "$OUT/rtc_off.log" 2>/dev/null && break
+            sleep 0.5
+        done
+        kill "$RTC_QEMU" 2>/dev/null
+        wait "$RTC_QEMU" 2>/dev/null
+        wait "$RTC_CAT" 2>/dev/null
+        kill "$RTC_FEED" 2>/dev/null
+        wait "$RTC_FEED" 2>/dev/null
+        RTC_N="$(grep -ac '^時元試 T4: ' "$OUT/rtc_off.log" 2>/dev/null)"
+        RTC_BAD="$(grep -a '^時元試 T4: ' "$OUT/rtc_off.log" 2>/dev/null | grep -vc '0x0000000000000001$')"
+        if [ "${RTC_N:-0}" -eq 10 ] && [ "${RTC_BAD:-1}" -eq 0 ] \
+           && grep -Eq '^日誌 黄紀 [0-9]+年[0-9][0-9]月[0-9][0-9]日 [0-9][0-9]:[0-9][0-9]:[0-9][0-9] UTC\?$' "$OUT/rtc_off.log" 2>/dev/null \
+           && grep -Eq '^時 黄紀 [0-9]+年[0-9][0-9]月[0-9][0-9]日 [0-9][0-9]:[0-9][0-9]:[0-9][0-9] UTC\? Unix [0-9]+ 単調 [0-9]+ ms$' "$OUT/rtc_off.log" 2>/dev/null; then
+            pass "kernel qemu: RTC 無効の起動 (壁時の旗 0、get_tim=ER_NODEV、篇の作時・改時 0、日誌と 時 の表示に ?)"
+        else
+            fail "kernel qemu: RTC 無効の起動 (T4 項目=${RTC_N:-0}/10、失敗=${RTC_BAD:-?})"
+            grep -a '^時元試\|^日誌\|^時 ' "$OUT/rtc_off.log" 2>/dev/null | sed 's/^/      /' | head -30
         fi
     else
         echo "SKIP: kernel qemu (qemu-system-aarch64 not found)"
