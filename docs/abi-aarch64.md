@@ -198,6 +198,7 @@
   | 28 | 章作 | `x0`=パス, `x1`=長 | 0／`-EEXIST`・`-ENOENT`・`-EACCES`・`-ENAMETOOLONG`（深さ 8 超を含む）・`-ENOSPC` |
   | 32 | 章移 | `x0`=パス, `x1`=長 | 0／`-ENOENT`・`-ENOTDIR`・`-EACCES`（現在章を変える） |
   | 33 | 章名 | `x0`=書き先, `x1`=長 | 現在章の絶対パス（`天地/…`）の長さ。書き先には長さまで写す |
+  | 34 | 篇時 | `x0`=パス, `x1`=長, `x2`=書き先（16 B: 作時・改時） | 0／`-ENOENT`・`-EACCES`（讀権）・`-EFAULT`。値を Unix 秒の `有符六四` で書く。RTC 無効時の値は 0 |
   | 31 | 頁残 | なし | 頁池の空きページ数（診断） |
   | 70 | 行程作成 | `x0`=LINK（SYS の像ファイル）, `x1`=優先度（0〜255、-1 は自行程と同じ）, `x2`=MESSAGE（NULL 可。8 B の見出し {W 型, W 大きさ} + 本体。型 0 のとき NUL 区切りが引数。本体は 255 B まで） | 子の識（正）／`-EDOM`（ER_PPRI）・`-E2BIG`（ER_SZOVR）・`-EFAULT`・`-ENOEXEC`（ER_REC。像ファイルでない）・`-ENOENT`・`-ENODEV`・`-EACCES`・`-EBUSY`・`-EAGAIN`・`-ENOMEM`。`cre_prc`。子は BTRON3 流（終了時に MS_EXIT、枠を即解放） |
   | 71 | 優先度変更 | `x0`=id（0=自分, -1=親, 正=行程。`P_TASK` なら 0 か自分の識）, `x1`=pri, `x2`=opt（P_ABS 0・P_REL 1・P_TASK 2） | 変更後の優先度（0〜255）／`-EDOM`（群の外・範囲外）・`-EINVAL`（opt）・`-ESRCH`・`-EBADR`（自分以外のタスク）。`chg_pri` |
@@ -217,7 +218,7 @@
   | 83 | 時限要求 | `x0`=time（ms、正）, `x1`=code | 0／`-EINVAL`（time が 0 以下）・`-ENOSPC`（時限表 16 件が満杯）。time 後（25 ms の刻へ切り上げ）に MS_TMOUT {型 4, 大きさ 4, 本体=code} が自分のキューに積まれる（キューが満杯なら捨てる）。`req_tmg` |
   | 84 | 時限取消 | なし | 0。自分の要求を全部取り消す（キューにあるものは消さない）。`can_tmg` |
   | 85 | 事象通知 | なし | 0。`WAIEVT` で `rcv_msg` の待ちに入っている行程（最後に入ったもの）の待ちを解き、その `rcv_msg` に `-ENOMEDIUM`（ER_NOME）を返させる。待つ行程が無ければ要求を 1 つ記録（次の `WAIEVT` が直ちに ER_NOME）。`brk_msg` |
-  | 86 | 篇同 | なし | 0／`-ENXIO`（`vda` が無い・容量が 10370 区画未満）・`-EIO`・`-ENOMEM`。篇藏と録層（FS 0）の状態を `vda` のスロットへ書く（[design-persistence.md](design-persistence.md)）。`篇同` |
+  | 86 | 篇同 | なし | 0／`-ENXIO`（`vda` が無い・容量が 10378 区画未満）・`-EIO`・`-ENOMEM`。篇藏と録層（FS 0）・篇の時刻副表の状態を `vda` のスロットへ書く（[design-persistence.md](design-persistence.md)）。`篇同` |
   | 96 | 作セマ | `x0`=初期カウント, `x1`=指定（SEM_SYNC=0 / SEM_EXCL=0x4000、+DELEXIT=0x8000） | ID（正）／`-EINVAL`（排他で cnt≠1・同期で cnt<0・不明なビット）・`-EMFILE`（16 個満杯）。`cre_sem` |
   | 97 | 削セマ | `x0`=ID | 0／`-EBADR`（ID が不正）・`-ENOENT`（無い）。待っている行程は `-EIDRM` で起こす。`del_sem` |
   | 98 | 返セマ | `x0`=ID | 0／`-EBADR`・`-ENOENT`・`-EPROTO`（排他を持っていない）・`-EMFILE`（上限）。待ちがあれば先頭へ手渡す。`sig_sem` |
