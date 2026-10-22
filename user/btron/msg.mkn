@@ -1,5 +1,5 @@
-註 BTRON3 互換層 1.2 メッセージ管理の基本部 (docs/compat/btron3-os.md §1.2)。要: lib.mkn、btron/types.mkn、btron/er.mkn を先に取込む。
-註 MESSAGE = {W msg_type; W msg_size; UB msg_body[32]} (40 B)。ハンドラ・CONFM は未実装。
+註 BTRON3 互換層 1.2 メッセージ管理 (docs/compat/btron3-os.md §1.2)。要: lib.mkn、btron/types.mkn、btron/er.mkn を先に取込む。
+註 MESSAGE = {W msg_type; W msg_size; UB msg_body[32]} (40 B)。
 
 常「MS_ABORT」之無符六四 為 1
 常「MS_EXIT」之無符六四 為 2
@@ -16,6 +16,9 @@
 常「CONFM」之無符六四 為 0x0002
 常「CHECK」之無符六四 為 0x0002   註 rcv_msg 用 (CONFM と同じ値)
 常「WAIEVT」之無符六四 為 0x0004
+常「MH_NONE」之無符六四 為 1   註 メッセージを捨てる。待ちは中断しない
+常「MH_BREAK」之無符六四 為 2  註 メッセージを捨て、待ちを含む漢令を ER_MINTR で中断する
+常「MH_TERM」之無符六四 為 3   註 メッセージを捨て、行程を異常終了する
 
 註 MSGMASK(type) = 1 << (type - 1)
 公開 記號「msgmask」 術曰「BTRON型掩」 受「型」之無符六四 返 無符六四
@@ -45,6 +48,16 @@
 註 brk_msg(): WAIEVT による rcv_msg の待ちを解く (その rcv_msg は ER_NOME)。待っていなければ要求を 1 つ記録する。
 公開 記號「brk_msg」 術曰「BTRON事象通知」 返 無符六四
     歸 呼「錯換」以(呼「奏令」以(85, 0, 0, 0, 0, 0, 0))
+終術
+
+註 def_msg(W t_mask, VOID (*msg_hdr)(W pid, MESSAGE* r_msg)): 0 で解除、1..3 は MH_*。
+公開 記號「def_msg」 術曰「BTRON信手定義」 受「型掩」之無符六四 受「手」之無符六四 返 無符六四
+    歸 呼「錯換」以(呼「奏令」以(183, 型掩 位與 0xFFFFFFFF, 手, 0, 0, 0, 0))
+終術
+
+註 ret_msg(W ret): 0 で中断位置へ戻る。0 以外は ret_msg から 0 を返してハンドラを続ける。
+公開 記號「ret_msg」 術曰「BTRON信手復帰」 受「値」之無符六四 返 無符六四
+    歸 呼「錯換」以(呼「奏令」以(184, 値 位與 0xFFFFFFFF, 0, 0, 0, 0, 0))
 終術
 
 註 clr_msg(W t_mask, W last_mask)
