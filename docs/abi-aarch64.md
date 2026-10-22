@@ -227,7 +227,7 @@
   | 101 | 削フラグ | `x0`=ID | 0／`-EBADR`・`-ENOENT`。`del_flg` |
   | 102 | 立フラグ | `x0`=ID, `x1`=パターン | 0／`-EBADR`・`-ENOENT`。`set_flg`（OR して、条件を満たす待ちを FIFO で起こす） |
   | 103 | 消フラグ | `x0`=ID, `x1`=残すビット | 0／`-EBADR`・`-ENOENT`。`clr_flg`（AND） |
-  | 104 | 待フラグ | `x0`=ID, `x1`=パターン（>0）, `x2`=様式（WF_AND=0 / WF_OR=2、+NOCLR=8）, `x3`=時限 | 条件を満たした時のパターン／`-EINVAL`（ptn=0・不明な様式）・`-ETIMEDOUT`・`-EIDRM`・`-EBADR`・`-ENOENT`。`wai_flg` |
+  | 104 | 待フラグ | `x0`=ID, `x1`=パターン（>0）, `x2`=様式（WF_AND=0 / TWF_ANDW=0 / WF_OR=2 / TWF_ORW=2、+NOCLR=8）, `x3`=時限 | 条件を満たした時のパターン／`-EINVAL`（ptn=0・不明な様式）・`-ETIMEDOUT`・`-EIDRM`・`-EBADR`・`-ENOENT`。`wai_flg` |
   | 105 | 作緩 | `x0`=bufsz（0〜512。0 は保存しない同期バッファ）, `x1`=max（1〜min(256, bufsz-4)。bufsz=0 は 1〜256）, `x2`=指定（DELEXIT のみ） | ID／`-EINVAL`・`-EMFILE`（4 個満杯）。`cre_mbf` |
   | 106 | 削緩 | `x0`=ID | 0／`-EBADR`・`-ENOENT`。待ちは `-EIDRM`。`del_mbf` |
   | 107 | 送緩 | `x0`=ID, `x1`=メッセージ, `x2`=大きさ（1〜max）, `x3`=時限 | 0／`-EINVAL`・`-EFAULT`・`-ETIMEDOUT`・`-EIDRM`。総量に空きが無ければ眠り、受信で空くと起きて再実行する。`snd_mbf` |

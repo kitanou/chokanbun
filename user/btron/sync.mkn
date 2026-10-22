@@ -6,6 +6,9 @@
 常「SEM_EXCL」之無符六四 為 0x4000
 常「WF_AND」之無符六四 為 0x0000
 常「WF_OR」之無符六四 為 0x0002
+註 仕様名の別名。値は実装内の WF_AND/WF_OR と同じ。
+常「TWF_ANDW」之無符六四 為 0x0000
+常「TWF_ORW」之無符六四 為 0x0002
 常「T_NOWAIT」之無符六四 為 0
 常「T_FOREVER」之無符六四 為 0xFFFFFFFF
 
