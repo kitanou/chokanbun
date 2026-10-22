@@ -50,7 +50,7 @@
 | 利試 | `user/btron_usr.mkn` | 19 | OS 1.1 利用者情報、1.9 設定系 | `get_usr`、`chg_usr`、`set_tim`、`set_tod` | 正・異・相 | 権限（level 0 のみ設定可）、子が親の写しを継ぐ。level の向きは解釈 |
 | 強試 | `user/btron_term.mkn` | 23 | OS 1.1 強制終了・状態 | `ter_prc`（`TERM_NRM`/`TERM_ALL`）、`prc_sts`、`MS_TERM` | 正・異・相 | `ER_SELF`/`ER_NOPRC`/`ER_LEVEL`/`ER_PAR`、子孫の終了順、枠の回収 |
 | 同試 | `user/btron_sync.mkn` | 21 | OS 1.3 セマフォ・イベントフラグ | `cre_sem`、`del_sem`、`sig_sem`、`wai_sem`、`cre_flg`、`del_flg`、`set_flg`、`clr_flg`、`wai_flg` | 正・異・境・相 | FIFO、時間切れ、`ER_DLT`、`DELEXIT`、排他の自動返却。待ち順は解釈 |
-| 緩試 | `user/btron_comm.mkn` | 27 | OS 1.3 メッセージバッファ・ランデブ | `cre_mbf`、`del_mbf`、`snd_mbf`、`rcv_mbf`、`cre_por`、`del_por`、`cal_por`、`acp_por`、`fwd_por`、`rpl_rdv` | 正・異・境・相 | 環の折り返し、満杯・空、転送、削除。`bufsz`=0 は未対応 |
+| 緩試 | `user/btron_comm.mkn` | 27 | OS 1.3 メッセージバッファ・ランデブ | `cre_mbf`、`del_mbf`、`snd_mbf`、`rcv_mbf`、`cre_por`、`del_por`、`cal_por`、`acp_por`、`fwd_por`、`rpl_rdv` | 正・異・境・相 | 環の折り返し、満杯・空、転送、削除、`bufsz`=0 の同期バッファ（待ち合わせ・時間切れ） |
 | 録試 | `user/btron_file.mkn` | 117 | OS 1.6 ファイル管理 B1〜B5、1.1 の `cre_prc` | `get_lnk`、`chg_wrk`、`att_fls`、`det_fls`、`lst_fls`、`fls_sts`、`cre_fil`、`cre_lnk`、`gen_fil`、`fnd_lnk`、`lnk_sts`、`syn_lnk`、`get_nlk`、`del_fil`、`opn_fil`、`cls_fil`、`fil_sts`、`ofl_sts`、`see_rec`、`fnd_rec`、`rea_rec`、`wri_rec`、`ins_rec`、`apd_rec`、`del_rec`、`trc_rec`、`loc_rec`、`xch_fil`、`chk_fil`、`chg_fmd`、`chg_fat`、`chg_fpw`、`chg_fnm`、`chg_ftm`、`get_dfm`、`set_dfm`、`cre_prc` | 正・異・境・相 | B1: 出現番号、`F_BASED`/`F_DIRECT`、作業ファイル継承。B2: 記述子の世代、ファイル数の上限と頁の返却、親レコードの満杯（`ER_SZOVR`）、参照数の増減、`F_EXCL`/`F_WEXCL` の行程間試験（子行程を使う）、行程終了での自動クローズ、読取専用 FS。B3: レコードの追記・挿入・書き足し（後ろが壊れない）・切り詰め・削除、リンクレコード、本文の容量、記述子間と行程間のロック、挿入・削除でのロック番号のずれ、`xch_fil`。B4: 属性の設定・解除、パスワード（20 文字・21 文字の境界を含む）、名前・時刻の変更、既定のアクセスモード、`A_MODE`、別の利用者・グループ・レベルになる子行程でのアクセス判定 |
 | 篇試 | `user/pian_test.mkn` | 28 | 篇藏（内部設計。BTRON3 の規範ではない） | 篇ID、章、パス、名替、予約章、深さ・名前長の上限 | 正・異・境 | 内部ストレージの試験。BTRON3 適合の根拠にはしない |
 | 貯試 | `user/btron_mem.mkn` | 45 | OS 1.5 メモリ管理 | `get_mbk`、`rel_mbk`、`mbk_sts`、`malloc` 系 18 関数 | 正・異・境・相 | ローカル塊の割当・解放・再利用（昇順 first-fit、解放後の穴）、ローカル域の枯渇（`ER_NOMEM`）、共有・システム塊の全行程写像（同一 VA・同一物理頁を子行程で横断確認）、`DELEXIT` の自動解放、`M_SYSTEM` のレベル 0 権限（子がレベル 1 で `ER_CTX`）、持ち主でない塊の解放（`ER_MPTR`）、`ER_PAR`（余計ビット・頁数 0・負）、`ER_ADR`（书写き先が不正）、`mbk_sts` の口径（空き枚数の減りと戻り）。子は 3 役。不足: 塊表 32 項の満杯・共有域 8 頁づまり（`ER_LIMIT`）の試験なし |
@@ -58,11 +58,12 @@
 | 設試 | `user/btron_dev.mkn` | 97 | OS 1.8 デバイス管理 | `opn_dev`、`cls_dev`、`rea_dev`、`wri_dev`、`chg_dmd`、`dev_sts`、`get_dev`、`lst_dev`、`sus_dev` | 正・異・境・相 | 論理名の解決（前綴り一致・支番 1〜3 桁・前 0 なし）と未登録（`ER_NOEXS`）、`o_mode` の不正ビット（`ER_PAR`）と排他（`D_EXCL`/`D_WEXCL` の `ER_BUSY`）、同時オープン 32 の上限（`ER_LIMIT`）、塊型の読み書き（`rda`）と属性データ（`start`<0、読のみ）、`a_size`、文字型（`con`）の路と空読み（`ER_BUSY`）、向きの検査（読否 `prn` の `D_READ` → `ER_DEV`、書禁 `rom` の `D_WRITE` → `ER_RONLY`）、`D_READ`/`D_WRITE` オープンでの逆操作（`ER_DD`）、`dev_sts`（`attr`/`mode`/`blksz`/`wprt`）、`get_dev`/`lst_dev`（`DEV_INFO`）、`chg_dmd` のレベル 0 権限（`ER_ACCES`）と `mode` の範囲、`sus_dev` の通常・強制カウンタ（`D_CHECK`/`D_SUSPEND`/`ER_BUSY`）。実機が無いため核内の模型 4 ユニット（`rda`/`rom`/`con`/`prn`）で試験する（子行程は使わない） |
 | 系試 | `user/btron_sys.mkn` | 38 | OS 1.10 システム管理 | `get_ver`、`get_cnf` | 正・異・境 | `T_VER`（20 B）の全欄（`maker`/`id`/`spver`/`prver`/`prno[4]`/`cpu`/`var`）と 20 バイトだけ書くこと、格納域が窓外・窓末で入らない場合（`ER_ADR`）、構成情報の数値 3 項目（`NPRC`/`PGSZ`/`NDEV`）と文字列 2 項目（`SYSNAM`/`SYSVER`）の内容と末尾の NUL、未知の名前（`ER_NOEXS`）・部分名・余分付き・大小文字、名または格納域が窓外（`ER_ADR`）、数値で `len`<4 と `len`<0（`ER_PAR`）、文字列の `len`=0・不足（4）・ちょうど（11）・余りあり（12）の切り詰め。`def_exc`/`ret_exc` は `例試` で試験する（子行程は使わない） |
 | 例試 | `user/btron_exc.mkn`（補助 `user/btron_exc_aux.S`） | 16 | OS 1.10 システム管理 | `def_exc`、`ret_exc`、EL0 例外ハンドラ | 正・異・境・相 | 要因 0〜7 の範囲外（`ER_PAR`）、ハンドラの窓外・像の終端・未整列（`ER_ADR`）、像の先頭の定義、ハンドラ外の `ret_exc(0)`/`(1)`（`ER_CTX`）、BRK の `ret_exc(0)`（例外位置から再開）と `(1)`（ハンドラ続行）、ハンドラが普通に戻ったときの復帰スタブ、データ異常の要因と FAR、後から定義したハンドラの優先、子行程のハンドラ表の分離。子行程は 4 役 |
+| 信手試 | `user/btron_msg_hdr.mkn`（補助 `user/btron_msg_hdr_aux.S`） | 25 | OS 1.2 メッセージ管理 | `def_msg`、`ret_msg`、`MH_NONE`、`MH_BREAK`、`MH_TERM`、メッセージハンドラ | 正・異・境・相 | `t_mask`=0・負（`ER_PAR`）、ハンドラの窓外・像の終端・未整列（`ER_ADR`）、像の先頭の定義、ハンドラ外の `ret_msg(0)`/`(1)`（`ER_CTX`）、自分宛のハンドラの送信元・型・大きさ・本体・回数、メッセージがキューに残らないこと、普通の `ret` の復帰スタブ、ハンドラ実行中の送信が入れ子にならず `ret_msg(0)` の後に走ること、他の行程からのメッセージで待っていた `rcv_msg` の `ER_MINTR`、`MH_BREAK` の中断とメッセージ破棄、`MH_NONE` の非中断と破棄、`MH_TERM` の終了と親への `MS_ABORT`、`ret_msg(1)` のハンドラ続行、`def_msg(...,0)` の解除。子行程は 5 役 |
 | 実試 | `user/btron_omgr.mkn`（起動される側は `user/obj_app.mkn`、像名 `objapp`） | 60 | 3.8 実身／仮身マネージャ（登録簿・起動・実行機能付箋。[設計](../design-object-model.md)） | `oreg_vob`・`b_odup_vob`・`odel_vob`・`oget_vob`・`ochg_sts`、`ocre_obj`・`oopn_obj`・`ochg_nam`・`odel_obj`・`oupd_fil`、続柄管理ファイル・`ochg_rel`・`ocnv_vob`、`oatt_fls`・`odet_fls`・`ofat_fls`・`ofdt_fls`・`oatt_vob`・`odet_vob`（虚身）、`oreg_apg`・`odel_apg`・`ofnd_apg`・`oset_sea`・`oget_sea`・`ochg_env`・`oget_env`・`oset_tmf`、`oexe_apg`・`osta_prc`・`oend_prc`・`oend_req`（V4b-1）、`oget_fsn`・`oput_fsn`（V4b-2） | 正・異・境・相 | 登録・取出しの往復（VLINK と 32 B の仮身セグメント、固有データ付き）、`size` が小さいときの切り詰め、内部の状態ビットと隠蔽、`V_CHKREF`/`V_CHKDUP`、複製と削除（ID を再利用しない）、`wid >= 0`・付箋・未定義の `disp`・読めない番地・固有データ 64 B 超・64 件の上限のエラー（`EX_*`）。V4b-1 は 2 行程にまたがり、既定起動の `M_EXECREQ`（`vid`・`mode`・`info`）、`V_INPROC`、`osta_prc`→`oend_prc` の固有データ、実行メニュー起動（`info = 2`）、既に処理中なら 0、`EX_PAR`/`EX_VID`/`EX_VOBJ`/`EX_NOEXS`/`ER_NOFS` を確かめる。V4b-2 は起動中の型 31 レコードの `FUSENSEG` を取得し、dlen=4 の固有データを更新して再取得で反映され、対象ファイルの更新日時が変わらないこと、既定起動の `EX_NOEXS`・処理中でない/虚身の `EX_VOBJ`・無い `vid` の `EX_VID`・読めない宛の `EX_ADR`・dlen 65 の `EX_NOSPC` を確かめる |
 | 言語 | `tests/lang/ok`・`err` | ok 8・err 37 | （BTRON3 とは無関係） | 言語仕様の黄金・診断試験 | — | 互換層を書く言語の健全性 |
 | 起動時 | `tests/run_tests.sh` | — | 核の基本動作 | argv 受け渡し、終了コード、EL0 行程、メモリ保護など | — | BTRON3 の項目には紐付けない |
 
-**集計**: BTRON3 互換層の QEMU 試験は 15 種・計 626 項目（識試 13、名試 21、時試 11、信試 45、利試 19、強試 23、同試 21、緩試 27、録試 117、貯試 45、件試 73、設試 97、系試 38、例試 16、実試 60）。ほかに篇藏 28 項目。V4b-1 の試験用アプリ `user/obj_app.mkn`（像名 `objapp`）は `実試` から起動する。
+**集計**: BTRON3 互換層の QEMU 試験は 16 種・計 651 項目（識試 13、名試 21、時試 11、信試 45、利試 19、強試 23、同試 21、緩試 27、録試 117、貯試 45、件試 73、設試 97、系試 38、例試 16、信手試 25、実試 60）。ほかに篇藏 28 項目。V4b-1 の試験用アプリ `user/obj_app.mkn`（像名 `objapp`）は `実試` から起動する。`信手試` は子行程を 5 役（送信・`MH_BREAK` 用・`MH_NONE` 用・`MH_TERM` 用・`ret_msg(1)` 用）で起動する。
 
 ## 5. API 単位の試験の有無（第2編 第1章）
 
@@ -76,7 +77,8 @@
 | `ext_prc` | 信試（`MS_EXIT`） | 資源解放の網羅（共有メモリ等は未実装） |
 | `ter_prc`、`prc_sts` | 強試 | `ER_LEVEL` の向きは解釈。優先度の返り値は固定値 |
 | `get_usr`、`chg_usr` | 利試 | 利用者名の接尾部、グループ名の検証は未実装 |
-| `snd_msg`、`rcv_msg`、`clr_msg` | 信試 | `CONFM`（取り出しまで待つ・相手が終わると `ER_NOPRC`・自分宛は `ER_SELF`）を子行程で確認。`CHECK`・`WAIEVT`・`req_tmg`・`can_tmg` は信試で確認のみ |
+| `snd_msg`、`rcv_msg`、`clr_msg` | 信試・信手試 | `CONFM`（取り出しまで待つ・相手が終わると `ER_NOPRC`・自分宛は `ER_SELF`）を子行程で確認。`CHECK`・`WAIEVT`・`req_tmg`・`can_tmg` は信試で確認。ハンドラ定義時の配送と待ちの `ER_MINTR` は信手試で確認 |
+| `def_msg`、`ret_msg` | 信手試 | `t_mask` の範囲、ハンドラ番地の検査、`MH_NONE`/`MH_BREAK`/`MH_TERM`、復帰スタブ、保留分の非入れ子起動、`ER_CTX`、子行程の分離 |
 | `cre_nam`、`del_nam`、`get_nam` | 名試 | 良好。`get_nam` の戻り動作は原文の欠落箇所（要確認） |
 | `cre_sem` `del_sem` `sig_sem` `wai_sem` | 同試 | カウント上限 65535、16 個上限（`ER_LIMIT`）の境界試験なし |
 | `cre_flg` `del_flg` `set_flg` `clr_flg` `wai_flg` | 同試 | OR 待ち（`TWF_ORW`）、複数待ち、16 個上限の試験なし |
@@ -96,7 +98,7 @@
 | `rea_rec`、`wri_rec` | 録試 | `wri_rec` の `units` は無視。リンクレコードの属性以外の書き込みは `ER_PAR` を確認。戻り値の意味は原文欠落で自前の解釈 |
 | `ins_rec`、`apd_rec` | 録試 | リンクの `ER_LIMIT`（参照数 255）は未検証。`ER_REC`（原文が不明）は未対応 |
 | `del_rec`、`trc_rec` | 録試 | 良好 |
-| `loc_rec` | 録試 | `F_LOCK` の待ち・`ER_MINTR`・複数ロックは未検証（未実装） |
+| `loc_rec` | 録試 | `F_LOCK` の待ち順・複数ロックは未検証。メッセージハンドラによる `ER_MINTR` の解除も未試験（`MH_BREAK` は待ち状態を実行可能に戻す） |
 | `xch_fil` | 録試 | `ER_XFS`（別 FS）と他の記述子のロック（`ER_LOCK`）は未検証 |
 | `att_fls`、`det_fls`、`lst_fls`、`fls_sts`、`syn_fls`、`chg_fls`、`chg_fsm` | 録試 | `chg_fls` の書込権 W による ER_ACCES と、装置が開かれている場合の ER_BUSY は未試験・未実装 |
 | `get_mbk`、`rel_mbk`、`mbk_sts` | 貯試 | ローカル塊: 先頭が頁 8 から連続し、書いて読め、解放した穴が再利用され、16 頁の塊 14 件でローカル域が尽きる（`ER_NOMEM`。残りの穴には小さな塊が当たる）。`ER_ADR`（書き先の番地が不正）、`ER_PAR`（指定 0x2・余計ビット・頁数 0 と負）、`ER_MPTR`（零・非整列・塊途中・塊で無い整列番地の放）。`mbk_sts` は blksz=4096・total=4096・空き枚数（塊で減り、解放で戻る） |
@@ -107,7 +109,7 @@
 | `opn_dev`、`cls_dev`、`rea_dev`、`wri_dev`、`chg_dmd`、`dev_sts`、`get_dev`、`lst_dev` | 設試 | 論理名（`rda`/`rom`/`con`/`prn` の前綴り一致、支番 1〜3 桁、前 0 なし、`ER_NOEXS`）、`o_mode` の許容ビットと `ER_PAR`、排他（ユニット単位の `ER_BUSY`、閉じれば再開ける）、32 相の上限（`ER_LIMIT`）、塊型の読み書きと属性データ（`start`<0）、`a_size` に容量・空き、文字型の 32 B 路と `ER_BUSY`、向き（読否 → `ER_DEV`、書禁 → `ER_RONLY`）と逆操作（`ER_DD`）、`dev_sts` の 4 欄、`get_dev` の支数、`lst_dev` の `DEV_INFO` 並び、`chg_dmd` の `ER_ACCES`・レベル 0 権限。不足: 実機の器類表（ディスク・コンソール・印刷） |
 | `sus_dev` | 設試 | 通常・強制の禁止カウンタ（`D_DISSUS`/`D_ENASUS`/`D_CHECK`）、通常の `D_SUSPEND` は両方 0 を要求、`D_FORCE|D_SUSPEND` は強制 0 を要求（`ER_BUSY`）、電源管理が無いので直ちに 0。不足: 実機の電源管理 |
 | `get_ver`、`get_cnf` | 系試 | `T_VER`（20 B）の全欄（`maker`/`id`/`spver`/`prver`/`prno[4]`/`cpu`/`var`）と 20 バイトだけ書くこと、格納域が窓外・窓末で入らない場合（`ER_ADR`）、数値 3 項目（`NPRC`/`PGSZ`/`NDEV`）と文字列 2 項目（`SYSNAM`/`SYSVER`）の内容・末尾 NUL、未知の名前・部分名・余分付き・大小文字（`ER_NOEXS`）、`len` の境界（数値で `len`<4・`len`<0 は `ER_PAR`、文字列の切り詰め） |
-| `def_exc`、`ret_exc` | 例試 | 要因 0〜7 の範囲外（`ER_PAR`）、ハンドラの窓外・像の終端・未整列（`ER_ADR`）、ハンドラ外の `ret_exc`（`ER_CTX`）、BRK の `ret_exc(0)` と `(1)`、ハンドラの普通の `ret`（復帰スタブ）、データ異常と FAR、後から定義したハンドラの優先、子行程の分離。不足: 非同期割込からの upcall（`def_msg` と共通の将来課題）。入れ子の再配送は例外文脈が有効な間は禁止のため試験しない |
+| `def_exc`、`ret_exc` | 例試 | 要因 0〜7 の範囲外（`ER_PAR`）、ハンドラの窓外・像の終端・未整列（`ER_ADR`）、ハンドラ外の `ret_exc`（`ER_CTX`）、BRK の `ret_exc(0)` と `(1)`、ハンドラの普通の `ret`（復帰スタブ）、データ異常と FAR、後から定義したハンドラの優先、子行程の分離。非同期のメッセージ配送は `信手試` で別に検証する。入れ子の再配送は例外文脈が有効な間は禁止のため試験しない |
 
 ## 6. 未整備の試験（優先順）
 
@@ -117,7 +119,7 @@
 | 2 | 同期系の上限・OR 待ち | 1.3 | `ER_LIMIT`、カウント上限、`TWF_ORW` を同試に追加 |
 | 3 | 型の残り | 共有データ §1 | `ErrCode` の二定義、`MSEC`/`STIME` の幅、浮動小数点の方針が決まってから |
 | 4 | 録層 B6 以降 | 1.6 | 写像・永続化・大きなファイルの本文。実装と同時に正常・異常・境界を足す。B4 の未検証項目（アクセス管理レベル 0 の FS、`chk_fil` の全ビット、複数ユーザーの公開経路）、`xch_fil` の `ER_LOCK` も併せて足す |
-| 5 | メッセージのハンドラ・タイムアウト | 1.2 | `def_msg`/`ret_msg`/`brk_msg`、`req_tmg`。同期例外の EL0 upcall 基盤（`def_exc`）は実装済み。非同期のメッセージ配送を足した後 |
+| 5 | 1.3 の同期待ちからの `ER_MINTR` | 1.3 | セマフォ・フラグ・メッセージバッファ・ランデブの待ちを `MH_BREAK` で中断する経路の試験。1.2 のハンドラとメッセージ待ちは `信手試` で検証済み |
 | 6 | 文字コード・TAD の往復試験 | 共有データ §2・§3 | 符号表と TAD の ID／配置を原文で確定してから。テストベクトルの入手経路を決める |
 | 7 | 描画・HMI の統合試験 | 第2編 第2章・第3章 | 表示装置の実装後。QEMU の framebuffer 出力の比較方法（スクリーンショットの画素比較）を決める |
 | 8 | 独立な期待値の導入 | 全体 | §3 の 6 を満たす手段（原文の例、別実装、ホスト計算）を項目ごとに調べる |

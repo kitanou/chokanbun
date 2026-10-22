@@ -39,12 +39,29 @@ exc_return_stub:
     svc #0
 1:  b 1b
 
+// Message-handler return trampoline.  メッセージ配送 sets a handler's x30 to
+// this address; a handler that returns without calling ret_msg is treated as
+// ret_msg(0) and resumes the interrupted position.
+    .globl msg_return_stub
+msg_return_stub:
+    mov x0, #0
+    mov x8, #184
+    svc #0
+1:  b 1b
+
 // exc_return_stub_addr(): EL0 address of exc_return_stub (kernel code is mapped
 // EL0 RO+X, so the trampoline is executable from the user handler).
     .globl exc_return_stub_addr
 exc_return_stub_addr:
     adrp x0, exc_return_stub
     add  x0, x0, :lo12:exc_return_stub
+    ret
+
+// msg_return_stub_addr(): EL0 address of msg_return_stub.
+    .globl msg_return_stub_addr
+msg_return_stub_addr:
+    adrp x0, msg_return_stub
+    add  x0, x0, :lo12:msg_return_stub
     ret
 
 // user_entry_addr(): return the address of the EL0 task entry (view: user_main).
