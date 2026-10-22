@@ -67,8 +67,8 @@
 | § | 項目 | 参照 | 関連する既存実装 | 状態 |
 |---|---|---|---|---|
 | 1.1 | プロセス／タスク管理（状態、優先度、スケジューリング、ユーザー情報、生成、定数、システムコール） | kernel/proc.html | `kernel/proc/`、協調+タイマープリエンプション | 部分適合（機能のみ・API不一致、[詳細](btron3-os.md)） |
-| 1.2 | メッセージ管理（メッセージ、ハンドラ、システムコール） | kernel/message.html | `kernel/proc/msg.mkn`、`kernel/proc/msgh.mkn`、`user/btron/msg.mkn`（漢令 80〜85、183・184） | 部分適合（基本部・`CHECK`・`WAIEVT`・`req_tmg`/`can_tmg`・`CONFM`・`brk_msg`・`def_msg`/`ret_msg` まで実装済み。ハンドラの 1.3 待ち中断など細部は未試験、[詳細](btron3-os.md)） |
-| 1.3 | プロセス／タスク同期通信管理 | kernel/taskcomm.html | なし | 実装済・未検証（`bufsz`=0 の同期バッファを含む。`ER_MINTR` は 1.2 のメッセージ待ちで実装済み。1.3 の各待ちは専用試験が未了、[詳細](btron3-os.md)） |
+| 1.2 | メッセージ管理（メッセージ、ハンドラ、システムコール） | kernel/message.html | `kernel/proc/msg.mkn`、`kernel/proc/msgh.mkn`、`user/btron/msg.mkn`（漢令 80〜85、183・184） | 部分適合（基本部・`CHECK`・`WAIEVT`・`req_tmg`/`can_tmg`・`CONFM`・`brk_msg`・`def_msg`/`ret_msg` まで実装済み。ハンドラの 1.3 待ち中断は `同試` 25 項目・`緩試` 35 項目で回帰試験済み。その他の細部は未試験、[詳細](btron3-os.md)） |
+| 1.3 | プロセス／タスク同期通信管理 | kernel/taskcomm.html | `kernel/proc/sync.mkn`、`kernel/proc/sync2.mkn`、`user/btron/sync.mkn`（漢令 96〜111・115〜117） | 実装済・未検証（`bufsz`=0 の同期バッファを含む。`ER_MINTR` は 1.2 のメッセージ待ちに加え、1.3 の各待ちも `同試` 25 項目・`緩試` 35 項目で中断と再使用を回帰試験済み、[詳細](btron3-os.md)） |
 | 1.4 | グローバル名管理 | kernel/gname.html | `kernel/proc/gname.mkn`、`user/btron/gname.mkn` | 実装済・未検証（[詳細](btron3-os.md)） |
 | 1.5 | メモリ管理（概要、定数、システムコール、ライブラリ） | kernel/memory.html | 頁池・MMU、`user/btron/mem.mkn`（漢令 120〜122） | 実装済・未検証（[詳細](btron3-os.md)） |
 | 1.6 | ファイル管理（構成、構造、アクセス制御、操作、詳細情報、システムコール） | kernel/file.html | `kernel/vfs/`、篇藏設計 | 部分適合（B1〜B5 と接続系の `syn_fls`/`chg_fls`/`chg_fsm` まで実装済・未検証。`F_SYSTEM`（民の行程から使えない空間）への写像と永続化が未実装、[詳細](btron3-os.md)） |
@@ -120,7 +120,7 @@ API 一覧: [btron3-api-inventory.md](btron3-api-inventory.md)（約 247 関数�
 | 第2編 第3章 シェル | 11 節・約 247 関数 | 0 | 0 | 0 | 11 節 | 0 |
 
 - 節単位の状態は最も低い API に引きずられるため、実質の進捗は第1章の API 単位表（[btron3-os.md](btron3-os.md)）で見る。
-- **適合確認済は 0**。合否基準と既存試験の対応は [btron3-test-plan.md](btron3-test-plan.md)（互換層の QEMU 試験 16 種・651 項目（1.5 メモリの `貯試` 45 項目、1.7 イベントの `件試` 73 項目、1.8 デバイスの `設試` 97 項目、1.10 システムの `系試` 38 項目と `例試` 16 項目、1.2 メッセージハンドラの `信手試` 25 項目を含む）を規範項目に紐付け済み）。
+- **適合確認済は 0**。合否基準と既存試験の対応は [btron3-test-plan.md](btron3-test-plan.md)（互換層の QEMU 試験 16 種・663 項目（1.5 メモリの `貯試` 45 項目、1.7 イベントの `件試` 73 項目、1.8 デバイスの `設試` 97 項目、1.10 システムの `系試` 38 項目と `例試` 16 項目、1.2 メッセージハンドラの `信手試` 25 項目、1.3 同期の `ER_MINTR` 回帰の `同試` 25 項目と `緩試` 35 項目を含む）を規範項目に紐付け済み）。
 - 1.6 は篇藏 F0〜F3 と録層 B5（作成・削除・開閉・状態・レコード操作・ロック・属性・アクセス制御・パスワード・SYS の像ファイルと `cre_prc` の LINK 版。`gen_fil`・`fnd_lnk` ほか M3 のリンク系、接続系の `syn_fls`/`chg_fls`/`chg_fsm` を含む）まで実装済み。B6（写像・永続化）が次。
 
 ## 次の作業（Phase 0 の残り）

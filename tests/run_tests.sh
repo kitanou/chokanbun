@@ -786,19 +786,19 @@ if [ -f "$OUT/kernel.elf" ]; then
         # --- #42 G6b: メッセージバッファとランデブポート (1.3) ------------------------
         CM_N="$(grep -ac '^緩試 ' "$KLOG" 2>/dev/null)"
         CM_BAD="$(grep -a '^緩試 ' "$KLOG" 2>/dev/null | grep -vc '0x0000000000000001$')"
-        if [ "${CM_N:-0}" -eq 27 ] && [ "${CM_BAD:-1}" -eq 0 ]; then
-            pass "kernel qemu: BTRON3 互換層 メッセージバッファ・ランデブ (環の折り返し・待ち・転送・削除の ${CM_N} 項目)"
+        if [ "${CM_N:-0}" -eq 35 ] && [ "${CM_BAD:-1}" -eq 0 ]; then
+            pass "kernel qemu: BTRON3 互換層 メッセージバッファ・ランデブ (環の折り返し・待ち・中断・転送・削除の ${CM_N} 項目)"
         else
-            fail "kernel qemu: BTRON3 互換層 メッセージバッファ・ランデブ (項目=${CM_N:-0}/27、失敗=${CM_BAD:-?})"
+            fail "kernel qemu: BTRON3 互換層 メッセージバッファ・ランデブ (項目=${CM_N:-0}/35、失敗=${CM_BAD:-?})"
             grep -a '^緩試 ' "$KLOG" 2>/dev/null | sed 's/^/      /'
         fi
         # --- #42 G6a: セマフォとイベントフラグ (1.3) -------------------------------------
         SY_N="$(grep -ac '^同試 ' "$KLOG" 2>/dev/null)"
         SY_BAD="$(grep -a '^同試 ' "$KLOG" 2>/dev/null | grep -vc '0x0000000000000001$')"
-        if [ "${SY_N:-0}" -eq 21 ] && [ "${SY_BAD:-1}" -eq 0 ]; then
-            pass "kernel qemu: BTRON3 互換層 セマフォ・イベントフラグ (待ちの FIFO・時間切れ・削除・DELEXIT・自動返却の ${SY_N} 項目)"
+        if [ "${SY_N:-0}" -eq 25 ] && [ "${SY_BAD:-1}" -eq 0 ]; then
+            pass "kernel qemu: BTRON3 互換層 セマフォ・イベントフラグ (待ちの FIFO・時間切れ・中断・削除・DELEXIT・自動返却の ${SY_N} 項目)"
         else
-            fail "kernel qemu: BTRON3 互換層 セマフォ・イベントフラグ (項目=${SY_N:-0}/21、失敗=${SY_BAD:-?})"
+            fail "kernel qemu: BTRON3 互換層 セマフォ・イベントフラグ (項目=${SY_N:-0}/25、失敗=${SY_BAD:-?})"
             grep -a '^同試 ' "$KLOG" 2>/dev/null | sed 's/^/      /'
         fi
         # --- #42 G5: ter_prc (MS_TERM・TERM_ALL・ER_LEVEL・ER_SELF) と prc_sts ------------
