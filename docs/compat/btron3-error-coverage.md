@@ -2,7 +2,7 @@
 
 > 親Issue: [#42](https://github.com/kitanou/chokanbun/issues/42) / 試験計画: [btron3-test-plan.md](btron3-test-plan.md)
 > 対象: BTRON3仕様書 Ver. 3.20.00 第2編 第1章 1.1〜1.10 の実装済み API。
-> 作成: 2026-10-22。`ER_*` の名称と、各 QEMU 試験が直接参照しているエラーを対応づける。
+> 作成: 2026-10-22、更新: 2026-10-23。`ER_*` の名称と、各 QEMU 試験が直接参照しているエラーを対応づける。
 
 ## 0. 範囲と読み方
 
@@ -19,7 +19,7 @@
 | `user/btron/er.mkn` が定義する `ER_*` | 42 |
 | 互換層の試験と `時元試` が参照する `ER_*` | 37 |
 | どの試験も参照していない `ER_*` | 5 |
-| BTRON3 互換層の QEMU 試験 | 16 種・667 項目 |
+| BTRON3 互換層の QEMU 試験 | 16 種・672 項目 |
 
 未参照の 5 名は `ER_ERDEV`・`ER_IO`・`ER_NODSK`・`ER_NOMDA`・`ER_XFS`。理由と次の一手は §4 にまとめる。
 
@@ -34,7 +34,7 @@
 | API | 記載 | 試験 | 直接確認 | 不足 |
 |---|---|---|---|---|
 | `get_tid` | エラー規定なし | 識 | — | なし |
-| `cre_prc`（LINK 版） | `ER_PPRI` `ER_SZOVR` `ER_ADR` `ER_REC` `ER_NOEXS` `ER_NOFS` `ER_ACCES` `ER_BUSY` | 録 | `ER_PPRI` `ER_SZOVR` `ER_ADR` `ER_REC` `ER_NOEXS` `ER_NOFS` | `ER_ACCES`・`ER_BUSY` |
+| `cre_prc`（LINK 版） | `ER_PPRI` `ER_SZOVR` `ER_ADR` `ER_REC` `ER_NOEXS` `ER_NOFS` `ER_ACCES` `ER_BUSY` | 録 | `ER_PPRI` `ER_SZOVR` `ER_ADR` `ER_REC` `ER_NOEXS` `ER_NOFS` `ER_BUSY` | `ER_ACCES` |
 | `ext_prc` | エラー規定なし | 信 | — | なし |
 | `ter_prc` | `ER_SELF` `ER_NOPRC` `ER_LEVEL` `ER_PAR` | 強 | 全て | なし |
 | `chg_pri` | `ER_PPRI` `ER_PAR` `ER_NOPRC` `ER_ID` | 強 | 全て | なし |
@@ -89,9 +89,9 @@
 | API 群 | 記載 | 試験 | 直接確認 | 不足 |
 |---|---|---|---|---|
 | `get_lnk` `chg_wrk` | `ER_ADR` `ER_NOEXS` `ER_NOFS` `ER_ACCES` | 録 | `ER_ADR` `ER_NOEXS` `ER_NOFS` | `ER_ACCES` の専用項目なし |
-| `cre_fil` `cre_lnk` `gen_fil` | `ER_FNAME` `ER_PAR` `ER_ADR` `ER_NOEXS` `ER_NOFS` `ER_EXS` `ER_RONLY` `ER_SZOVR` `ER_LIMIT` `ER_REC` `ER_ACCES` | 録 | `ER_FNAME` `ER_PAR` `ER_ADR` `ER_NOEXS` `ER_NOFS` `ER_EXS` `ER_RONLY` `ER_SZOVR` `ER_LIMIT` `ER_REC` `ER_ACCES` | `gen_fil` の `ER_ACCES`（レベル 0 以外） |
-| `del_fil` | `ER_BUSY` `ER_LOCK` `ER_PERM` `ER_REC` `ER_NOEXS` `ER_ACCES` | 録 | `ER_BUSY` `ER_PERM` `ER_REC` `ER_NOEXS` `ER_ACCES` | `ER_LOCK` |
-| `opn_fil` / `cls_fil` | `ER_NOEXS` `ER_PAR` `ER_ADR` `ER_NOFS` `ER_BUSY` `ER_RONLY` `ER_ACCES` `ER_PWD` `ER_FD` `ER_LIMIT` | 録 | `ER_NOEXS` `ER_PAR` `ER_ADR` `ER_NOFS` `ER_BUSY` `ER_RONLY` `ER_ACCES` `ER_PWD` `ER_FD` | `opn_fil` の `ER_LIMIT`（開表 16 件） |
+| `cre_fil` `cre_lnk` `gen_fil` | `ER_FNAME` `ER_PAR` `ER_ADR` `ER_NOEXS` `ER_NOFS` `ER_EXS` `ER_RONLY` `ER_SZOVR` `ER_LIMIT` `ER_REC` `ER_ACCES` | 録 | `ER_FNAME` `ER_PAR` `ER_ADR` `ER_NOEXS` `ER_NOFS` `ER_EXS` `ER_RONLY` `ER_SZOVR` `ER_LIMIT` `ER_REC` `ER_ACCES` | なし |
+| `del_fil` | `ER_BUSY` `ER_LOCK` `ER_PERM` `ER_REC` `ER_NOEXS` `ER_ACCES` | 録 | `ER_BUSY` `ER_LOCK` `ER_PERM` `ER_REC` `ER_NOEXS` `ER_ACCES` | なし |
+| `opn_fil` / `cls_fil` | `ER_NOEXS` `ER_PAR` `ER_ADR` `ER_NOFS` `ER_BUSY` `ER_RONLY` `ER_ACCES` `ER_PWD` `ER_FD` `ER_LIMIT` | 録 | `ER_NOEXS` `ER_PAR` `ER_ADR` `ER_NOFS` `ER_BUSY` `ER_RONLY` `ER_ACCES` `ER_PWD` `ER_FD` `ER_LIMIT` | なし |
 | レコード操作（`see_rec`〜`trc_rec`） | `ER_PAR` `ER_ADR` `ER_FD` `ER_ENDR` `ER_REC` `ER_LOCK` `ER_BUSY` `ER_SZOVR` | 録 | 全て | なし |
 | `loc_rec` / `xch_fil` | `ER_PAR` `ER_FD` `ER_LOCK` `ER_BUSY` `ER_XFS` | 録 | `ER_PAR` `ER_FD` `ER_LOCK` `ER_BUSY` | `ER_XFS`（別 FS） |
 | `fil_sts` / `ofl_sts` | `ER_ADR` `ER_FD` | 録 | 両方 | なし |
@@ -192,17 +192,14 @@
 
 ## 5. 名前はあるが直接確認がない条件
 
-未参照の 5 名とは別に、`ER_*` 自体は他の試験で参照されていても、特定の API・条件では直接確認がないものがある。
+未参照の 5 名とは別に、`ER_*` 自体は他の試験で参照されていても、特定の API・条件では直接確認がないものがある。2026-10-23 に `gen_fil` の `ER_ACCES`、`del_fil` の `ER_LOCK`、`opn_fil` の `ER_LIMIT`、`xch_fil` の `ER_LOCK`、`cre_prc` の `ER_BUSY` を `録試` に追加した。
 
 | API・条件 | 不足している `ER_*` | 補う試験の案 |
 |---|---|---|
-| `cre_prc` の権限・排他 | `ER_ACCES` `ER_BUSY` | 親のいない像ファイル、使用中の像ファイル、レベル不足の子で 1 件ずつ |
+| `cre_prc` の権限 | `ER_ACCES` | SYS の像ファイルは FS のアクセス管理レベル 0 で、`A_MODE` が常に一般 0x0FFF に整えられるため、実行権を絞れない。レベル 1 以上の FS に像ファイルを置く仕組みが要る |
 | `snd_msg` の `CONFM` 待ち中断 | `ER_MINTR` | 既存の `信手試` の `MH_BREAK` を `CONFM` 送信側にも広げる |
 | `slp_tsk` / `dly_tsk` の待ち中断 | `ER_MINTR` | ハンドラから `MH_BREAK` を送る子を 1 役足す |
 | `get_mbk` / `malloc` の上限 | `ER_LIMIT` | 塊表 32 項満杯、共有域 8 頁づまりを順に作る |
-| `gen_fil` のレベル 0 以外 | `ER_ACCES` | レベル 1 の子で `gen_fil` を呼ぶ |
-| `del_fil` のロック中 | `ER_LOCK` | 別の記述子でレコードをロックしてから `del_fil` |
-| `opn_fil` の開表上限 | `ER_LIMIT` | 16 個の記述子を開いて 17 個目を試す |
 | FS 操作の装置・媒体 | `ER_NODEV` `ER_NOMDA` | §4 の模型・構成待ち |
 | `xch_fil` の別 FS | `ER_XFS` | 2 つ目の書込可能 FS を接続して試す |
 | `sus_dev` の禁止カウンタ上限 | `ER_LIMIT` | `D_DISSUS` を 32767 回行い、次を試す |
