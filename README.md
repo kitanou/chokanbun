@@ -28,7 +28,7 @@
 | カーネル | QEMU/AArch64 起動、例外処理、MMU、ページ管理、タイマー・割込の基礎を実装 |
 | 行程・漢令 | EL0 実行、SVC ABI、スケジューラ、アドレス空間、プリエンプション等の基礎を実装 |
 | 篇藏・漢殻 | 篇藏（篇ID・章とパス・権限・作時/改時）と機械漢文製の最小シェルを実装。殻の `時` が黄帝紀元を表示し、`同` で篇藏と録層を `vda` へ保存・再起動で復元する |
-| BTRON3 適合 | 互換層（`user/btron/` → 漢令）で第2編 第1章の一部を実装し、QEMU 試験 626 項目（15 種）で検証中。1.6 ファイル管理は作成・削除・開閉・レコード操作・ロック・属性・アクセス制御、`cre_prc`（SYS の像ファイル）まで。1.10 の `def_exc`/`ret_exc` は EL0 ハンドラへの同期例外の配送まで実装。適合確認済みの項目は 0 で、完全準拠ではない（[適合性マトリクス](docs/compat/btron3-conformance.md)） |
+| BTRON3 適合 | 互換層（`user/btron/` → 漢令）で第2編 第1章の一部を実装し、QEMU 試験 16 種・667 項目で検証中。1.6 ファイル管理は作成・削除・開閉・レコード操作・ロック・属性・アクセス制御、`cre_prc`（SYS の像ファイル）まで。1.10 の `def_exc`/`ret_exc` は EL0 ハンドラへの同期例外の配送まで実装。適合確認済みの項目は 0 で、完全準拠ではない（[適合性マトリクス](docs/compat/btron3-conformance.md)・[`ER_*` 網羅表](docs/compat/btron3-error-coverage.md)） |
 | 実身・仮身／篇藏 | 設計・統合を進める段階。永続化や GUI 統合は未完了 |
 | GUI・実機対応 | 今後の段階 |
 | 機械漢文ブートローダー・セルフホスティング | 未完了 |
@@ -103,7 +103,7 @@ qemu-system-aarch64 -M virt,gic-version=2 -cpu cortex-a57 -nographic \
 
 ## テスト
 
-`make test` はコンパイラから AArch64 オブジェクト／ELF の生成、QEMU での実行、カーネルの統合テストを検証します。対象には型エラー診断、起動メッセージ、例外処理、MMU・ページ管理、タイマー割込、EL0 行程・漢令・境界検査、プリエンプション、待機と起床、デマンドページング、UART 入力、篇藏、漢殻の各命令、BTRON3 互換層の適合試験（識試・名試・時試・信試・利試・強試・同試・緩試・録試・系試・例試）などが含まれます。適合試験と規範項目の対応は [適合試験計画](docs/compat/btron3-test-plan.md) を参照してください。
+`make test` はコンパイラから AArch64 オブジェクト／ELF の生成、QEMU での実行、カーネルの統合テストを検証します。対象には型エラー診断、起動メッセージ、例外処理、MMU・ページ管理、タイマー割込、EL0 行程・漢令・境界検査、プリエンプション、待機と起床、デマンドページング、UART 入力、篇藏、漢殻の各命令、BTRON3 互換層の適合試験（識試・名試・時試・信試・利試・強試・同試・緩試・録試・貯試・件試・設試・系試・例試・信手試・実試）などが含まれます。適合試験と規範項目の対応は [適合試験計画](docs/compat/btron3-test-plan.md) を、`ER_*` の API 別対応は [`ER_*` 網羅表](docs/compat/btron3-error-coverage.md) を参照してください。
 
 テスト数や PASS 数は実行時の結果を正とし、README に固定値を記載しません。失敗時はログと再現手順を確認してください。
 
@@ -122,7 +122,7 @@ qemu-system-aarch64 -M virt,gic-version=2 -cpu cortex-a57 -nographic \
 - [漢殻コマンド一覧](docs/shell-commands.md)
 - [実装メモ](docs/implementation-notes.md)
 - [開発ロードマップ](docs/roadmap.md)
-- BTRON3 適合性: [適合性マトリクス](docs/compat/btron3-conformance.md)・[互換層の設計](docs/compat/btron3-compat-layer.md)・[OS 仕様編の照合](docs/compat/btron3-os.md)・[共有データ編](docs/compat/btron3-shared-data.md)・[第2章・第3章の API 棚卸し](docs/compat/btron3-api-inventory.md)・[ファイル管理の設計](docs/compat/btron3-file-design.md)・[適合試験計画](docs/compat/btron3-test-plan.md)・[原文の直接確認と食い違い](docs/compat/btron3-spec-verification.md)
+- BTRON3 適合性: [適合性マトリクス](docs/compat/btron3-conformance.md)・[互換層の設計](docs/compat/btron3-compat-layer.md)・[OS 仕様編の照合](docs/compat/btron3-os.md)・[共有データ編](docs/compat/btron3-shared-data.md)・[第2章・第3章の API 棚卸し](docs/compat/btron3-api-inventory.md)・[ファイル管理の設計](docs/compat/btron3-file-design.md)・[適合試験計画](docs/compat/btron3-test-plan.md)・[`ER_*` 網羅表](docs/compat/btron3-error-coverage.md)・[原文の直接確認と食い違い](docs/compat/btron3-spec-verification.md)
 
 ## 開発上の約束
 
