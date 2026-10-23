@@ -19,7 +19,7 @@
 | `user/btron/er.mkn` が定義する `ER_*` | 42 |
 | 互換層の試験と `時元試` が参照する `ER_*` | 37 |
 | どの試験も参照していない `ER_*` | 5 |
-| BTRON3 互換層の QEMU 試験 | 16 種・670 項目 |
+| BTRON3 互換層の QEMU 試験 | 16 種・672 項目 |
 
 未参照の 5 名は `ER_ERDEV`・`ER_IO`・`ER_NODSK`・`ER_NOMDA`・`ER_XFS`。理由と次の一手は §4 にまとめる。
 
@@ -34,7 +34,7 @@
 | API | 記載 | 試験 | 直接確認 | 不足 |
 |---|---|---|---|---|
 | `get_tid` | エラー規定なし | 識 | — | なし |
-| `cre_prc`（LINK 版） | `ER_PPRI` `ER_SZOVR` `ER_ADR` `ER_REC` `ER_NOEXS` `ER_NOFS` `ER_ACCES` `ER_BUSY` | 録 | `ER_PPRI` `ER_SZOVR` `ER_ADR` `ER_REC` `ER_NOEXS` `ER_NOFS` | `ER_ACCES`・`ER_BUSY` |
+| `cre_prc`（LINK 版） | `ER_PPRI` `ER_SZOVR` `ER_ADR` `ER_REC` `ER_NOEXS` `ER_NOFS` `ER_ACCES` `ER_BUSY` | 録 | `ER_PPRI` `ER_SZOVR` `ER_ADR` `ER_REC` `ER_NOEXS` `ER_NOFS` `ER_BUSY` | `ER_ACCES` |
 | `ext_prc` | エラー規定なし | 信 | — | なし |
 | `ter_prc` | `ER_SELF` `ER_NOPRC` `ER_LEVEL` `ER_PAR` | 強 | 全て | なし |
 | `chg_pri` | `ER_PPRI` `ER_PAR` `ER_NOPRC` `ER_ID` | 強 | 全て | なし |
@@ -192,11 +192,11 @@
 
 ## 5. 名前はあるが直接確認がない条件
 
-未参照の 5 名とは別に、`ER_*` 自体は他の試験で参照されていても、特定の API・条件では直接確認がないものがある。2026-10-23 に `gen_fil` の `ER_ACCES`、`del_fil` の `ER_LOCK`、`opn_fil` の `ER_LIMIT` を `録試` に追加した。
+未参照の 5 名とは別に、`ER_*` 自体は他の試験で参照されていても、特定の API・条件では直接確認がないものがある。2026-10-23 に `gen_fil` の `ER_ACCES`、`del_fil` の `ER_LOCK`、`opn_fil` の `ER_LIMIT`、`xch_fil` の `ER_LOCK`、`cre_prc` の `ER_BUSY` を `録試` に追加した。
 
 | API・条件 | 不足している `ER_*` | 補う試験の案 |
 |---|---|---|
-| `cre_prc` の権限・排他 | `ER_ACCES` `ER_BUSY` | 親のいない像ファイル、使用中の像ファイル、レベル不足の子で 1 件ずつ |
+| `cre_prc` の権限 | `ER_ACCES` | SYS の像ファイルは FS のアクセス管理レベル 0 で、`A_MODE` が常に一般 0x0FFF に整えられるため、実行権を絞れない。レベル 1 以上の FS に像ファイルを置く仕組みが要る |
 | `snd_msg` の `CONFM` 待ち中断 | `ER_MINTR` | 既存の `信手試` の `MH_BREAK` を `CONFM` 送信側にも広げる |
 | `slp_tsk` / `dly_tsk` の待ち中断 | `ER_MINTR` | ハンドラから `MH_BREAK` を送る子を 1 役足す |
 | `get_mbk` / `malloc` の上限 | `ER_LIMIT` | 塊表 32 項満杯、共有域 8 頁づまりを順に作る |
