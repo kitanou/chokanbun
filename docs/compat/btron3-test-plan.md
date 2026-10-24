@@ -60,10 +60,11 @@
 | 例試 | `user/btron_exc.mkn`（補助 `user/btron_exc_aux.S`） | 16 | OS 1.10 システム管理 | `def_exc`、`ret_exc`、EL0 例外ハンドラ | 正・異・境・相 | 要因 0〜7 の範囲外（`ER_PAR`）、ハンドラの窓外・像の終端・未整列（`ER_ADR`）、像の先頭の定義、ハンドラ外の `ret_exc(0)`/`(1)`（`ER_CTX`）、BRK の `ret_exc(0)`（例外位置から再開）と `(1)`（ハンドラ続行）、ハンドラが普通に戻ったときの復帰スタブ、データ異常の要因と FAR、後から定義したハンドラの優先、子行程のハンドラ表の分離。子行程は 4 役 |
 | 信手試 | `user/btron_msg_hdr.mkn`（補助 `user/btron_msg_hdr_aux.S`） | 25 | OS 1.2 メッセージ管理 | `def_msg`、`ret_msg`、`MH_NONE`、`MH_BREAK`、`MH_TERM`、メッセージハンドラ | 正・異・境・相 | `t_mask`=0・負（`ER_PAR`）、ハンドラの窓外・像の終端・未整列（`ER_ADR`）、像の先頭の定義、ハンドラ外の `ret_msg(0)`/`(1)`（`ER_CTX`）、自分宛のハンドラの送信元・型・大きさ・本体・回数、メッセージがキューに残らないこと、普通の `ret` の復帰スタブ、ハンドラ実行中の送信が入れ子にならず `ret_msg(0)` の後に走ること、他の行程からのメッセージで待っていた `rcv_msg` の `ER_MINTR`、`MH_BREAK` の中断とメッセージ破棄、`MH_NONE` の非中断と破棄、`MH_TERM` の終了と親への `MS_ABORT`、`ret_msg(1)` のハンドラ続行、`def_msg(...,0)` の解除。子行程は 5 役 |
 | 実試 | `user/btron_omgr.mkn`（起動される側は `user/obj_app.mkn`、像名 `objapp`） | 60 | 3.8 実身／仮身マネージャ（登録簿・起動・実行機能付箋。[設計](../design-object-model.md)） | `oreg_vob`・`b_odup_vob`・`odel_vob`・`oget_vob`・`ochg_sts`、`ocre_obj`・`oopn_obj`・`ochg_nam`・`odel_obj`・`oupd_fil`、続柄管理ファイル・`ochg_rel`・`ocnv_vob`、`oatt_fls`・`odet_fls`・`ofat_fls`・`ofdt_fls`・`oatt_vob`・`odet_vob`（虚身）、`oreg_apg`・`odel_apg`・`ofnd_apg`・`oset_sea`・`oget_sea`・`ochg_env`・`oget_env`・`oset_tmf`、`oexe_apg`・`osta_prc`・`oend_prc`・`oend_req`（V4b-1）、`oget_fsn`・`oput_fsn`（V4b-2） | 正・異・境・相 | 登録・取出しの往復（VLINK と 32 B の仮身セグメント、固有データ付き）、`size` が小さいときの切り詰め、内部の状態ビットと隠蔽、`V_CHKREF`/`V_CHKDUP`、複製と削除（ID を再利用しない）、`wid >= 0`・付箋・未定義の `disp`・読めない番地・固有データ 64 B 超・64 件の上限のエラー（`EX_*`）。V4b-1 は 2 行程にまたがり、既定起動の `M_EXECREQ`（`vid`・`mode`・`info`）、`V_INPROC`、`osta_prc`→`oend_prc` の固有データ、実行メニュー起動（`info = 2`）、既に処理中なら 0、`EX_PAR`/`EX_VID`/`EX_VOBJ`/`EX_NOEXS`/`ER_NOFS` を確かめる。V4b-2 は起動中の型 31 レコードの `FUSENSEG` を取得し、dlen=4 の固有データを更新して再取得で反映され、対象ファイルの更新日時が変わらないこと、既定起動の `EX_NOEXS`・処理中でない/虚身の `EX_VOBJ`・無い `vid` の `EX_VID`・読めない宛の `EX_ADR`・dlen 65 の `EX_NOSPC` を確かめる |
+| 副試 | `user/btron_task.mkn`（補助 `user/btron_task_aux.S`） | 17 | OS 1.1 プロセス／タスク管理 | `cre_tsk`、`ext_tsk`、`ter_tsk`、`slp_tsk`、`wup_tsk`、`can_wup`、`chg_pri`、`get_tid`、`get_inf` | 正・異・境・相 | 副タスクの生成と `arg`・`get_tid`・return（終了スタブ）、`ER_ADR`（コード域外・未整列）・`ER_PPRI`（群外 100/200/256）・`ER_LIMIT`（主あたり 4）・副スタック 16 頁の返却、`ter_tsk` の停止と頁の返却・`ER_ID`（自タスク・主・終了済み・無い ID）、副タスクの `ext_tsk` で行程が終わらないこと、眠る副タスクの `wup_tsk`、起きている副タスクの起床要求の積上げと `can_wup`、`slp_tsk` の時間切れ `ER_NONE`、副タスクの `rcv_msg` の `ER_NOSPT`、`chg_pri` の `P_TASK` あり/なしの範囲と `ER_ID`・`ER_PPRI`・`ER_NOPRC`、`get_inf` の `utime` 合算、主の `ext_tsk` で全副タスクが終わり親へ `MS_EXIT`、他プロセスのタスクへの `ER_ID`。子行程は役 `E`（2 副タスクを作って `ext_tsk`）と `W`（眠る）の 2 役 |
 | 言語 | `tests/lang/ok`・`err` | ok 8・err 37 | （BTRON3 とは無関係） | 言語仕様の黄金・診断試験 | — | 互換層を書く言語の健全性 |
 | 起動時 | `tests/run_tests.sh` | — | 核の基本動作 | argv 受け渡し、終了コード、EL0 行程、メモリ保護など | — | BTRON3 の項目には紐付けない |
 
-**集計**: BTRON3 互換層の QEMU 試験は 16 種・計 672 項目（識試 13、名試 21、時試 11、信試 45、利試 19、強試 23、同試 29、緩試 35、録試 122、貯試 45、件試 73、設試 97、系試 38、例試 16、信手試 25、実試 60）。ほかに篇藏 28 項目。V4b-1 の試験用アプリ `user/obj_app.mkn`（像名 `objapp`）は `実試` から起動する。`信手試` は子行程を 5 役（送信・`MH_BREAK` 用・`MH_NONE` 用・`MH_TERM` 用・`ret_msg(1)` 用）で起動する。`同試` と `緩試` は、100 ms 後に型 30 のメッセージを送る子役で `MH_BREAK` を起こし、中断と中断後の再使用を確かめる。
+**集計**: BTRON3 互換層の QEMU 試験は 17 種・計 689 項目（識試 13、名試 21、時試 11、信試 45、利試 19、強試 23、同試 29、緩試 35、録試 122、貯試 45、件試 73、設試 97、系試 38、例試 16、信手試 25、副試 17、実試 60）。ほかに篇藏 28 項目。V4b-1 の試験用アプリ `user/obj_app.mkn`（像名 `objapp`）は `実試` から起動する。`信手試` は子行程を 5 役（送信・`MH_BREAK` 用・`MH_NONE` 用・`MH_TERM` 用・`ret_msg(1)` 用）で起動する。`副試` は子行程を役 `E`・`W` の 2 役で起動し、主と副タスクの関係を確かめる。`同試` と `緩試` は、100 ms 後に型 30 のメッセージを送る子役で `MH_BREAK` を起こし、中断と中断後の再使用を確かめる。
 
 ## 5. API 単位の試験の有無（第2編 第1章）
 
@@ -71,7 +72,11 @@
 
 | API | 試験 | 足りない区分・不足 |
 |---|---|---|
-| `get_tid` | 識試 | 副タスク・エラー規定（要確認） |
+| `get_tid` | 識試・副試 | 主タスク・副タスクとも生成時の ID と一致。エラー規定なし |
+| `cre_tsk`、`ext_tsk`、`ter_tsk` | 副試 | 生成・`arg`・return・`ER_ADR`/`ER_PPRI`/`ER_LIMIT`・頁の返却・`ter_tsk` の `ER_ID`・主の終了で全副タスク終了を確認。副タスクのメッセージ待ち（`ER_NOSPT`）と、持ったセマフォの解放は初期版の制限 |
+| `slp_tsk`、`wup_tsk`、`can_wup` | 副試 | 副タスクの時間切れ `ER_NONE`、主からの起床 `x0=0`、起床要求の積上げと `can_wup`、自タスク・他プロセス・無い ID の `ER_ID` を確認 |
+| `chg_pri` | 副試 | `P_TASK` なし（主＋全副タスク）とあり（1 枠）の範囲、`ER_ID`/`ER_PPRI`/`ER_NOPRC` を確認。群 B/C の配分比は未実装 |
+| `get_inf` | 副試 | 副タスクの走った刻が主の `utime` に合算されることを確認 |
 | `cre_prc`（LINK 版） | 録試 | 子の生成・作業ファイルの継承・`MS_EXIT`・引数（argc）・各エラー・`ER_BUSY` は確認済み。優先度の反映、型 0 以外のメッセージ、`ER_ACCES` は未検証（SYS はアクセス管理レベル 0 のため実行権を絞れない） |
 | `cre_prc`（旧形 `BTRON生行程`） | 信試 | 試験と殻の補助。BTRON3 の規範には使わない |
 | `ext_prc` | 信試（`MS_EXIT`） | 資源解放の網羅（共有メモリ等は未実装） |

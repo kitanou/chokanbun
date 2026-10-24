@@ -8,6 +8,7 @@
 //   +8  漢像の終端の仮想アドレス (u64。__image_end。長さ = これ - 0x40610000)
 //   +16 bss の開始の仮想アドレス (u64。__bss_start)
 //   +24 bss の終端の仮想アドレス (u64。__bss_end)
+//   +32 副タスクが return したときの終了スタブ (u64。__task_exit_stub。無ければ 0)
 // 詳細は docs/design-process-exec.md §5.1。
 
     .section .header, "a"
@@ -18,6 +19,7 @@ __image_header:
     .quad  __image_end
     .quad  __bss_start
     .quad  __bss_end
+    .quad  __task_exit_stub
 
     .section .text.start, "ax"
     .globl _start
@@ -28,6 +30,14 @@ _start:
     mov x8, #2
     svc #0
 1:  b 1b
+
+// 副タスク (cre_tsk) が return したときの戻り先。ext_tsk (番186) を発行する。
+// kernel は KBN1 ヘッダ +32 からこの番地を取り、保存フレームの x30 に入れる。
+    .globl __task_exit_stub
+__task_exit_stub:
+    mov x8, #186
+    svc #0
+2:  b 2b
 
 // svc_call(nr, a0..a5): 漢令 ABI v0.1 の `svc #0` (kernel/el0.S と同じ)。
     .globl svc_call
