@@ -101,7 +101,7 @@
 | P5 | A | `rcv_msg` の戻り値 | 送信元 pid（自分なら 0）。入り切らないときはエラー | 実装済み（送信元 pid。入り切らないときは `ER_SZOVR` でメッセージは残る） |
 | P6 | B | `snd_msg` | 本体サイズ 0 以下も `ER_SZOVR`、`CONFM` 対応、`ER_SELF` | 実装済み（`CONFM` は取り出しまで待つ。ハンドラが受け取った場合も解除する） |
 | P7 | C | メッセージ | `req_tmg`/`can_tmg`/`def_msg`/`ret_msg`/`brk_msg`、`WAIEVT`、`CHECK`、`MH_*` | 実装済み（M7e、§6.10。`def_msg`/`ret_msg`/`MH_*` を含む） |
-| P8 | C | タスク | `cre_tsk`/`ext_tsk`/`ter_tsk`/`slp_tsk`/`wup_tsk`/`can_wup`/`dly_tsk`、`chg_pri`、`get_inf` | 未実装（`get_tid` と `待機` 相当のみ） |
+| P8 | C | タスク | `cre_tsk`/`ext_tsk`/`ter_tsk`/`slp_tsk`/`wup_tsk`/`can_wup`/`dly_tsk`、`chg_pri`、`get_inf` | 実装済み（M7f、§6.11。副タスクを含む） |
 | P9 | B | `get_tod`/`set_tim` の ≦ 0 | `time` ≦ 0 が「現在／設定しない」 | 0 のときだけ |
 | P10 | C | 同期 | `bufsz`=0 の同期バッファ、`ER_MINTR` | `bufsz`=0 は実装済み。`ER_MINTR` は 1.2 のメッセージ待ち（§6.10）と 1.3 のセマフォ・フラグ・MB・ランデブ待ち（`同試` 29 項目・`緩試` 35 項目）で実装・回帰試験済み |
 | P11 | C | 1.10 | `def_exc`/`ret_exc` | 実装済み（M7d、§6.9。`get_ver`/`get_cnf` は M7c、§6.8） |
@@ -349,7 +349,7 @@ TAD（第1編 第3章）・フロッピー形式（第4章）・描画（第2編
 
 ## 6.10 段階 M7e（1.2 `def_msg`/`ret_msg`、信手試 25 項目）
 
-1.2 のメッセージハンドラ `def_msg`/`ret_msg` と、メッセージ到着・タイマー・`ret_msg` 後の保留分の EL0 配送を、`def_exc`/`ret_exc` の保存フレーム差し替えを共有して実装した。核は `kernel/proc/msgh.mkn`、EL0 ラッパは `user/btron/msg.mkn`、試験は外部命令 **信手試**（`user/btron_msg_hdr.mkn`、補助 `user/btron_msg_hdr_aux.S`）の 25 項目。`make test` は 190 PASS（rc=0）で、`tests/run_tests.sh` は信手試の項目数 25 を検査する。
+1.2 のメッセージハンドラ `def_msg`/`ret_msg` と、メッセージ到着・タイマー・`ret_msg` 後の保留分の EL0 配送を、`def_exc`/`ret_exc` の保存フレーム差し替えを共有して実装した。核は `kernel/proc/msgh.mkn`、EL0 ラッパは `user/btron/msg.mkn`、試験は外部命令 **信手試**（`user/btron_msg_hdr.mkn`、補助 `user/btron_msg_hdr_aux.S`）の 25 項目。`make test` は 192 PASS（rc=0）で、`tests/run_tests.sh` は信手試の項目数 25 を検査する。
 
 ### 実装の要点（機械漢文）
 
@@ -409,6 +409,32 @@ TAD（第1編 第3章）・フロッピー形式（第4章）・描画（第2編
 - `MH_BREAK` は 1.2 のメッセージ待ちで試験した。1.3 のセマフォ・フラグ・メッセージバッファ・ランデブの待ちも状態を実行可能に戻し、ランデブ記録は消す。この中断と中断後の再使用は、`同試` 29 項目・`緩試` 35 項目で回帰試験済み。
 - 実行中の漢令や民のコードにハンドラが割り込んだ場合、`ret_msg(0)` はレジスタをそのまま戻す（`ER_MINTR` にするのは待ち状態のときだけ）。
 - `MH_TERM` の終了コードは 0 固定。`ret_msg(1)` の再開位置はハンドラ側のスタックに依存する。
+
+## 6.11 段階 M7f（1.1 副タスク、副試 17 項目）
+
+1.1 の `cre_tsk`・`ext_tsk`・`ter_tsk` と、`slp_tsk`・`wup_tsk`・`can_wup`・`chg_pri`・`get_inf` の副タスク対応を、[design-subtask.md](../design-subtask.md) の案 A（副タスク = 行程表の従属する枠）で実装した。核は `kernel/kernel.mkn`・`kernel/proc/{spawn,term}.mkn`、EL0 ラッパは `user/btron/proc.mkn`、試験は外部命令 **副試**（`user/btron_task.mkn`、補助 `user/btron_task_aux.S`）の 17 項目。`make test` は 192 PASS（rc=0）で、`tests/run_tests.sh` は副試の項目数 17 を検査する。
+
+### 実装の要点（機械漢文）
+
+| 項目 | 内容 |
+|---|---|
+| 漢令 | **185 生成**（`cre_tsk`）・**186 終了**（`ext_tsk`）・**187 強制終了**（`ter_tsk`）。74 `wup_tsk`・75 `can_wup` は副タスク対応に修正 |
+| 枠 | 副タスクは行程表の枠を 1 つ使う。`程項幅` は 128 → 192、`+128 偏主`（主の枠 + 1、0 = 主）・`+136 偏起`・`+144 偏棧`・`+152 偏帰`。`程限` は 8 のまま |
+| 資源の持ち主 | `主行程(号)`・`現主()`。柄・章・ファイル・利用者・ロック・メモリ・デバイス・イベント・時計・名前は主の枠で引く。待ち合わせ系は枠単位のまま |
+| 民スタック | 窓内 `0x406D8000`（頁 216〜231）に 16 KiB × 4。作成時に 4 頁とも空いていることを確かめ、終了時にその 4 頁だけ返す |
+| 起動 | `[像基, 像基+像最大)` かつ 4 B 整列の入口。保存フレームの `x0 = arg`・`x30 = 偏帰`・`ELR = entry`・`SP_EL0 = 棧頭`。`crt0.S` の `+32` に `__task_exit_stub`（`x8=186` の `svc`）を書き、return は `ext_tsk` になる |
+| 誤り | `誤範囲`（ER_ADR）・`誤優先`（ER_PPRI）・`誤再`（ER_LIMIT、主あたり 4）・`誤資`（ER_NOMEM）・`誤任識`（ER_ID） |
+| 起床・待ち | `slp_tsk` の有限待ちは `状眠時 = 10`、無期限は 9。`wup_tsk` は `x0=0`、時間切れは `覚醒` が `x0=誤時限`（`錯換` で `ER_NONE`）。`can_wup(0)` は自分の要求数 |
+| `chg_pri` | `P_TASK` なしは主と全副タスク（戻り値は主）、ありは同じ主の 1 枠（`id=0` は自タスク）。範囲は主の現在の優先度群 |
+| 統計 | `get_inf` は副タスクが走った刻を主の `utime` に合算する |
+| 終了 | 副タスクは自分の枠だけを片付ける。主の `ext_tsk` は先に同じ主の全副タスクを終えてから `程終了` を通る |
+| 試験 | 生成・`arg`・`get_tid`・return、`ER_ADR`/`ER_PPRI`/`ER_LIMIT` と頁の返却、`ter_tsk`、`ext_tsk`、`wup_tsk`/`can_wup`、時間切れ、`rcv_msg` の `ER_NOSPT`、`chg_pri` の範囲、`get_inf` の合算、主の終了、他プロセスへの `ER_ID` |
+
+### 制限
+
+- 副タスクはメッセージ待ち（`rcv_msg` ほか）ができない。待ち行列は枠単位のままで、副タスクが待とうとすると `ER_NOSPT`（`誤非対応`）を返す。原文との差として [btron3-os.md](btron3-os.md) に記録した。
+- 排他セマフォを持ったまま副タスクが終了した場合の解放は行わない（既存の行程終了と同じ）。
+- 同時に生きられるタスク総数は行程表の枠数（8）まで。1 プロセスあたりの副タスクは 4 まで。
 
 ## 7. 残りの章を直接読んだ結果（2026-10-18）
 

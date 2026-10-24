@@ -19,11 +19,11 @@
 | `user/btron/er.mkn` が定義する `ER_*` | 42 |
 | 互換層の試験と `時元試` が参照する `ER_*` | 37 |
 | どの試験も参照していない `ER_*` | 5 |
-| BTRON3 互換層の QEMU 試験 | 16 種・672 項目 |
+| BTRON3 互換層の QEMU 試験 | 17 種・689 項目 |
 
 未参照の 5 名は `ER_ERDEV`・`ER_IO`・`ER_NODSK`・`ER_NOMDA`・`ER_XFS`。理由と次の一手は §4 にまとめる。
 
-`ER_NODEV` は互換層の 16 種には現れないが、RTC 無効の起動で `時元試`（`user/time_test.mkn`）が `get_tim` の戻り値として直接確認している。このため「未参照」には数えない。
+`ER_NODEV` は互換層の 17 種には現れないが、RTC 無効の起動で `時元試`（`user/time_test.mkn`）が `get_tim` の戻り値として直接確認している。このため「未参照」には数えない。
 
 ## 2. API 別の対応
 
@@ -44,8 +44,8 @@
 | `get_inf` | `ER_NOPRC` `ER_ADR` | 強 | 両方 | なし |
 | `slp_tsk` | `ER_PAR` `ER_NONE`、`MH_BREAK` 時は `ER_MINTR` | 強 | `ER_PAR` `ER_NONE` | `ER_MINTR` |
 | `dly_tsk` | `ER_PAR`、`MH_BREAK` 時は `ER_MINTR` | 強 | `ER_PAR` | `ER_MINTR` |
-| `wup_tsk` / `can_wup` | `ER_ID` | 強 | `ER_ID` | なし（副タスク未実装のため常に `ER_ID`） |
-| `cre_tsk` / `ext_tsk` / `ter_tsk` | 副タスク | — | — | 未実装。対象外 |
+| `wup_tsk` / `can_wup` | `ER_ID` | 強・副 | `ER_ID` | なし |
+| `cre_tsk` / `ext_tsk` / `ter_tsk` | `ER_ADR` `ER_PPRI` `ER_LIMIT` `ER_NOMEM` `ER_ID` | 副 | `ER_ADR` `ER_PPRI` `ER_LIMIT` `ER_ID` | `ER_NOMEM`（頁の枯渇を作れない） |
 
 ### 1.2 メッセージ管理
 
@@ -149,7 +149,7 @@
 | `ER_EXS` | 名・録 | 名前・ファイル ID の重複 |
 | `ER_FD` | 録 | 記述子不正・モード不一致・閉じた記述子 |
 | `ER_FNAME` | 録 | ファイル名の不正・長すぎ |
-| `ER_ID` | 強・同・緩 | 不正な ID、種違い、副タスク無し |
+| `ER_ID` | 強・副・同・緩 | 不正な ID、種違い、副タスクでない対象 |
 | `ER_IO` | — | 装置の入出力エラー・時間切れ |
 | `ER_LEVEL` | 強 | 利用者レベルの上下関係 |
 | `ER_LIMIT` | 同・録・設 | オブジェクト数・表・記述子・ファイル数・ロックの上限 |
