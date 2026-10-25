@@ -765,13 +765,13 @@ if [ -f "$OUT/kernel.elf" ]; then
             fail "kernel qemu: BTRON3 互換層 メッセージハンドラ (項目=${MH_N:-0}/25、失敗=${MH_BAD:-?})"
             grep -a '^信手試 ' "$KLOG" 2>/dev/null | grep -av '0x0000000000000001$' | sed 's/^/      /' | head -40
         fi
-        # --- 1.1 副タスク (cre_tsk・ext_tsk・ter_tsk・slp/wup/can_wup・chg_pri) ------
+        # --- 1.1 副タスク (cre_tsk・ext_tsk・ter_tsk・slp/wup/can_wup・chg_pri・配分比) ------
         SB_N="$(grep -ac '^副試 ' "$KLOG" 2>/dev/null)"
         SB_BAD="$(grep -a '^副試 ' "$KLOG" 2>/dev/null | grep -vc '0x0000000000000001$')"
-        if [ "${SB_N:-0}" -eq 17 ] && [ "${SB_BAD:-1}" -eq 0 ]; then
+        if [ "${SB_N:-0}" -eq 19 ] && [ "${SB_BAD:-1}" -eq 0 ]; then
             pass "kernel qemu: BTRON3 互換層 副タスク (cre_tsk・ext_tsk・ter_tsk・slp_tsk/wup_tsk/can_wup・chg_pri・get_inf の ${SB_N} 項目)"
         else
-            fail "kernel qemu: BTRON3 互換層 副タスク (項目=${SB_N:-0}/17、失敗=${SB_BAD:-?})"
+            fail "kernel qemu: BTRON3 互換層 副タスク (項目=${SB_N:-0}/19、失敗=${SB_BAD:-?})"
             grep -a '^副試 ' "$KLOG" 2>/dev/null | sed 's/^/      /' | head -40
         fi
         # --- 篇藏 F1〜F3 (#6): 篇ID・屬、章とパス、名替、權・志・器・術・法 ---------------
