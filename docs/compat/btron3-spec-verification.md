@@ -410,7 +410,7 @@ TAD（第1編 第3章）・フロッピー形式（第4章）・描画（第2編
 - 実行中の漢令や民のコードにハンドラが割り込んだ場合、`ret_msg(0)` はレジスタをそのまま戻す（`ER_MINTR` にするのは待ち状態のときだけ）。
 - `MH_TERM` の終了コードは 0 固定。`ret_msg(1)` の再開位置はハンドラ側のスタックに依存する。
 
-## 6.11 段階 M7f（1.1 副タスク、副試 19 項目）
+## 6.11 段階 M7f（1.1 副タスク、副試 21 項目）
 
 1.1 の `cre_tsk`・`ext_tsk`・`ter_tsk` と、`slp_tsk`・`wup_tsk`・`can_wup`・`chg_pri`・`get_inf` の副タスク対応を、[design-subtask.md](../design-subtask.md) の案 A（副タスク = 行程表の従属する枠）で実装した。核は `kernel/kernel.mkn`・`kernel/proc/{spawn,term}.mkn`、EL0 ラッパは `user/btron/proc.mkn`、試験は外部命令 **副試**（`user/btron_task.mkn`、補助 `user/btron_task_aux.S`）の 19 項目。`make test` は 192 PASS（rc=0）で、`tests/run_tests.sh` は副試の項目数 19 を検査する。
 
