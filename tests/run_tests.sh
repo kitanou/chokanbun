@@ -59,8 +59,9 @@ echo "=== ChoKanbun compiler tests ==="
 "$CLANG" --target=aarch64-none-elf -ffreestanding -c boot/uart.c \
     -o "$OUT/uart_c.o" >"$OUT/uart_c.log" 2>&1 \
     && pass "uart: bootstrap UART object" || fail "uart: bootstrap UART object"
-"$CLANG" --target=aarch64-none-elf -c boot/boot.S -o "$OUT/boot.o" \
-    >"$OUT/boot.log" 2>&1 \
+"$BIN" boot/boot.mkn -ir -o "$OUT/boot.ll" 2>"$OUT/boot.gen.log" \
+    && "$LLC" -march=aarch64 -filetype=obj "$OUT/boot.ll" -o "$OUT/boot.o" \
+        >"$OUT/boot.log" 2>&1 \
     && pass "uart: boot stub object" || fail "uart: boot stub object"
 
 if [ -f "$OUT/uart.o" ] && [ -f "$OUT/uart_c.o" ] && [ -f "$OUT/boot.o" ]; then
