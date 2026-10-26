@@ -93,7 +93,7 @@
 - **`ext_tsk`／`ter_tsk`**: 副タスクは自分の枠だけを片付ける（主の柄・ファイル・共有資源は閉じない）。主の `ext_tsk` は先に同じ主の全副タスクを終えてから既存の `程終了` を通る。`ter_tsk` は同じ主の生きた副タスクだけを受け、それ以外は `ER_ID`。
 - **`chg_pri`**: `P_TASK` なしは主と全副タスク（戻り値は主）、ありは同じ主の 1 枠（`id=0` は自タスク）。範囲は主の現在の優先度群で検査する。
 - **`get_inf`**: 副タスクが走った刻は主の `utime` に合算する。
-- **試験**: 外部命令 `副試`（`user/btron_task.mkn`、補助 `user/btron_task_aux.S`、19 項目）。生成・arg・`get_tid`・return、`ER_ADR`・`ER_PPRI`・`ER_LIMIT` と頁の返却、`ter_tsk` と頁、`ext_tsk`、`wup_tsk`/`can_wup`、時間切れ、`rcv_msg` の `ER_NOSPT`、`chg_pri` の範囲、`get_inf` の合算、主の終了、他プロセスへの `ER_ID`、群 B・C の配分比を確かめる。`make test` は 192 PASS（rc=0）。
+- **試験**: 外部命令 `副試`（`user/btron_task.mkn`、19 項目）。生成・arg・`get_tid`・return、`ER_ADR`・`ER_PPRI`・`ER_LIMIT` と頁の返却、`ter_tsk` と頁、`ext_tsk`、`wup_tsk`/`can_wup`、時間切れ、`rcv_msg` の `ER_NOSPT`、`chg_pri` の範囲、`get_inf` の合算、主の終了、他プロセスへの `ER_ID`、群 B・C の配分比を確かめる。`make test` は 192 PASS（rc=0）。
 - **既知の制限**: 副タスクはメッセージ待ち（`rcv_msg` ほか）ができない（`ER_NOSPT`）。排他セマフォを持ったまま終了した場合の解放は行わない。`dly_tsk` の待ち状態 2 は副タスクでもそのまま動くが、`slp_tsk` の時間切れだけ `状眠時` で区別する。
 
 ## 10. 群 B・C の配分比（2026-10-25）

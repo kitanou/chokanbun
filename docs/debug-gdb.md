@@ -100,7 +100,7 @@ SPSR_EL1 = 0x00000000600003c5
 | `_vectors` | 例外ベクタ表の先頭。2 KiB 整列の確認にも使える |
 | `exception_dispatch` | 同期例外・SError の漢文ハンドラ。`ESR_EL1`・`ELR_EL1` を見る |
 | `irq_dispatch` | EL1 の IRQ（タイマー・UART） |
-| `lower_sync_handler` / `lower_irq_handler` | EL0 からの SVC・IRQ の入口（`kernel/el0.S`） |
+| `lower_sync_handler` / `lower_irq_handler` | EL0 からの SVC・IRQ の入口（`kernel/entry.mkn`） |
 | `svc_dispatch` | 漢令の分岐。`x8` が漢令番号、`x0`〜`x5` が引数 |
 | `main` | カーネルの初期化が一通り終わったあと |
 
@@ -165,7 +165,7 @@ gdb-multiarch tests/output/kernel.elf
 grep -n "400017d8" tests/output/kernel.dis     # 例: 停止した番地を逆アセンブルから探す
 ```
 
-4. EL0 の行程が原因なら、`lower_sync_handler` か `svc_dispatch` で止め、`ELR_EL1`（民の番地）と保存フレーム（`kernel/el0.S` が作る 288 バイト）を読む。民の像は `0x40610000` から始まるので、`memory read` と `objdump` で照合できる。
+4. EL0 の行程が原因なら、`lower_sync_handler` か `svc_dispatch` で止め、`ELR_EL1`（民の番地）と保存フレーム（`kernel/entry.mkn` が作る 288 バイト）を読む。民の像は `0x40610000` から始まるので、`memory read` と `objdump` で照合できる。
 5. 割込がらみなら `irq_dispatch` と `GICC_IAR`（`0x0801000C`）を見る。タイマーは `CNTP_CTL_EL0`・`CNTP_TVAL_EL0` を `register read` で確認できる。
 
 ## 6. 後片付け

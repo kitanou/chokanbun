@@ -23,7 +23,7 @@
 ## 実装状況（M3）
 - `kernel/`: 漢極本体。`kernel.mkn`（機械漢文）が PL011 出力・例外診断・
   物理ページ割当・変換表構築・GIC 設定・割込処理・漢令処理・民行程本体を担い、
-  `boot.S`/`vectors.S`/`sysreg.S`/`el0.S`（暫定アセンブリ）がスタック・ベクタ表・
+  `boot.mkn`/`entry.mkn`/`proc/sysreg.mkn`（`組譯` によるインライン asm）がスタック・ベクタ表・
   システムレジスタ操作・EL0 遷移と SVC 境界を担う。
 - 例外: 同期例外を捕捉し ESR_EL1 を復号、`eret` で継続する。
 - コンソール: PL011 UART を機械漢文の volatile MMIO で操作する。出力は
