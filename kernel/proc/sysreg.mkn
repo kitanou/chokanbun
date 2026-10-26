@@ -1,0 +1,101 @@
+註 システムレジスタ・タイマー・割込制御・TLB/キャッシュ維持 (旧 kernel/sysreg.S)。
+註 組譯 は 險 の中だけ。制約文字列は LLVM のインライン asm 制約をそのまま書く。
+
+註 enable_mmu: 台址 (レベル 1 の変換表の物理番地、4 KiB 整列) で変換を有効にする。
+註   MAIR_EL1: Attr0 = Normal WB, Attr1 = Device。TCR_EL1: T0SZ=33, TG0=4K, WB, 内部共有。
+註   SCTLR_EL1.PAN を消し (EL0 も書ける民の棧塊へ EL1 が触れるように)、M・C・I を立てる。
+術曰「有効化MMU」 受「台址」之無符六四 返 無
+    險
+        組譯〈無〉(『mov x1, #0xff\nmsr mair_el1, x1\nmsr ttbr0_el1, $0\nmov x1, #0x3521\nmovk x1, #0x90, lsl #16\nmovk x1, #0x2, lsl #32\nmsr tcr_el1, x1\ndsb sy\nisb\nmrs x1, sctlr_el1\nbic x1, x1, #0x400000\norr x1, x1, #1\norr x1, x1, #4\norr x1, x1, #4096\nmsr sctlr_el1, x1\nisb』, 『r,~{x1},~{memory}』, 台址)
+    終險
+終術
+
+註 SCTLR_EL1 を返す (変換が有効か確かめる)。
+術曰「讀SCTLR」 返 無符六四
+    設「値」之無符六四 為 0
+    險
+        置「値」為 組譯〈無符六四〉(『mrs $0, sctlr_el1』, 『=r』)
+    終險
+    歸 値
+終術
+
+註 TTBR0_EL1 を台址へ切り替え、TLB を捨てる。排程が行程ごとの空間を与えるのに使う。
+術曰「設台」 受「台址」之無符六四 返 無
+    險
+        組譯〈無〉(『msr ttbr0_el1, $0\ndsb sy\ntlbi vmalle1\ndsb sy\nisb』, 『r,~{memory}』, 台址)
+    終險
+終術
+
+註 ---- 汎用タイマー (EL1 物理タイマー CNTP) ----
+註 幅 刻で CNTP_TVAL_EL0 を装填し、割込を許可して動かす。
+術曰「始計時」 受「幅」之無符六四 返 無
+    險
+        組譯〈無〉(『msr cntp_tval_el0, $0\nmov x1, #1\nmsr cntp_ctl_el0, x1』, 『r,~{x1},~{memory}』, 幅)
+    終險
+終術
+
+術曰「再裝計時」 受「幅」之無符六四 返 無
+    險
+        組譯〈無〉(『msr cntp_tval_el0, $0』, 『r,~{memory}』, 幅)
+    終險
+終術
+
+術曰「停計時」 返 無
+    險
+        組譯〈無〉(『msr cntp_ctl_el0, xzr』, 『~{memory}』)
+    終險
+終術
+
+註 CNTFRQ_EL0 (システムカウンタの周波数、Hz)。
+術曰「讀周波数」 返 無符六四
+    設「値」之無符六四 為 0
+    險
+        置「値」為 組譯〈無符六四〉(『mrs $0, cntfrq_el0』, 『=r』)
+    終險
+    歸 値
+終術
+
+註 ---- CPU の割込制御 ----
+註 PSTATE.I を消して IRQ を受ける。
+術曰「開割込」 返 無
+    險
+        組譯〈無〉(『msr daifclr, #2』, 『~{memory}』)
+    終險
+終術
+
+註 IRQ などの起床事象が来るまで待つ。
+術曰「待割込」 返 無
+    險
+        組譯〈無〉(『wfi』, 『~{memory}』)
+    終險
+終術
+
+註 直前のデータ・命令アボートで欠けた仮想番地 (FAR_EL1)。デマンドページングが触れた頁を知るのに使う。
+術曰「讀異常址」 返 無符六四
+    設「値」之無符六四 為 0
+    險
+        置「値」為 組譯〈無符六四〉(『mrs $0, far_el1』, 『=r』)
+    終險
+    歸 値
+終術
+
+註 変換表に項を入れた後に EL1&0 の TLB を捨てる。これが無いと、再試行する参照が古い「変換失敗」を使い続けうる。
+術曰「無效台」 返 無
+    險
+        組譯〈無〉(『dsb sy\ntlbi vmalle1\ndsb sy\nisb』, 『~{memory}』)
+    終險
+終術
+
+註 データキャッシュを PoU までクリーンする。生行程が漢像のコードを複写した後、命令フェッチから見えるようにする。
+術曰「清資」 受「址」之無符六四 受「長」之無符六四 返 無
+    險
+        組譯〈無〉(『add x3, $0, $1\nbic x2, $0, #63\n1:\ndc cvau, x2\nadd x2, x2, #64\ncmp x2, x3\nb.lo 1b\ndsb ish』, 『r,r,~{x2},~{x3},~{cc},~{memory}』, 址, 長)
+    終險
+終術
+
+註 命令キャッシュを捨てる。清データ範囲の後に呼ぶ。
+術曰「同命令」 返 無
+    險
+        組譯〈無〉(『ic iallu\ndsb ish\nisb』, 『~{memory}』)
+    終險
+終術

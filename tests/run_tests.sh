@@ -122,9 +122,6 @@ awk '/^define /{e=1} /^[A-Za-z0-9_.]+:$/{ if ($0!="entry:") e=0 } /alloca/{ if(!
 "$CLANG" --target=aarch64-none-elf -c kernel/vectors.S -o "$OUT/kernel_vectors.o" \
     >"$OUT/kernel_vectors.log" 2>&1 \
     && pass "kernel: exception vectors object" || fail "kernel: exception vectors object"
-"$CLANG" --target=aarch64-none-elf -c kernel/sysreg.S -o "$OUT/kernel_sysreg.o" \
-    >"$OUT/kernel_sysreg.log" 2>&1 \
-    && pass "kernel: sysreg helpers object" || fail "kernel: sysreg helpers object"
 "$CLANG" --target=aarch64-none-elf -c kernel/el0.S -o "$OUT/kernel_el0.o" \
     >"$OUT/kernel_el0.log" 2>&1 \
     && pass "kernel: EL0/SVC boundary object" || fail "kernel: EL0/SVC boundary object"
@@ -268,10 +265,10 @@ sh tools/gen-images.sh "$OUT/kernel_images.S" 問安="$OUT/hello.zo" 數="$OUT/c
     && pass "kernel: 漢像の埋め込み (像表)" || fail "kernel: 漢像の埋め込み (像表)"
 
 if [ -f "$OUT/kernel.o" ] && [ -f "$OUT/kernel_boot.o" ] && \
-   [ -f "$OUT/kernel_vectors.o" ] && [ -f "$OUT/kernel_sysreg.o" ] && \
+   [ -f "$OUT/kernel_vectors.o" ] && \
    [ -f "$OUT/kernel_el0.o" ] && [ -f "$OUT/kernel_images.o" ]; then
     "$LD" -T kernel/kernel.lds "$OUT/kernel_boot.o" "$OUT/kernel_vectors.o" \
-        "$OUT/kernel_sysreg.o" "$OUT/kernel_el0.o" "$OUT/kernel_images.o" "$OUT/kernel.o" -o "$OUT/kernel.elf" \
+        "$OUT/kernel_el0.o" "$OUT/kernel_images.o" "$OUT/kernel.o" -o "$OUT/kernel.elf" \
         >"$OUT/kernel.link.log" 2>&1 \
         && pass "kernel: ELF link" || fail "kernel: ELF link"
     if [ -f "$OUT/kernel.elf" ]; then
