@@ -56,6 +56,8 @@ make test     # テストを実行し、カーネル tests/output/kernel.elf も
 make clean
 ```
 
+GitHub Actions（macOS arm64）でも同じ `make test` を実行します。失敗したときは `tests/output` のログを artifact に保存します（[`.github/workflows/ci.yml`](.github/workflows/ci.yml)）。
+
 ### QEMU で起動
 
 ```sh
@@ -120,6 +122,7 @@ qemu-system-aarch64 -M virt,gic-version=2 -cpu cortex-a57 -nographic \
 - [篇藏 v0.1（ファイル体系）の設計](docs/design-pianfs.md)
 - [時刻体系の設計（黄帝紀元・壁時計・単調時計）](docs/design-time.md)
 - [漢殻コマンド一覧](docs/shell-commands.md)
+- [GDB・LLDB による起動・例外の調査](docs/debug-gdb.md)
 - [実装メモ](docs/implementation-notes.md)
 - [開発ロードマップ](docs/roadmap.md)
 - BTRON3 適合性: [適合性マトリクス](docs/compat/btron3-conformance.md)・[互換層の設計](docs/compat/btron3-compat-layer.md)・[OS 仕様編の照合](docs/compat/btron3-os.md)・[共有データ編](docs/compat/btron3-shared-data.md)・[第2章・第3章の API 棚卸し](docs/compat/btron3-api-inventory.md)・[ファイル管理の設計](docs/compat/btron3-file-design.md)・[適合試験計画](docs/compat/btron3-test-plan.md)・[`ER_*` 網羅表](docs/compat/btron3-error-coverage.md)・[原文の直接確認と食い違い](docs/compat/btron3-spec-verification.md)
