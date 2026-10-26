@@ -58,6 +58,8 @@ private:
         out_ << ") (ret " << type(fn.returnType) << ")";
         if (fn.isPublic) out_ << " public";
         if (fn.isNoreturn) out_ << " noreturn";
+        if (fn.isNaked) out_ << " naked";
+        if (fn.alignment) out_ << " (align " << fn.alignment << ")";
         if (!fn.section.empty()) out_ << " (section \"" << fn.section << "\")";
         if (!fn.symbolName.empty()) out_ << " (symbol \"" << fn.symbolName << "\")";
         if (fn.isExternal) {
@@ -218,6 +220,11 @@ private:
                 break;
             case Expr::Kind::Fence:
                 out_ << "(障壁 " << e.fenceKind << ")";
+                break;
+            case Expr::Kind::Asm:
+                out_ << "(組譯 " << type(e.asmType) << " \"" << e.asmText << "\" \"" << e.asmConstraints << "\"";
+                for (auto& a : e.args) { out_ << " "; expr(a); }
+                out_ << ")";
                 break;
             case Expr::Kind::StrLen:
                 out_ << "(長度 ";

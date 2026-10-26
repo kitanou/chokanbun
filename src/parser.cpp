@@ -72,18 +72,35 @@ Decl Parser::parseDeclaration() {
     Token tok = current();
 
     // Check for attributes (公開, 不返, 節, 記號)
-    if (check(TokKind::Gongkai) || check(TokKind::Bufan) ||
-        check(TokKind::Jie) || check(TokKind::Jihao)) {
+    auto isAttr = [&]() {
+        return check(TokKind::Gongkai) || check(TokKind::Bufan) ||
+               check(TokKind::Jie) || check(TokKind::Jihao) ||
+               check(TokKind::Luo) || check(TokKind::Qi);
+    };
+    if (isAttr()) {
         bool isPublic = false;
         bool isNoreturn = false;
+        bool isNaked = false;
+        uint64_t alignment = 0;
         std::string section;
         std::string symbol;
 
         // Parse all attributes
-        while (check(TokKind::Gongkai) || check(TokKind::Bufan) ||
-               check(TokKind::Jie) || check(TokKind::Jihao)) {
+        while (isAttr()) {
             if (match(TokKind::Gongkai)) {
                 isPublic = true;
+            } else if (match(TokKind::Luo)) {
+                isNaked = true;
+            } else if (match(TokKind::Qi)) {
+                // 齊 2048
+                if (check(TokKind::IntegerLit)) {
+                    alignment = std::stoull(current().value);
+                    advance();
+                } else {
+                    error(current(), "E0008", "expected alignment after 齊");
+                    hasErrors_ = true;
+                    advance();
+                }
             } else if (match(TokKind::Bufan)) {
                 isNoreturn = true;
             } else if (match(TokKind::Jie)) {
@@ -126,6 +143,8 @@ Decl Parser::parseDeclaration() {
         auto fn = parseFunctionAfterKeyword(isExt);
         fn->isPublic = isPublic;
         fn->isNoreturn = isNoreturn;
+        fn->isNaked = isNaked;
+        fn->alignment = alignment;
         fn->section = section;
         if (!symbol.empty()) fn->symbolName = symbol;
 
@@ -865,6 +884,35 @@ ExprPtr Parser::parsePrimary() {
         }
         expect(TokKind::RightAngle, "〉");
         expect(TokKind::LeftParen, "(");
+        expect(TokKind::RightParen, ")");
+        return e;
+    }
+
+    // 組譯〈type〉(『文』, 『制約』 {, expr})
+    if (match(TokKind::ZuYi)) {
+        e->kind = Expr::Kind::Asm;
+        expect(TokKind::LeftAngle, "〈");
+        e->asmType = parseType();
+        expect(TokKind::RightAngle, "〉");
+        expect(TokKind::LeftParen, "(");
+        if (check(TokKind::StringLit)) {
+            e->asmText = current().value;
+            advance();
+        } else {
+            error(current(), "E0008", "expected assembly text string after 組譯(");
+            hasErrors_ = true;
+        }
+        expect(TokKind::Comma, ",");
+        if (check(TokKind::StringLit)) {
+            e->asmConstraints = current().value;
+            advance();
+        } else {
+            error(current(), "E0008", "expected constraint string in 組譯");
+            hasErrors_ = true;
+        }
+        while (match(TokKind::Comma)) {
+            e->args.push_back(parseExpr());
+        }
         expect(TokKind::RightParen, ")");
         return e;
     }
