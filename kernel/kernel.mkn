@@ -928,6 +928,7 @@
     歸 0
 終術
 
+註 @取込 boot.mkn
 註 @取込 proc/sysreg.mkn
 註 @取込 vfs/pian.mkn
 註 @取込 vfs/persist.mkn

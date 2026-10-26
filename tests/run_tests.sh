@@ -103,6 +103,8 @@ if [ -n "$KLINE" ] && [ "$(sh tools/kernel-line.sh "$OUT/kernel_all.mkn.map" "$K
 else
     fail "kernel: 展開後の行番号を元のファイル:行へ戻せる"
 fi
+# 前回の成果物が残っていると、生成に失敗しても古い ELF で QEMU 試験が走ってしまう。
+rm -f "$OUT/kernel.ll" "$OUT/kernel.o" "$OUT/kernel.elf"
 "$BIN" "$OUT/kernel_all.mkn" -ir -o "$OUT/kernel.ll" 2>"$OUT/kernel.gen.log" \
     && pass "kernel: IR generation" || fail "kernel: IR generation"
 if [ -s "$OUT/kernel.gen.log" ] && grep -q '錯' "$OUT/kernel.gen.log"; then
@@ -116,9 +118,6 @@ awk '/^define /{e=1} /^[A-Za-z0-9_.]+:$/{ if ($0!="entry:") e=0 } /alloca/{ if(!
 "$LLC" -march=aarch64 -filetype=obj "$OUT/kernel.ll" -o "$OUT/kernel.o" \
     >"$OUT/kernel.llc.log" 2>&1 \
     && pass "kernel: AArch64 object" || fail "kernel: AArch64 object"
-"$CLANG" --target=aarch64-none-elf -c kernel/boot.S -o "$OUT/kernel_boot.o" \
-    >"$OUT/kernel_boot.log" 2>&1 \
-    && pass "kernel: boot stub object" || fail "kernel: boot stub object"
 "$CLANG" --target=aarch64-none-elf -c kernel/vectors.S -o "$OUT/kernel_vectors.o" \
     >"$OUT/kernel_vectors.log" 2>&1 \
     && pass "kernel: exception vectors object" || fail "kernel: exception vectors object"
@@ -264,10 +263,10 @@ sh tools/gen-images.sh "$OUT/kernel_images.S" 問安="$OUT/hello.zo" 數="$OUT/c
         >"$OUT/kernel_images.log" 2>&1 \
     && pass "kernel: 漢像の埋め込み (像表)" || fail "kernel: 漢像の埋め込み (像表)"
 
-if [ -f "$OUT/kernel.o" ] && [ -f "$OUT/kernel_boot.o" ] && \
+if [ -f "$OUT/kernel.o" ] && \
    [ -f "$OUT/kernel_vectors.o" ] && \
    [ -f "$OUT/kernel_el0.o" ] && [ -f "$OUT/kernel_images.o" ]; then
-    "$LD" -T kernel/kernel.lds "$OUT/kernel_boot.o" "$OUT/kernel_vectors.o" \
+    "$LD" -T kernel/kernel.lds "$OUT/kernel_vectors.o" \
         "$OUT/kernel_el0.o" "$OUT/kernel_images.o" "$OUT/kernel.o" -o "$OUT/kernel.elf" \
         >"$OUT/kernel.link.log" 2>&1 \
         && pass "kernel: ELF link" || fail "kernel: ELF link"
