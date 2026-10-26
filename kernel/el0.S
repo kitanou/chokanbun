@@ -13,21 +13,6 @@
 
     .text
 
-// svc_call(nr, a0..a5): issue the 漢令ABI v0.1 `svc #0`.
-//   in:  x0 = 番号, x1..x6 = 引数 (AAPCS64)
-//   ->   x8 = 番号, x0..x5 = 引数, `svc #0`, x0 = 戻り値.
-    .globl svc_call
-svc_call:
-    mov x8, x0
-    mov x0, x1
-    mov x1, x2
-    mov x2, x3
-    mov x3, x4
-    mov x4, x5
-    mov x5, x6
-    svc #0
-    ret
-
 // Exception-handler return trampoline.  例外飛 sets a handler's x30 to this
 // address; a handler that returns without calling ret_exc is treated as
 // ret_exc(0) and resumes the interrupted instruction.  The first SVC should

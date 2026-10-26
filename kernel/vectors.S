@@ -137,11 +137,3 @@ irq_handler:
     add sp, sp, #256
 
     eret
-
-// Raised from machine-kanbun 外術曰「試異常」 (ELF symbol `trigger_exception`).
-// `brk #0` takes a synchronous exception; control returns to the `ret` below
-// after 異常處理 advances ELR_EL1 past the breakpoint.
-    .globl trigger_exception
-trigger_exception:
-    brk #0
-    ret

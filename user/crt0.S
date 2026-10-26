@@ -38,16 +38,3 @@ __task_exit_stub:
     mov x8, #186
     svc #0
 2:  b 2b
-
-// svc_call(nr, a0..a5): 漢令 ABI v0.1 の `svc #0` (kernel/el0.S と同じ)。
-    .globl svc_call
-svc_call:
-    mov x8, x0
-    mov x0, x1
-    mov x1, x2
-    mov x2, x3
-    mov x3, x4
-    mov x4, x5
-    mov x5, x6
-    svc #0
-    ret
