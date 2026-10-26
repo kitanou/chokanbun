@@ -12,13 +12,6 @@ exc_brk:
     brk #0
     ret
 
-// void exc_store(unsigned long addr, unsigned long value): store to a possibly
-// unmapped address from EL0 (data abort test).
-    .globl exc_store
-exc_store:
-    str x1, [x0]
-    ret
-
 .macro EXC_ADDR name, target
     .globl \name
 \name:
