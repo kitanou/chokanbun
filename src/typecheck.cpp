@@ -969,8 +969,6 @@ void TypeChecker::checkExprStmt(const Stmt& s) {
 void TypeChecker::checkFunction(const FunctionDecl& fn) {
     // 裸: 本体は 險 の中の 組譯 だけ。引数・局所変数・通常の文は持てない。
     if (fn.isNaked) {
-        if (!fn.params.empty())
-            error(fn.line, fn.col, "E0012", "naked function " + fn.name + " cannot have parameters");
         if (fn.returnType && fn.returnType->kind != Type::Kind::Void)
             error(fn.line, fn.col, "E0012", "naked function " + fn.name + " must return 無");
         if (!fn.isPublic)

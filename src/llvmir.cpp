@@ -207,7 +207,8 @@ void LLVMIRGen::genFunction(const FunctionDecl& fn) {
     currentBlock_ = "entry";
 
     // Allocate locals for parameters (params are passed as %argN).
-    for (size_t i = 0; i < fn.params.size(); i++) {
+    // 裸の関数は棧を使わないので、引数は退避しない (レジスタのまま組譯が読む)。
+    for (size_t i = 0; i < fn.params.size() && !fn.isNaked; i++) {
         auto& p = fn.params[i];
         std::string alloca = freshName("p");
         emit("%" + alloca + " = alloca " + llvmType(p.type) + ", align 8");
