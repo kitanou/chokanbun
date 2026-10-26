@@ -492,4 +492,4 @@
 - デバイスアドレスを固定値で決め打ちせず、QEMU virtの仕様/DTBを参照する。
 
 ## 検証
-QEMU + GDBでPC、SP、例外レベル、UART出力、割込動作を確認する。
+QEMU + GDBでPC、SP、例外レベル、UART出力、割込動作を確認する。起動手順、breakpoint、例外レジスタ（`ESR_EL1`・`ELR_EL1`・`SPSR_EL1`）、後片付けは [debug-gdb.md](debug-gdb.md) にまとめた（macOS は LLDB、Linux は `gdb-multiarch`）。

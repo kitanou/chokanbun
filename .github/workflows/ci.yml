@@ -1,0 +1,71 @@
+name: CI
+
+# コンパイラのビルドと QEMU を含む全試験を、README と同じ macOS/Homebrew 環境で回す。
+# 失敗したときは tests/output のログを artifact に残す (docs/roadmap.md の F0)。
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: make test (macOS arm64)
+    runs-on: macos-14
+    timeout-minutes: 90
+    env:
+      HOMEBREW_NO_AUTO_UPDATE: "1"
+      HOMEBREW_NO_INSTALL_CLEANUP: "1"
+      HOMEBREW_NO_ENV_HINTS: "1"
+      LLVM_BIN: /opt/homebrew/opt/llvm/bin
+      LLD_BIN: /opt/homebrew/opt/lld/bin
+    steps:
+      - name: リポジトリを取得
+        uses: actions/checkout@v5
+
+      # Homebrew の bottle を毎回ダウンロードしない。キーはワークフローに
+      # 紐づけ、brew の版が変わったときは作り直す。
+      - name: Homebrew のダウンロードをキャッシュ
+        uses: actions/cache@v5
+        with:
+          path: ~/Library/Caches/Homebrew
+          key: brew-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('.github/workflows/ci.yml') }}
+          restore-keys: |
+            brew-${{ runner.os }}-${{ runner.arch }}-
+
+      - name: 依存を導入
+        run: brew install llvm lld qemu
+
+      - name: ツールの版を記録
+        run: |
+          set -eu
+          "$LLVM_BIN/llc" --version | sed -n '1,3p'
+          "$LLD_BIN/ld.lld" --version
+          qemu-system-aarch64 --version | sed -n '1p'
+
+      - name: コンパイラをビルド
+        run: make
+
+      - name: 試験 (make test)
+        run: |
+          set -o pipefail
+          mkdir -p tests/output
+          make test 2>&1 | tee tests/output/ci.log
+
+      - name: 失敗時のログを保存
+        if: failure()
+        uses: actions/upload-artifact@v6
+        with:
+          name: test-logs-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            tests/output/*.log
+          if-no-files-found: ignore
+          retention-days: 14
