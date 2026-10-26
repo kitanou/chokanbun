@@ -39,7 +39,7 @@ README から切り出した、各マイルストーンの実装の中身。仕�
   EL0 で受けたタイマー割込が下位EL IRQ ベクタから `割込切替`（`irq_switch`）に入り、`排程` を呼んで
   SVC と同じ枠組みで非協調的に切り替える。
 - **行程ごとの核棧:** 行程ごとに 64 KiB。保存フレームはその核棧上に置く。`排程` が次行程のフレームへの
-  ポインタを返し、`el0.S` が `SP_EL1` を切り替えて復歸する。
+  ポインタを返し、`kernel/entry.mkn` の入口が `SP_EL1` を切り替えて復歸する。
 - **待機と起床:** 行程の状態は 空/実行可能/待機 の 3 値。`待機`（番8）が起床予定刻を記録して眠り、
   `割込切替` の覚醒が刻の経過で実行可能へ戻す。
 
@@ -64,7 +64,7 @@ README から切り出した、各マイルストーンの実装の中身。仕�
   `.incbin` で埋め込む（像表）。詳細は [design-process-exec.md](design-process-exec.md) §5.1。
 - **`生行程`（番17）** → `生行程処理`: 像表で名前を探し（`像検`）、形式を確かめ（`像検査`）、空き枠（状 0 かつ 識 0）を選ぶ。
   枠の窓を空にして（`窓清`）、民の棧 2 ページとコード（16 ページ目 = `0x40610000` から、読み取り専用）を頁池から張って複写し、
-  引数を最後のページ（`0x407FF000`）へ写す。コードを書いたあと `clean_dcache_range`・`sync_icache`（`kernel/sysreg.S`）で
+  引数を最後のページ（`0x407FF000`）へ写す。コードを書いたあと `clean_dcache_range`・`sync_icache`（`kernel/proc/sysreg.mkn`）で
   命令フェッチから見えるようにする。保存フレームに `x0`=引数のアドレス、`x1`=長さ、`ELR`=入口、`SPSR`=EL0t を作り、
   柄 0/1/2 を盤に向けて、識を割り当てて実行可能にする。
 - **`終行程`（番2）** → `程終了`: 柄をすべて閉じ、子を孤児にし（親を 0 に）、親があれば窓の頁を返して状を僵（3）にし、
@@ -136,17 +136,18 @@ README から切り出した、各マイルストーンの実装の中身。仕�
 
 ## 暫定アセンブリと C 実装
 
-暫定 AArch64 アセンブリは次に限定する。
+核・民のアセンブリは、機械漢文の `組譯`（インライン asm）に置き換え済みである（[asm-inventory.md](asm-inventory.md)）。
+`.S` ファイルは残っていない。アセンブリの文は次のファイルの `組譯` の文字列に書かれている。
 
 | ファイル | 役割 |
 |---|---|
-| `kernel/boot.S` | スタック設定・BSS 零化・`VBAR_EL1` 設定 |
-| `kernel/vectors.S` | 例外ベクタ表とレジスタ保存 |
-| `kernel/sysreg.S` | システムレジスタ操作（MMU・タイマー・割込制御） |
-| `kernel/el0.S` | EL0 遷移・SVC 境界・下位EL IRQ 入口 |
+| `kernel/boot.mkn` | `_start`（SP 設定）、`.bss` 零化、`VBAR_EL1` 設定、`核主` へ分岐 |
+| `kernel/entry.mkn` | 例外ベクタ表、レジスタ保存、EL0 遷移（`enter_el0`）、SVC・IRQ の下位 EL 入口、復帰スタブ |
+| `kernel/proc/sysreg.mkn` | システムレジスタ操作（MMU・タイマー・割込制御・TLB・キャッシュ） |
+| `user/lib.mkn` | 漢像の入口 `_start`、副タスクの終了スタブ、`奏令`（`svc #0`） |
+| `boot/boot.mkn` | Phase 0 の最小起動スタブ（`uart`・`uart_mmio` 試験用） |
 
-`boot/uart.c` の C 版ドライバは `外術曰` 連携の後方互換・参照用に残している。旧起動スタブ `boot/boot.S` は
-Phase 0 の参照用。VFS は `kernel/vfs/` に分割済み（下記）。
+`boot/uart.c` の C 版ドライバは `外術曰` 連携の後方互換・参照用に残している（C であってアセンブリではない）。VFS は `kernel/vfs/` に分割済み（下記）。
 
 ## ソースの分割と展開（`kernel/vfs/`）
 
@@ -242,7 +243,7 @@ sh tools/kernel-line.sh tests/output/kernel_all.mkn.map <展開後の行番号> 
 - 試験は外部命令 `例試`（`user/btron_exc.mkn`、像名 `例試`）の 16 項目。BRK の `ret_exc(0)`/`(1)`、
   ハンドラの普通の `ret`、データ異常と FAR、`def_exc` の ER_PAR/ER_ADR、ハンドラ外の ER_CTX、
   後から定義したハンドラの優先、子行程の分離を確かめる。子行程のハンドラ番地は
-  `user/btron_exc_aux.S` の記号で取得し、`tools/mkimage.sh` が `user/<name>_aux.S` を任意でリンクする。
+  `取址(術名)` で取得する。
 - 制限: 配送するのは同期例外だけ。タイマー割込のような非同期の upcall は 1.2 の
   `def_msg`/`ret_msg` で別に実装した。例外文脈が有効な間に起きた例外は再配送しない。
 
@@ -269,7 +270,7 @@ sh tools/kernel-line.sh tests/output/kernel_all.mkn.map <展開後の行番号> 
   ランデブの途中記録（`呼取消`）を消す。`MH_TERM` は捨てて行程を異常終了させ、親へ
   `MS_ABORT`（型 1）を送る。
 - 起動時に `メッセージ初期化`、行程の再利用時に `メッセージ清` で消す（子は親のハンドラを継がない）。
-- 試験は外部命令 `信手試`（`user/btron_msg_hdr.mkn`、補助 `user/btron_msg_hdr_aux.S`）の 25 項目。
+- 試験は外部命令 `信手試`（`user/btron_msg_hdr.mkn`）の 25 項目。
   `t_mask` と番地の誤り、`ER_CTX`、自分宛・他行程宛の配送、復帰スタブ、保留分の非入れ子起動、
   `MH_NONE`/`MH_BREAK`/`MH_TERM`、`ret_msg(1)`、解除を確かめる。`make test` は 192 PASS（rc=0）。
 - 制限: ハンドラ表は 8 行程・型 1〜31。`def_msg` は定義後に届くメッセージだけを対象にする。
@@ -302,8 +303,7 @@ sh tools/kernel-line.sh tests/output/kernel_all.mkn.map <展開後の行番号> 
   枠単位のまま。
 - 副タスクの民スタックは窓内 `0x406D8000`（頁 216〜231）に 16 KiB × 4。作成時に 4 頁とも空いて
   いることを確かめ、終了時にその 4 頁だけ返す。
-- `生行程像` が KBN1 ヘッダ +32 の終了スタブを `+152 偏帰` に保存する。`crt0.S` はそこへ
-  `__task_exit_stub`（`x8=186` の `svc`）を書き、副タスクが return すると `ext_tsk` になる。
+- `生行程像` が KBN1 ヘッダ +32 の終了スタブを `+152 偏帰` に保存する。`user/lib.mkn` の `__task_exit_stub`（`x8=186` の `svc`）の番地をリンカスクリプトがヘッダに置き、副タスクが return すると `ext_tsk` になる。
 - 漢令 185 `cre_tsk`・186 `ext_tsk`・187 `ter_tsk` を追加した。`cre_tsk` の入口は
   `[像基, 像基+像最大)` かつ 4 B 整列。主あたり 4 個まで。誤りは `誤範囲`（ER_ADR）・
   `誤優先`（ER_PPRI）・`誤再`（ER_LIMIT）・`誤資`（ER_NOMEM）・`誤任識`（ER_ID）。
@@ -314,7 +314,7 @@ sh tools/kernel-line.sh tests/output/kernel_all.mkn.map <展開後の行番号> 
   範囲は主の現在の優先度群で検査する。`get_inf` は副タスクが走った刻を主の `utime` に合算する。
 - `ext_tsk`・`ter_tsk` は副タスクの枠だけを片付ける（主の柄・ファイル・共有資源は閉じない）。
   主の `ext_tsk` は先に同じ主の全副タスクを終えてから既存の `程終了` を通る。
-- 試験は外部命令 `副試`（`user/btron_task.mkn`、補助 `user/btron_task_aux.S`）の 17 項目。
+- 試験は外部命令 `副試`（`user/btron_task.mkn`）の 17 項目。
   生成・`arg`・`get_tid`・return、`ER_ADR`/`ER_PPRI`/`ER_LIMIT` と頁の返却、`ter_tsk`、`ext_tsk`、
   `wup_tsk`/`can_wup`、時間切れ、`rcv_msg` の `ER_NOSPT`、`chg_pri` の範囲、`get_inf` の合算、
   主の終了、他プロセスへの `ER_ID` を確かめる。

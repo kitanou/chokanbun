@@ -47,6 +47,8 @@ enum class TokKind {
     Bufan,        // 不返
     Jie,          // 節
     Jihao,        // 記號
+    Luo,          // 裸
+    Qi,           // 齊
 
     // Primitive type keywords
     WufuBa,       // 無符八
@@ -75,6 +77,7 @@ enum class TokKind {
     DuHuiFa,      // 讀揮發
     XieHuiFa,     // 寫揮發
     ZhangBei,     // 障壁
+    ZuYi,         // 組譯
     ChangDu,      // 長度
     Lan,          // 欄
     Xiang,        // 項

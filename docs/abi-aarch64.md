@@ -8,14 +8,14 @@
 
 ## ブート
 1. QEMU virtの起動契約とデバイスツリーを確認する。
-2. スタックとBSSを初期化する。（実装: `kernel/boot.S`）
+2. スタックとBSSを初期化する。（実装: `kernel/boot.mkn` の `_start` と `早起動`）
 3. UARTを初期化し、最初のログを出す。（実装: `kernel/kernel.mkn` の PL011 ドライバ）
-4. 例外ベクタを設定する。（実装: `kernel/boot.S` が `VBAR_EL1` に `_vectors` を設定）
+4. 例外ベクタを設定する。（実装: `kernel/boot.mkn` が `VBAR_EL1` に `_vectors` を設定）
 5. メモリ管理とタイマーを順次有効化する。（MMU: 実装済み。タイマー+GIC割込: 実装済み）
 
 ## 例外
 - `-kernel` 起動は EL1（SP_EL1）で始まる。`VBAR_EL1` に 2 KiB 整列した
-  ベクタ表を設定し、同期例外は `kernel/vectors.S` の共通入口でレジスタを
+  ベクタ表を設定し、同期例外は `kernel/entry.mkn` の共通入口でレジスタを
   保存してから機械漢文ハンドラ `exception_dispatch`（`kernel/kernel.mkn`）を
   呼ぶ。ハンドラは ESR_EL1 を復号して診断を出力し、復帰先 ELR_EL1 を返す。
 
@@ -25,7 +25,7 @@
 - EL1 物理タイマー（PPI 30）を `CNTP_TVAL_EL0`/`CNTP_CTL_EL0` で起動し、
   `CNTFRQ_EL0`（QEMU virt では 62.5 MHz）から周期を求める。
 - IRQ はベクタ表の Current EL with SPx（+0x280）から `irq_handler`
-  （`kernel/vectors.S`）に届く。`irq_handler` は x0–x30 と NZCV を保存して
+  （`kernel/entry.mkn`）に届く。`irq_handler` は x0–x30 と NZCV を保存して
   機械漢文ハンドラ `irq_dispatch`（`kernel/kernel.mkn`）を呼び、復帰時に
   すべて復元して `eret` する。
 - 例外入口は `PSTATE.DAIF` の I ビットを立てるため、ハンドラ実行中は割込が
@@ -35,7 +35,7 @@
   `GICC_CTLR.AckCtl`（bit 2）を設定して `GICC_IAR` で Group 1 の要因番号を
   取得する。要因番号は `GICC_EOIR` に書き戻して完了する。
 - EL0 実行中のタイマー割込（プリエンプション）は下位EL IRQ ベクタ（オフセット
-  `0x480`）の `lower_irq_handler`（`kernel/el0.S`）に入り、SVC と同じ 288 バイトの
+  `0x480`）の `lower_irq_handler`（`kernel/entry.mkn`）に入り、SVC と同じ 288 バイトの
   保存フレームを作って機械漢文の `割込切替`（`irq_switch`）を呼ぶ。`割込切替` は
   `GICC_IAR`/`GICC_EOIR` とタイマー再装填、刻数の加算を行い、`排程` で次の行程へ
   切り替えて復歸先フレームへのポインタを返す（0 なら EL1 で待機）。
@@ -98,7 +98,7 @@
   異なるため、行程間で互いの書き込みは見えない。ただし共有・システム塊域
   （頁 248〜255）は例外で、塊を取った物理ページが全行程の表に同じ VA で張られる。
 - 変換表（1 行程あたり 12 KiB = レベル1 + レベル2 + レベル3）は機械漢文
-  （`設頁表`）が構築し、システムレジスタ設定のみ `kernel/sysreg.S` に委譲する
+  （`設頁表`）が構築し、システムレジスタ設定のみ `kernel/proc/sysreg.mkn` の `組譯` で行う
   （`enable_mmu` で起動、`set_ttbr0` で切替）。
 - 行程切替時は `排程`（機械漢文）が `設台`（`set_ttbr0`）を呼び、
   `TTBR0_EL1` を次の行程の表へ向けて TLB を無効化する。核の恒等写像は
@@ -115,11 +115,11 @@
 
 ## 漢令（syscall）ABI v0.1
 - `svc #0` で EL0 から EL1 へ遷移する。下位EL同期ベクタ（オフセット `0x400`）
-  の `lower_sync_handler`（`kernel/el0.S`）が 288 バイトの保存フレームを作る
+  の `lower_sync_handler`（`kernel/entry.mkn`）が 288 バイトの保存フレームを作る
   （`x0`–`x30`、NZCV、`ELR_EL1`、`SPSR_EL1`、`SP_EL0`）。`ESR_EL1` とフレームへの
   ポインタを `svc_dispatch`（`kernel/kernel.mkn`）に渡す。
 - `svc_dispatch` は復歸先フレームへのポインタを返す。フレームは**行程ごとの核棧**
-  （64 KiB、`核棧基` 0x40320000 から）上にあり、`el0.S` は返されたアドレスへ
+  （64 KiB、`核棧基` 0x40320000 から）上にあり、`kernel/entry.mkn` の入口は返されたアドレスへ
   `SP_EL1`（EL1h の `sp`）を切り替えてから復歸する。これによりハンドラは別の行程の
   フレーム（と核棧）から復歸でき、コンテキスト切替を実現する。0 を返すと
   実行可能な行程が無いことを意味し、核は EL1 で待機する（`wfi`）。
@@ -346,7 +346,7 @@
   目録の開数は、その典籍を指す開表項の数で、0 でなければ `削` は `-EBUSY`。
   核は EL1 から民の頁を書くため、`讀入` の宛先は `備宛`（窓内・`令長限` 以内を確認し
   `給頁` で先に張る）を通す。
-- 機械漢文側からは薄いラッパ `奏令`（`kernel/el0.S` の `svc_call`、
+- 機械漢文側からは薄いラッパ `奏令`（`user/lib.mkn`・`kernel/kernel.mkn` の `組譯` による `svc #0`、
   AAPCS64 で x0=番号, x1–x6=引数）を呼ぶ。
 - 下位EL データアボート（EC=36）が民の窓 `0x40600000`–`0x407FFFFF` 内なら、
   `svc_dispatch` は未写像ページに `頁取` で物理ページを与え、`無效台` で TLB を
@@ -444,8 +444,8 @@
   `x30=終了スタブ` で作り、その ID を返す。主あたり 4 個まで。
 - 副タスクの民スタックは窓内 `0x406D8000` から 16 KiB × 4（頁 216〜231）。作成時に 4 頁とも
   空いていることを確かめ、`ext_tsk`・`ter_tsk`・主の終了でその 4 頁だけを返す。
-- KBN1 ヘッダの `+32` に `__task_exit_stub`（`x8=186` の `svc`）の番地を置く。`crt0.S` が
-  これを書き、`生行程像` が行程表の `+152 偏帰` に控える。副タスクが return すると
+- KBN1 ヘッダの `+32` に `__task_exit_stub`（`x8=186` の `svc`）の番地を置く。`user/lib.mkn` が定義し `user/user.lds` が
+  ヘッダへ置き、`生行程像` が行程表の `+152 偏帰` に控える。副タスクが return すると
   `x30` のスタブから `ext_tsk` に入る。
 - 行程表は 192 B/項。`+128 偏主` は主の枠 + 1（0 は主）、`+136 偏起` は起床要求数、
   `+144 偏棧` は民スタック上端、`+152 偏帰` は終了スタブ。`程限` は 8 のまま。

@@ -1,0 +1,29 @@
+(module
+  (extern 「境界」 (params) (ret 無) (symbol "__bss_start"))
+  (fn 「讀系」 (params) (ret 無符六四)
+    (let 「値」 無符六四 (int 0))
+    (unsafe
+      (set 「値」 (組譯 無符六四 "mrs $0, cntfrq_el0" "=r"))
+    )
+    (return 「値」)
+  )
+  (fn 「書系」 (params (「値」 無符六四)) (ret 無)
+    (unsafe
+      (expr (組譯 無 "msr tpidr_el1, $0" "r,~{memory}" 「値」))
+    )
+  )
+  (fn 「入口」 (params) (ret 無)
+  )
+  (fn 「址取」 (params) (ret 無符六四)
+    (let 「甲」 無符六四 (取址 「入口」))
+    (let 「乙」 無符六四 (取址 「境界」))
+    (return (加 「甲」 「乙」))
+  )
+  (fn 「向量」 (params) (ret 無) public naked (align 2048) (section ".vectors") (symbol "vec_test")
+    (unsafe
+      (expr (組譯 無 "nop
+b .
+" ""))
+    )
+  )
+)

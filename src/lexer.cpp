@@ -174,7 +174,7 @@ static const std::vector<std::pair<std::string, TokKind>>& allKeywords() {
         {"別名", TokKind::Bieming}, {"為", TokKind::Wei},
         {"常", TokKind::Chang}, {"公開", TokKind::Gongkai},
         {"不返", TokKind::Bufan}, {"節", TokKind::Jie},
-        {"記號", TokKind::Jihao},
+        {"記號", TokKind::Jihao}, {"裸", TokKind::Luo}, {"齊", TokKind::Qi},
         {"無符八", TokKind::WufuBa}, {"無符十六", TokKind::WufuShiliu},
         {"無符三二", TokKind::WufuSaner}, {"無符六四", TokKind::WufuLiushi},
         {"有符八", TokKind::YoufuBa}, {"有符十六", TokKind::YoufuShiliu},
@@ -185,7 +185,7 @@ static const std::vector<std::pair<std::string, TokKind>>& allKeywords() {
         {"取址", TokKind::QuZhi}, {"取值", TokKind::QuZhi2},
         {"呼", TokKind::Hu}, {"轉", TokKind::Zhuan},
         {"讀揮發", TokKind::DuHuiFa}, {"寫揮發", TokKind::XieHuiFa},
-        {"障壁", TokKind::ZhangBei}, {"長度", TokKind::ChangDu},
+        {"障壁", TokKind::ZhangBei}, {"組譯", TokKind::ZuYi}, {"長度", TokKind::ChangDu},
         {"欄", TokKind::Lan}, {"項", TokKind::Xiang},
         {"加", TokKind::Jia}, {"減", TokKind::Jian},
         {"乘", TokKind::Cheng}, {"除", TokKind::Chu}, {"餘", TokKind::Yu},
@@ -624,6 +624,8 @@ const char* Token::kindName() const {
         case TokKind::Gongkai: return "公開";
         case TokKind::Bufan: return "不返";
         case TokKind::Jie: return "節";
+        case TokKind::Luo: return "裸";
+        case TokKind::Qi: return "齊";
         case TokKind::Jihao: return "記號";
         case TokKind::WufuBa: return "無符八";
         case TokKind::WufuShiliu: return "無符十六";
@@ -647,6 +649,7 @@ const char* Token::kindName() const {
         case TokKind::DuHuiFa: return "讀揮發";
         case TokKind::XieHuiFa: return "寫揮發";
         case TokKind::ZhangBei: return "障壁";
+        case TokKind::ZuYi: return "組譯";
         case TokKind::ChangDu: return "長度";
         case TokKind::Lan: return "欄";
         case TokKind::Xiang: return "項";

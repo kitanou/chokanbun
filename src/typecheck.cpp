@@ -1,5 +1,6 @@
 #include "typecheck.h"
 #include <iostream>
+#include <functional>
 
 namespace chokanbun {
 
@@ -216,6 +217,8 @@ TypePtr TypeChecker::checkExpr(const Expr& e) {
             return checkVolatileWrite(e);
         case Expr::Kind::Fence:
             return checkFence(e);
+        case Expr::Kind::Asm:
+            return checkAsm(e);
         case Expr::Kind::StrLen:
             return checkStrLen(e);
         case Expr::Kind::FieldAccess:
@@ -473,6 +476,14 @@ TypePtr TypeChecker::checkAddrOf(const Expr& e) {
         return t;
     }
 
+    // 取址(術名): 関数 (外術のリンカ記号を含む) のアドレスを 無符六四 で返す。
+    if (e.addend->kind == Expr::Kind::Ident && !lookupVar(e.addend->identName) &&
+        !findConstant(e.addend->identName) && findFunction(e.addend->identName)) {
+        auto t = Type::U64();
+        exprTypes_[&e] = t;
+        return t;
+    }
+
     TypePtr base = checkExpr(*e.addend);
     if (!base) {
         auto t = Type::Void();
@@ -626,6 +637,22 @@ TypePtr TypeChecker::checkFence(const Expr& e) {
     }
 
     auto t = Type::Void();
+    exprTypes_[&e] = t;
+    return t;
+}
+
+TypePtr TypeChecker::checkAsm(const Expr& e) {
+    // inline asm requires 險 context (spec §6)
+    if (unsafeDepth_ == 0) {
+        errorAt(e, "E0002", "inline assembly requires 險 block");
+    }
+    for (auto& a : e.args) {
+        TypePtr at = checkExpr(*a);
+        if (at && !(at->isInteger() || at->kind == Type::Kind::Pointer || at->kind == Type::Kind::Bool)) {
+            errorAt(*a, "E0001", "組譯 operand must be an integer or pointer, got " + at->toString());
+        }
+    }
+    auto t = e.asmType ? e.asmType : Type::Void();
     exprTypes_[&e] = t;
     return t;
 }
@@ -940,6 +967,22 @@ void TypeChecker::checkExprStmt(const Stmt& s) {
 // ========== Declaration checking ==========
 
 void TypeChecker::checkFunction(const FunctionDecl& fn) {
+    // 裸: 本体は 險 の中の 組譯 だけ。引数・局所変数・通常の文は持てない。
+    if (fn.isNaked) {
+        if (fn.returnType && fn.returnType->kind != Type::Kind::Void)
+            error(fn.line, fn.col, "E0012", "naked function " + fn.name + " must return 無");
+        if (!fn.isPublic)
+            error(fn.line, fn.col, "E0012", "naked function " + fn.name + " must be 公開");
+        std::function<void(const std::vector<StmtPtr>&)> only = [&](const std::vector<StmtPtr>& b) {
+            for (auto& st : b) {
+                if (st->kind == Stmt::Kind::UnsafeBlock) { only(st->unsafeBody); continue; }
+                if (st->kind == Stmt::Kind::ExprStmt && st->expr && st->expr->kind == Expr::Kind::Asm) continue;
+                error(st->line, st->col, "E0012", "naked function " + fn.name + " may contain only 組譯");
+            }
+        };
+        only(fn.body);
+    }
+
     // Check the function body
     enterScope();
 

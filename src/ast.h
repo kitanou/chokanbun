@@ -101,6 +101,7 @@ struct Expr {
         VolatileRead, // 讀揮發〈T〉(ptr)
         VolatileWrite,// 寫揮發〈T〉(ptr, val)
         Fence,        // 障壁〈種〉()
+        Asm,          // 組譯〈T〉(『文』, 『制約』, 引...)
         StrLen,       // 長度(expr)
         FieldAccess,  // 欄(lvalue, 「field」)
         ElemAccess,   // 項(lvalue, expr)
@@ -140,6 +141,10 @@ struct Expr {
     ExprPtr volVal;
     // Fence
     std::string fenceKind;
+    // Asm: asmText=args[0] literal, constraints=args[1] literal, inputs=args[2..]
+    std::string asmText;
+    std::string asmConstraints;
+    TypePtr asmType;
     // FieldAccess
     ExprPtr base;
     std::string fieldName;
@@ -222,6 +227,8 @@ struct FunctionDecl {
     bool isPublic = false;   // 公開
     bool isNoreturn = false; // 不返
     std::string section;     // 節「.text.boot」
+    bool isNaked = false;    // 裸
+    uint64_t alignment = 0;  // 齊「N」 (0 = 既定)
 
     uint32_t line, col;
 };

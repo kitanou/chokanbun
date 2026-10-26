@@ -59,8 +59,9 @@ echo "=== ChoKanbun compiler tests ==="
 "$CLANG" --target=aarch64-none-elf -ffreestanding -c boot/uart.c \
     -o "$OUT/uart_c.o" >"$OUT/uart_c.log" 2>&1 \
     && pass "uart: bootstrap UART object" || fail "uart: bootstrap UART object"
-"$CLANG" --target=aarch64-none-elf -c boot/boot.S -o "$OUT/boot.o" \
-    >"$OUT/boot.log" 2>&1 \
+"$BIN" boot/boot.mkn -ir -o "$OUT/boot.ll" 2>"$OUT/boot.gen.log" \
+    && "$LLC" -march=aarch64 -filetype=obj "$OUT/boot.ll" -o "$OUT/boot.o" \
+        >"$OUT/boot.log" 2>&1 \
     && pass "uart: boot stub object" || fail "uart: boot stub object"
 
 if [ -f "$OUT/uart.o" ] && [ -f "$OUT/uart_c.o" ] && [ -f "$OUT/boot.o" ]; then
@@ -103,6 +104,8 @@ if [ -n "$KLINE" ] && [ "$(sh tools/kernel-line.sh "$OUT/kernel_all.mkn.map" "$K
 else
     fail "kernel: 展開後の行番号を元のファイル:行へ戻せる"
 fi
+# 前回の成果物が残っていると、生成に失敗しても古い ELF で QEMU 試験が走ってしまう。
+rm -f "$OUT/kernel.ll" "$OUT/kernel.o" "$OUT/kernel.elf"
 "$BIN" "$OUT/kernel_all.mkn" -ir -o "$OUT/kernel.ll" 2>"$OUT/kernel.gen.log" \
     && pass "kernel: IR generation" || fail "kernel: IR generation"
 if [ -s "$OUT/kernel.gen.log" ] && grep -q '錯' "$OUT/kernel.gen.log"; then
@@ -116,18 +119,6 @@ awk '/^define /{e=1} /^[A-Za-z0-9_.]+:$/{ if ($0!="entry:") e=0 } /alloca/{ if(!
 "$LLC" -march=aarch64 -filetype=obj "$OUT/kernel.ll" -o "$OUT/kernel.o" \
     >"$OUT/kernel.llc.log" 2>&1 \
     && pass "kernel: AArch64 object" || fail "kernel: AArch64 object"
-"$CLANG" --target=aarch64-none-elf -c kernel/boot.S -o "$OUT/kernel_boot.o" \
-    >"$OUT/kernel_boot.log" 2>&1 \
-    && pass "kernel: boot stub object" || fail "kernel: boot stub object"
-"$CLANG" --target=aarch64-none-elf -c kernel/vectors.S -o "$OUT/kernel_vectors.o" \
-    >"$OUT/kernel_vectors.log" 2>&1 \
-    && pass "kernel: exception vectors object" || fail "kernel: exception vectors object"
-"$CLANG" --target=aarch64-none-elf -c kernel/sysreg.S -o "$OUT/kernel_sysreg.o" \
-    >"$OUT/kernel_sysreg.log" 2>&1 \
-    && pass "kernel: sysreg helpers object" || fail "kernel: sysreg helpers object"
-"$CLANG" --target=aarch64-none-elf -c kernel/el0.S -o "$OUT/kernel_el0.o" \
-    >"$OUT/kernel_el0.log" 2>&1 \
-    && pass "kernel: EL0/SVC boundary object" || fail "kernel: EL0/SVC boundary object"
 
 # 外部命令 (漢像 KBN1) をビルドし、カーネルイメージへ埋め込む (行程の設計 P1)。
 export BIN LLVM_BIN LLD_BIN
@@ -267,11 +258,10 @@ sh tools/gen-images.sh "$OUT/kernel_images.S" 問安="$OUT/hello.zo" 數="$OUT/c
         >"$OUT/kernel_images.log" 2>&1 \
     && pass "kernel: 漢像の埋め込み (像表)" || fail "kernel: 漢像の埋め込み (像表)"
 
-if [ -f "$OUT/kernel.o" ] && [ -f "$OUT/kernel_boot.o" ] && \
-   [ -f "$OUT/kernel_vectors.o" ] && [ -f "$OUT/kernel_sysreg.o" ] && \
-   [ -f "$OUT/kernel_el0.o" ] && [ -f "$OUT/kernel_images.o" ]; then
-    "$LD" -T kernel/kernel.lds "$OUT/kernel_boot.o" "$OUT/kernel_vectors.o" \
-        "$OUT/kernel_sysreg.o" "$OUT/kernel_el0.o" "$OUT/kernel_images.o" "$OUT/kernel.o" -o "$OUT/kernel.elf" \
+if [ -f "$OUT/kernel.o" ] && \
+   [ -f "$OUT/kernel_images.o" ]; then
+    "$LD" -T kernel/kernel.lds \
+        "$OUT/kernel_images.o" "$OUT/kernel.o" -o "$OUT/kernel.elf" \
         >"$OUT/kernel.link.log" 2>&1 \
         && pass "kernel: ELF link" || fail "kernel: ELF link"
     if [ -f "$OUT/kernel.elf" ]; then

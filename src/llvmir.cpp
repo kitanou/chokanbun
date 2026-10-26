@@ -184,7 +184,7 @@ void LLVMIRGen::genFunction(const FunctionDecl& fn) {
     // Linkage: public (external) for 公開/main, internal otherwise
     std::string linkage = "internal";
     if (fn.isPublic || name == "main")
-        linkage = "external";
+        linkage = "dso_local";
 
     std::string define = "define ";
     if (fn.isNoreturn) define += "noreturn ";
@@ -195,9 +195,11 @@ void LLVMIRGen::genFunction(const FunctionDecl& fn) {
         ir_ += llvmType(fn.params[i].type) + " %arg" + std::to_string(i);
     }
     ir_ += ")";
+    if (fn.isNaked) ir_ += " naked noinline nounwind";
     if (!fn.section.empty()) {
         ir_ += " section \"" + fn.section + "\"";
     }
+    if (fn.alignment) ir_ += " align " + std::to_string(fn.alignment);
     ir_ += " {\n";
 
     // Entry block
@@ -205,7 +207,8 @@ void LLVMIRGen::genFunction(const FunctionDecl& fn) {
     currentBlock_ = "entry";
 
     // Allocate locals for parameters (params are passed as %argN).
-    for (size_t i = 0; i < fn.params.size(); i++) {
+    // 裸の関数は棧を使わないので、引数は退避しない (レジスタのまま組譯が読む)。
+    for (size_t i = 0; i < fn.params.size() && !fn.isNaked; i++) {
         auto& p = fn.params[i];
         std::string alloca = freshName("p");
         emit("%" + alloca + " = alloca " + llvmType(p.type) + ", align 8");
@@ -224,7 +227,9 @@ void LLVMIRGen::genFunction(const FunctionDecl& fn) {
 
     // If function doesn't end with a terminator, add one
     if (!endsWithTerminator()) {
-        if (fn.returnType->kind == Type::Kind::Void) {
+        if (fn.isNaked) {
+            emit("unreachable");
+        } else if (fn.returnType->kind == Type::Kind::Void) {
             emit("ret void");
         } else {
             emit("unreachable");
@@ -414,6 +419,7 @@ std::string LLVMIRGen::genExpr(const ExprPtr& e) {
         case Expr::Kind::VolatileRead: return genVolatileRead(e);
         case Expr::Kind::VolatileWrite: return genVolatileWrite(e);
         case Expr::Kind::Fence: return genFence(e);
+        case Expr::Kind::Asm: return genAsm(e);
         case Expr::Kind::StrLen: return genStrLen(e);
         case Expr::Kind::FieldAccess: return genFieldAccess(e);
         case Expr::Kind::ElemAccess: return genElemAccess(e);
@@ -609,6 +615,15 @@ std::string LLVMIRGen::genAddrOf(const ExprPtr& e) {
             return "ptr %" + it->second.second;
         }
     }
+    // 取址(術名) - address of a function / linker symbol, as 無符六四
+    if (e->addend->kind == Expr::Kind::Ident) {
+        auto fit = functions_.find(e->addend->identName);
+        if (fit != functions_.end()) {
+            std::string result = freshName("faddr");
+            emit("%" + result + " = ptrtoint ptr " + irName(fnSymbol(*fit->second)) + " to i64");
+            return "i64 %" + result;
+        }
+    }
     // 取址(『...』) - address of string literal (spec §9)
     if (e->addend->kind == Expr::Kind::StringLit) {
         return genStringLit(e->addend);
@@ -692,6 +707,41 @@ std::string LLVMIRGen::genFence(const ExprPtr& e) {
     return "void ";
 }
 
+// LLVM IR の文字列定数用の逃がし ("..." の中身)。
+static std::string irEscape(const std::string& s) {
+    static const char* hex = "0123456789ABCDEF";
+    std::string out;
+    for (unsigned char c : s) {
+        if (c < 0x20 || c == '"' || c == '\\' || c >= 0x7F) {
+            out += '\\';
+            out += hex[c >> 4];
+            out += hex[c & 15];
+        } else {
+            out += static_cast<char>(c);
+        }
+    }
+    return out;
+}
+
+std::string LLVMIRGen::genAsm(const ExprPtr& e) {
+    // 組譯〈T〉(『文』, 『制約』, 引...) -> call asm sideeffect
+    std::string args;
+    for (size_t i = 0; i < e->args.size(); i++) {
+        if (i > 0) args += ", ";
+        args += genExpr(e->args[i]);
+    }
+    std::string text = "asm sideeffect \"" + irEscape(e->asmText) + "\", \"" +
+        irEscape(e->asmConstraints) + "\"(" + args + ")";
+    if (!e->asmType || e->asmType->kind == Type::Kind::Void) {
+        emit("call void " + text);
+        return "void ";
+    }
+    std::string ty = llvmType(e->asmType);
+    std::string result = freshName("asm");
+    emit("%" + result + " = call " + ty + " " + text);
+    return ty + " %" + result;
+}
+
 std::string LLVMIRGen::genStrLen(const ExprPtr& e) {
     // 長度(expr) - for strings, returns the length as a compile-time constant
     // Handles: 長度(『...』), 長度(取址(『...』)), 長度(ptr to string)
@@ -743,7 +793,7 @@ std::string LLVMIRGen::genElemAccess(const ExprPtr& e) {
 
 void LLVMIRGen::genExternal(const FunctionDecl& fn) {
     std::string name = fnSymbol(fn);
-    std::string s = "declare " + llvmType(fn.returnType) + " " + irName(name) + "(";
+    std::string s = "declare dso_local " + llvmType(fn.returnType) + " " + irName(name) + "(";
     for (size_t i = 0; i < fn.params.size(); i++) {
         if (i > 0) s += ", ";
         s += llvmType(fn.params[i].type);

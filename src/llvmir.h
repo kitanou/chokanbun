@@ -60,6 +60,7 @@ private:
     std::string genVolatileRead(const ExprPtr& e);
     std::string genVolatileWrite(const ExprPtr& e);
     std::string genFence(const ExprPtr& e);
+    std::string genAsm(const ExprPtr& e);
     std::string genStrLen(const ExprPtr& e);
     std::string genFieldAccess(const ExprPtr& e);
     std::string genElemAccess(const ExprPtr& e);
