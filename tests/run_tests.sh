@@ -1192,7 +1192,13 @@ if "$LLC" -march=aarch64 -filetype=obj "$OUT/lang_machine.ll" -o "$OUT/lang_mach
     && grep -qE 'ic[[:space:]]+iallu' "$OUT/lang_machine.dis" \
     && grep -qE 'wfi' "$OUT/lang_machine.dis" \
     && grep -qE 'svc[[:space:]]+#0' "$OUT/lang_machine.dis" \
-    && grep -qE 'brk[[:space:]]+#0' "$OUT/lang_machine.dis"; then
+    && grep -qE 'brk[[:space:]]+#0' "$OUT/lang_machine.dis" \
+    && grep -qE 'sub[[:space:]]+sp, sp, #0x120' "$OUT/lang_machine.dis" \
+    && grep -qE 'sub[[:space:]]+sp, sp, #0x100' "$OUT/lang_machine.dis" \
+    && grep -qE 'stp[[:space:]]+x28, x29, \[sp, #0xe0\]' "$OUT/lang_machine.dis" \
+    && grep -qE 'str[[:space:]]+x2, \[sp, #0x110\]' "$OUT/lang_machine.dis" \
+    && grep -qE 'msr[[:space:]]+SP_EL0, x2' "$OUT/lang_machine.dis" \
+    && grep -qE 'eret' "$OUT/lang_machine.dis"; then
     pass "lang ok: machine (型付き機械命令 -> AArch64 命令)"
 else
     fail "lang ok: machine (型付き機械命令 -> AArch64 命令)"

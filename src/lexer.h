@@ -88,6 +88,9 @@ enum class TokKind {
     DaiShiXiang,  // 待事象
     HanLing,      // 漢令
     YiChangLing,  // 異常令
+    KuangCun,     // 框存
+    KuangFu,      // 框復
+    LiWaiGui,     // 例外歸
     ChangDu,      // 長度
     Lan,          // 欄
     Xiang,        // 項

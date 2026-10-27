@@ -191,6 +191,7 @@ static const std::vector<std::pair<std::string, TokKind>>& allKeywords() {
         {"臺無效", TokKind::TaiWuXiao}, {"資清", TokKind::ZiQing},
         {"令清", TokKind::LingQing}, {"待事象", TokKind::DaiShiXiang},
         {"漢令", TokKind::HanLing}, {"異常令", TokKind::YiChangLing},
+        {"框存", TokKind::KuangCun}, {"框復", TokKind::KuangFu}, {"例外歸", TokKind::LiWaiGui},
         {"長度", TokKind::ChangDu},
         {"欄", TokKind::Lan}, {"項", TokKind::Xiang},
         {"加", TokKind::Jia}, {"減", TokKind::Jian},
@@ -666,6 +667,9 @@ const char* Token::kindName() const {
         case TokKind::DaiShiXiang: return "待事象";
         case TokKind::HanLing: return "漢令";
         case TokKind::YiChangLing: return "異常令";
+        case TokKind::KuangCun: return "框存";
+        case TokKind::KuangFu: return "框復";
+        case TokKind::LiWaiGui: return "例外歸";
         case TokKind::ChangDu: return "長度";
         case TokKind::Lan: return "欄";
         case TokKind::Xiang: return "項";

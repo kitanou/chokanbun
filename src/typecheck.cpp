@@ -706,6 +706,9 @@ TypePtr TypeChecker::checkMachine(const Expr& e) {
         case Expr::MachineOp::TlbInvalidate:
         case Expr::MachineOp::InstrCacheClean:
         case Expr::MachineOp::WaitEvent:
+        case Expr::MachineOp::FrameSave:
+        case Expr::MachineOp::FrameRestore:
+        case Expr::MachineOp::ExceptionReturn:
             return ret(Type::Void());
 
         case Expr::MachineOp::DataCacheClean: {

@@ -1,6 +1,6 @@
 註 例外ベクタ表と EL0 境界 (旧 kernel/vectors.S・kernel/el0.S)。
-註 本体は 裸 の関数で、命令列は 組譯 に書く。レジスタ退避の枠 (256/288 バイト) は
-註 docs/abi-aarch64.md の「機械漢文から見える割込境界」と、kernel/proc/*.mkn が読む框の配置に合わせる。
+註 本体は 裸 の関数で、レジスタ退避の框は 框存・框復・例外歸 (型付き機械命令)、呼出しと分岐は 組譯 に書く。
+註 框 (256/288 バイト) の配置は docs/abi-aarch64.md の「機械漢文から見える割込境界」と、kernel/proc/*.mkn が読む框の配置に合わせる。
 註
 註 EL0 行程の框 (288 バイト): x0..x29 が +0..+232, x30 が +240, NZCV が +248,
 註   ELR_EL1 が +256, SPSR_EL1 が +264, SP_EL0 が +272。
@@ -8,14 +8,34 @@
 
 註 ---- 例外ベクタ表 (2 KiB 整列、16 項 × 0x80) ----
 註 項 0〜3 現 EL・SP0 (未使用)、4〜7 現 EL・SPx (核。5 が IRQ)、8〜11 下位 EL・AArch64 (8 が SVC、9 が IRQ)、12〜15 下位 EL・AArch32。
-註 表の直後に、共通の同期入口 exception_handler と核の IRQ 入口 irq_handler を置く。
+註 各入口 (exception_handler・irq_handler・lower_*) は表の後ろの 裸 の関数で、表の項から b で飛ぶ。
 公開 裸 齊 2048 節「.vectors」 記號「_vectors」 術曰「向量」 返 無
     險
         組譯〈無〉(『.p2align 7\nb exception_handler\n.p2align 7\nb exception_handler\n.p2align 7\nb exception_handler\n.p2align 7\nb exception_handler\n.p2align 7\nb exception_handler\n.p2align 7\nb irq_handler\n.p2align 7\nb exception_handler\n.p2align 7\nb exception_handler\n.p2align 7\nb lower_sync_handler\n.p2align 7\nb lower_irq_handler\n.p2align 7\nb exception_handler\n.p2align 7\nb exception_handler\n.p2align 7\nb exception_handler\n.p2align 7\nb exception_handler\n.p2align 7\nb exception_handler\n.p2align 7\nb exception_handler』, 『』)
-        組譯〈無〉(『exception_handler:\nsub sp, sp, #256\nstp x0, x1, [sp, #0]\nstp x2, x3, [sp, #16]\nstp x4, x5, [sp, #32]\nstp x6, x7, [sp, #48]\nstp x8, x9, [sp, #64]\nstp x10, x11, [sp, #80]\nstp x12, x13, [sp, #96]\nstp x14, x15, [sp, #112]\nstp x16, x17, [sp, #128]\nstp x18, x19, [sp, #144]\nstp x20, x21, [sp, #160]\nstp x22, x23, [sp, #176]\nstp x24, x25, [sp, #192]\nstp x26, x27, [sp, #208]\nstp x28, x29, [sp, #224]\nstr x30, [sp, #240]\nmrs x0, esr_el1\nmrs x1, elr_el1\nbl exception_dispatch\nmsr elr_el1, x0\nldr x30, [sp, #240]\nldp x28, x29, [sp, #224]\nldp x26, x27, [sp, #208]\nldp x24, x25, [sp, #192]\nldp x22, x23, [sp, #176]\nldp x20, x21, [sp, #160]\nldp x18, x19, [sp, #144]\nldp x16, x17, [sp, #128]\nldp x14, x15, [sp, #112]\nldp x12, x13, [sp, #96]\nldp x10, x11, [sp, #80]\nldp x8, x9, [sp, #64]\nldp x6, x7, [sp, #48]\nldp x4, x5, [sp, #32]\nldp x2, x3, [sp, #16]\nldp x0, x1, [sp, #0]\nadd sp, sp, #256\neret』, 『』)
-        組譯〈無〉(『irq_handler:\nsub sp, sp, #256\nstp x0, x1, [sp, #0]\nstp x2, x3, [sp, #16]\nstp x4, x5, [sp, #32]\nstp x6, x7, [sp, #48]\nstp x8, x9, [sp, #64]\nstp x10, x11, [sp, #80]\nstp x12, x13, [sp, #96]\nstp x14, x15, [sp, #112]\nstp x16, x17, [sp, #128]\nstp x18, x19, [sp, #144]\nstp x20, x21, [sp, #160]\nstp x22, x23, [sp, #176]\nstp x24, x25, [sp, #192]\nstp x26, x27, [sp, #208]\nstp x28, x29, [sp, #224]\nstr x30, [sp, #240]\nmrs x2, nzcv\nstr x2, [sp, #248]\nbl irq_dispatch\nldr x2, [sp, #248]\nmsr nzcv, x2\nldr x30, [sp, #240]\nldp x28, x29, [sp, #224]\nldp x26, x27, [sp, #208]\nldp x24, x25, [sp, #192]\nldp x22, x23, [sp, #176]\nldp x20, x21, [sp, #160]\nldp x18, x19, [sp, #144]\nldp x16, x17, [sp, #128]\nldp x14, x15, [sp, #112]\nldp x12, x13, [sp, #96]\nldp x10, x11, [sp, #80]\nldp x8, x9, [sp, #64]\nldp x6, x7, [sp, #48]\nldp x4, x5, [sp, #32]\nldp x2, x3, [sp, #16]\nldp x0, x1, [sp, #0]\nadd sp, sp, #256\neret』, 『』)
     終險
 終術
+
+註 現 EL (EL1) の同期例外の入口 (ベクタ 0x200 など)。EL1 の框 (256 バイト) を作り、ESR_EL1 と ELR_EL1 を
+註 exception_dispatch に渡す。戻り値を ELR_EL1 に入れて復帰する。
+公開 裸 記號「exception_handler」 術曰「例外入口」 返 無
+    險
+        框存〈『el1』〉()
+        組譯〈無〉(『mrs x0, esr_el1\nmrs x1, elr_el1\nbl exception_dispatch\nmsr elr_el1, x0』, 『』)
+        框復〈『el1』〉()
+        例外歸()
+    終險
+終術
+
+註 核 (EL1) の IRQ 入口 (ベクタ 0x280)。EL1 の框に NZCV を加えて退避し、irq_dispatch を呼ぶ。
+公開 裸 記號「irq_handler」 術曰「核割込入口」 返 無
+    險
+        框存〈『el1irq』〉()
+        組譯〈無〉(『bl irq_dispatch』, 『』)
+        框復〈『el1irq』〉()
+        例外歸()
+    終險
+終術
+
 
 註 例外ハンドラの戻り先。例外飛 が民のハンドラの x30 にこの番地を入れる。ret_exc を呼ばずに戻れば ret_exc(0) (番 182) として割り込まれた命令から再開する。
 公開 裸 記號「exc_return_stub」 術曰「例戻」 返 無
@@ -53,20 +73,34 @@
 終術
 
 註 下位 EL の同期入口 (ベクタ 0x400)。EL0 の x0..x30・NZCV・ELR・SPSR・SP_EL0 を核棧の 288 バイトの框へ退避し、
-註 ESR_EL1 と框を 漢令處理 (svc_dispatch) に渡す。戻り値は再開する框 (行程が替わりうる)、0 なら走れる行程が無く el0_park へ。
+註 ESR_EL1 と框を 漢令處理 (svc_dispatch) に渡す。戻り値は再開する框 (行程が替わりうる)、0 なら走れる行程が無く el0_park
 公開 裸 記號「lower_sync_handler」 術曰「下位同期」 返 無
     險
-        組譯〈無〉(『sub sp, sp, #288\nstp x0, x1, [sp, #0]\nstp x2, x3, [sp, #16]\nstp x4, x5, [sp, #32]\nstp x6, x7, [sp, #48]\nstp x8, x9, [sp, #64]\nstp x10, x11, [sp, #80]\nstp x12, x13, [sp, #96]\nstp x14, x15, [sp, #112]\nstp x16, x17, [sp, #128]\nstp x18, x19, [sp, #144]\nstp x20, x21, [sp, #160]\nstp x22, x23, [sp, #176]\nstp x24, x25, [sp, #192]\nstp x26, x27, [sp, #208]\nstp x28, x29, [sp, #224]\nstr x30, [sp, #240]\nmrs x2, nzcv\nstr x2, [sp, #248]\nmrs x2, elr_el1\nstr x2, [sp, #256]\nmrs x2, spsr_el1\nstr x2, [sp, #264]\nmrs x2, sp_el0\nstr x2, [sp, #272]\nmrs x0, esr_el1\nmov x1, sp\nbl svc_dispatch\ncbz x0, el0_park\nmov sp, x0\nb el0_resume』, 『』)
+        框存〈『el0』〉()
+        組譯〈無〉(『mrs x0, esr_el1\nmov x1, sp\nbl svc_dispatch\ncbz x0, el0_park\nmov sp, x0\nb el0_resume』, 『』)
     終險
 終術
 
-註 下位 EL の IRQ 入口 (ベクタ 0x480)。EL0 行程が走る間のタイマー割込。同じ 288 バイトの框を作り、割込切替 (irq_switch) が
-註 次の行程の框を返す (0 なら走れる行程なし)。el0_resume (框から再開) と el0_park (idle_poll で待つ) は同期入口と共有する。
+註 下位 EL の IRQ 入口 (ベクタ 0x480)。EL0 行程が走る間のタイマー割込。同じ 288 バイトの框を作り、割込切替 (irq_switch) で
+註 次の行程の框を返す (0 なら走れる行程なし)。el0_resume (框から再開) と el0_park (idle_poll で待つ) は同期入口と共有する
 公開 裸 記號「lower_irq_handler」 術曰「下位割込」 返 無
     險
-        組譯〈無〉(『sub sp, sp, #288\nstp x0, x1, [sp, #0]\nstp x2, x3, [sp, #16]\nstp x4, x5, [sp, #32]\nstp x6, x7, [sp, #48]\nstp x8, x9, [sp, #64]\nstp x10, x11, [sp, #80]\nstp x12, x13, [sp, #96]\nstp x14, x15, [sp, #112]\nstp x16, x17, [sp, #128]\nstp x18, x19, [sp, #144]\nstp x20, x21, [sp, #160]\nstp x22, x23, [sp, #176]\nstp x24, x25, [sp, #192]\nstp x26, x27, [sp, #208]\nstp x28, x29, [sp, #224]\nstr x30, [sp, #240]\nmrs x2, nzcv\nstr x2, [sp, #248]\nmrs x2, elr_el1\nstr x2, [sp, #256]\nmrs x2, spsr_el1\nstr x2, [sp, #264]\nmrs x2, sp_el0\nstr x2, [sp, #272]\nmov x0, sp\nbl irq_switch\ncbz x0, el0_park\nmov sp, x0』, 『』)
-        組譯〈無〉(『el0_resume:\nldr x2, [sp, #248]\nmsr nzcv, x2\nldr x2, [sp, #256]\nmsr elr_el1, x2\nldr x2, [sp, #264]\nmsr spsr_el1, x2\nldr x2, [sp, #272]\nmsr sp_el0, x2\nldr x30, [sp, #240]\nldp x28, x29, [sp, #224]\nldp x26, x27, [sp, #208]\nldp x24, x25, [sp, #192]\nldp x22, x23, [sp, #176]\nldp x20, x21, [sp, #160]\nldp x18, x19, [sp, #144]\nldp x16, x17, [sp, #128]\nldp x14, x15, [sp, #112]\nldp x12, x13, [sp, #96]\nldp x10, x11, [sp, #80]\nldp x8, x9, [sp, #64]\nldp x6, x7, [sp, #48]\nldp x4, x5, [sp, #32]\nldp x2, x3, [sp, #16]\nldp x0, x1, [sp, #0]\nadd sp, sp, #288\neret』, 『』)
-        組譯〈無〉(『el0_park:\nbl idle_poll\ncbz x0, 2f\nmov sp, x0\nb el0_resume\n2:\nwfi\nb el0_park』, 『』)
+        框存〈『el0』〉()
+        組譯〈無〉(『mov x0, sp\nbl irq_switch\ncbz x0, el0_park\nmov sp, x0\nb el0_resume』, 『』)
     終險
 終術
 
+註 sp が指す EL0 の框から再開する。
+公開 裸 記號「el0_resume」 術曰「框再開」 返 無
+    險
+        框復〈『el0』〉()
+        例外歸()
+    終險
+終術
+
+註 走れる行程が無い間、idle_poll が返す框を待って再開する。
+公開 裸 記號「el0_park」 術曰「框待機」 返 無
+    險
+        組譯〈無〉(『1:\nbl idle_poll\ncbz x0, 2f\nmov sp, x0\nb el0_resume\n2:\nwfi\nb 1b』, 『』)
+    終險
+終術

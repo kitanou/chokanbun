@@ -743,6 +743,52 @@ std::string LLVMIRGen::genAsm(const ExprPtr& e) {
     return ty + " %" + result;
 }
 
+// 例外の框の退避 (save) / 復帰 (!save) の命令列。x0..x30 は +0..+240、
+// el1irq は +248 に NZCV、el0 はさらに ELR_EL1 +256・SPSR_EL1 +264・SP_EL0 +272 (docs/abi-aarch64.md)。
+// 退避の途中で x2 を作業用に使う (x0..x30 を保存した後なので壊してよい)。
+static std::string frameAsm(const std::string& kind, bool save) {
+    bool el0 = kind == "el0";
+    bool nzcv = el0 || kind == "el1irq";
+    int size = el0 ? 288 : 256;
+    std::string s;
+    auto line = [&](const std::string& t) { s += t + "\n"; };
+    auto sysSave = [&](const char* reg, int off) {
+        line(std::string("mrs x2, ") + reg);
+        line("str x2, [sp, #" + std::to_string(off) + "]");
+    };
+    auto sysLoad = [&](const char* reg, int off) {
+        line("ldr x2, [sp, #" + std::to_string(off) + "]");
+        line(std::string("msr ") + reg + ", x2");
+    };
+    if (save) {
+        line("sub sp, sp, #" + std::to_string(size));
+        for (int r = 0; r < 30; r += 2)
+            line("stp x" + std::to_string(r) + ", x" + std::to_string(r + 1) +
+                 ", [sp, #" + std::to_string(r * 8) + "]");
+        line("str x30, [sp, #240]");
+        if (nzcv) sysSave("nzcv", 248);
+        if (el0) {
+            sysSave("elr_el1", 256);
+            sysSave("spsr_el1", 264);
+            sysSave("sp_el0", 272);
+        }
+    } else {
+        if (nzcv) sysLoad("nzcv", 248);
+        if (el0) {
+            sysLoad("elr_el1", 256);
+            sysLoad("spsr_el1", 264);
+            sysLoad("sp_el0", 272);
+        }
+        line("ldr x30, [sp, #240]");
+        for (int r = 28; r >= 0; r -= 2)
+            line("ldp x" + std::to_string(r) + ", x" + std::to_string(r + 1) +
+                 ", [sp, #" + std::to_string(r * 8) + "]");
+        line("add sp, sp, #" + std::to_string(size));
+    }
+    if (!s.empty()) s.pop_back();
+    return s;
+}
+
 std::string LLVMIRGen::genMachine(const ExprPtr& e) {
     // 型付き機械命令 -> コンパイラが生成した inline asm。ソースには asm 文を書かない。
     auto callVoid = [&](const std::string& text, const std::string& constraints,
@@ -810,6 +856,15 @@ std::string LLVMIRGen::genMachine(const ExprPtr& e) {
             return callI64("svc #0",
                 "={x0},{x0},{x1},{x2},{x3},{x4},{x5},{x8},~{memory}", operands);
         }
+
+        case Expr::MachineOp::FrameSave:
+            return callVoid(frameAsm(e->asmText, true), "~{memory}");
+
+        case Expr::MachineOp::FrameRestore:
+            return callVoid(frameAsm(e->asmText, false), "~{memory}");
+
+        case Expr::MachineOp::ExceptionReturn:
+            return callVoid("eret", "~{memory}");
 
         case Expr::MachineOp::Breakpoint: {
             uint64_t imm = e->args.empty() ? 0 : (e->args[0]->intValue & 0xFFFF);

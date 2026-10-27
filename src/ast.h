@@ -158,6 +158,9 @@ struct Expr {
         WaitEvent,        // 待事象() -> wfi
         Syscall,          // 漢令(番 [, 引...]) -> svc #0
         Breakpoint,       // 異常令(即値) -> brk
+        FrameSave,        // 框存〈『種』〉() -> sp を下げて汎用レジスタ等を框へ退避
+        FrameRestore,     // 框復〈『種』〉() -> 框から復帰して sp を戻す (eret は含まない)
+        ExceptionReturn,  // 例外歸() -> eret
     };
     MachineOp machineOp = MachineOp::SysRegRead;
     // FieldAccess

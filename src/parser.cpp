@@ -27,6 +27,12 @@ bool isBarrierDomain(const std::string& s) {
 }
 
 // オペランドを取らない TLBI 命令だけを許す (レジスタ付きは 組譯 で書く)。
+// 框の種類: el1 (256 バイト・x0..x30)、el1irq (256 バイト・+248 に NZCV)、
+// el0 (288 バイト・+248 NZCV、+256 ELR、+264 SPSR、+272 SP_EL0)。
+bool isFrameKind(const std::string& s) {
+    return s == "el1" || s == "el1irq" || s == "el0";
+}
+
 bool isTlbInvalidateOp(const std::string& s) {
     static const char* kOps[] = {
         "vmalle1", "vmalle1is", "vmalls12e1", "vmalls12e1is",
@@ -1100,6 +1106,40 @@ ExprPtr Parser::parsePrimary() {
         e->machineOp = Expr::MachineOp::Breakpoint;
         expect(TokKind::LeftParen, "(");
         e->args.push_back(parseExpr());
+        expect(TokKind::RightParen, ")");
+        return e;
+    }
+
+    // 框存〈『種』〉() / 框復〈『種』〉() -> 例外の框の退避・復帰
+    if (check(TokKind::KuangCun) || check(TokKind::KuangFu)) {
+        bool save = check(TokKind::KuangCun);
+        std::string name = save ? "框存" : "框復";
+        advance();
+        e->kind = Expr::Kind::Machine;
+        e->machineOp = save ? Expr::MachineOp::FrameSave : Expr::MachineOp::FrameRestore;
+        expect(TokKind::LeftAngle, "〈");
+        if (check(TokKind::StringLit)) {
+            e->asmText = current().value;
+            advance();
+        } else {
+            error(current(), "E0008", name + " requires a frame kind string");
+            hasErrors_ = true;
+        }
+        if (!isFrameKind(e->asmText)) {
+            error(current(), "E0008", "unknown frame kind: " + e->asmText);
+            hasErrors_ = true;
+        }
+        expect(TokKind::RightAngle, "〉");
+        expect(TokKind::LeftParen, "(");
+        expect(TokKind::RightParen, ")");
+        return e;
+    }
+
+    // 例外歸() -> eret
+    if (match(TokKind::LiWaiGui)) {
+        e->kind = Expr::Kind::Machine;
+        e->machineOp = Expr::MachineOp::ExceptionReturn;
+        expect(TokKind::LeftParen, "(");
         expect(TokKind::RightParen, ")");
         return e;
     }
