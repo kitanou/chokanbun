@@ -1,0 +1,52 @@
+(module
+  (fn 「系読」 (params) (ret 無符六四)
+    (unsafe
+      (return (系統讀 "cntfrq_el0"))
+    )
+  )
+  (fn 「系書」 (params (「値」 無符六四)) (ret 無)
+    (unsafe
+      (expr (系統寫 "tpidr_el1" 「値」))
+      (expr (系統寫 "daifclr" (int 2)))
+    )
+  )
+  (fn 「障壁群」 (params) (ret 無)
+    (unsafe
+      (expr (記憶障壁 "sy"))
+      (expr (記憶障壁 "ish"))
+      (expr (命令障壁))
+    )
+  )
+  (fn 「臺拂」 (params) (ret 無)
+    (unsafe
+      (expr (臺無效 "vmalle1"))
+    )
+  )
+  (fn 「資清群」 (params (「址」 無符六四)) (ret 無)
+    (unsafe
+      (expr (資清 「址」))
+      (expr (令清))
+    )
+  )
+  (fn 「待機」 (params) (ret 無)
+    (unsafe
+      (expr (待事象))
+    )
+  )
+  (fn 「呼核」 (params) (ret 無符六四)
+    (unsafe
+      (return (漢令 (int 7) (int 1) (int 2)))
+    )
+  )
+  (fn 「破」 (params) (ret 無)
+    (unsafe
+      (expr (異常令 (int 0)))
+    )
+  )
+  (fn 「裸機」 (params) (ret 無) public naked (symbol "machine_probe")
+    (unsafe
+      (expr (系統寫 "vbar_el1" (int 0)))
+      (expr (命令障壁))
+    )
+  )
+)

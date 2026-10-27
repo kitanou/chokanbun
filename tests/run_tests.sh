@@ -1179,6 +1179,26 @@ else
     sed 's/^/      /' "$OUT/lang_consts.llc.log" | head -10
     grep -nE 'neg|147244780800|add i64 7' "$OUT/lang_consts.ll" | sed 's/^/      /' | head -10
 fi
+# 型付き機械命令が AArch64 の命令 (mrs/msr/dsb/isb/tlbi/dc/ic/wfi/svc/brk) になること。
+if "$LLC" -march=aarch64 -filetype=obj "$OUT/lang_machine.ll" -o "$OUT/lang_machine.o" \
+        >"$OUT/lang_machine.llc.log" 2>&1 \
+    && "$OBJDUMP" -d "$OUT/lang_machine.o" >"$OUT/lang_machine.dis" 2>&1 \
+    && grep -qE 'mrs[[:space:]]+x[0-9]+, CNTFRQ_EL0' "$OUT/lang_machine.dis" \
+    && grep -qE 'msr[[:space:]]+TPIDR_EL1' "$OUT/lang_machine.dis" \
+    && grep -qE 'msr[[:space:]]+DAIFClr, #0x2' "$OUT/lang_machine.dis" \
+    && grep -qE 'dsb[[:space:]]+sy' "$OUT/lang_machine.dis" \
+    && grep -qE 'tlbi[[:space:]]+vmalle1' "$OUT/lang_machine.dis" \
+    && grep -qE 'dc[[:space:]]+cvau' "$OUT/lang_machine.dis" \
+    && grep -qE 'ic[[:space:]]+iallu' "$OUT/lang_machine.dis" \
+    && grep -qE 'wfi' "$OUT/lang_machine.dis" \
+    && grep -qE 'svc[[:space:]]+#0' "$OUT/lang_machine.dis" \
+    && grep -qE 'brk[[:space:]]+#0' "$OUT/lang_machine.dis"; then
+    pass "lang ok: machine (型付き機械命令 -> AArch64 命令)"
+else
+    fail "lang ok: machine (型付き機械命令 -> AArch64 命令)"
+    sed 's/^/      /' "$OUT/lang_machine.llc.log" | head -10
+    grep -E 'mrs|msr|dsb|tlbi|dc |ic |wfi|svc|brk' "$OUT/lang_machine.dis" 2>/dev/null | sed 's/^/      /' | head -20
+fi
 # 全キーワードが golden テストのどこかで実際に使われていること (言語仕様 §10 条件 1)
 : >"$OUT/lang_tokens.txt"
 for f in tests/lang/ok/*.mkn; do "$BIN" "$f" -tokens 2>/dev/null | awk '{print $2}' >>"$OUT/lang_tokens.txt"; done

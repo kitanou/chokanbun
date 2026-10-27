@@ -420,6 +420,7 @@ std::string LLVMIRGen::genExpr(const ExprPtr& e) {
         case Expr::Kind::VolatileWrite: return genVolatileWrite(e);
         case Expr::Kind::Fence: return genFence(e);
         case Expr::Kind::Asm: return genAsm(e);
+        case Expr::Kind::Machine: return genMachine(e);
         case Expr::Kind::StrLen: return genStrLen(e);
         case Expr::Kind::FieldAccess: return genFieldAccess(e);
         case Expr::Kind::ElemAccess: return genElemAccess(e);
@@ -740,6 +741,82 @@ std::string LLVMIRGen::genAsm(const ExprPtr& e) {
     std::string result = freshName("asm");
     emit("%" + result + " = call " + ty + " " + text);
     return ty + " %" + result;
+}
+
+std::string LLVMIRGen::genMachine(const ExprPtr& e) {
+    // 型付き機械命令 -> コンパイラが生成した inline asm。ソースには asm 文を書かない。
+    auto callVoid = [&](const std::string& text, const std::string& constraints,
+                        const std::string& operands = "") {
+        emit("call void asm sideeffect \"" + irEscape(text) + "\", \"" +
+             irEscape(constraints) + "\"(" + operands + ")");
+        return std::string("void ");
+    };
+    auto callI64 = [&](const std::string& text, const std::string& constraints,
+                       const std::string& operands = "") {
+        std::string result = freshName("mach");
+        emit("%" + result + " = call i64 asm sideeffect \"" + irEscape(text) + "\", \"" +
+             irEscape(constraints) + "\"(" + operands + ")");
+        return "i64 %" + result;
+    };
+
+    switch (e->machineOp) {
+        case Expr::MachineOp::SysRegRead:
+            return callI64("mrs $0, " + e->asmText, "=r");
+
+        case Expr::MachineOp::SysRegWrite: {
+            if (e->args.empty()) return "void ";
+            if (e->asmText == "daifset" || e->asmText == "daifclr") {
+                uint64_t imm = e->args[0]->intValue & 0xF;
+                return callVoid("msr " + e->asmText + ", #" + std::to_string(imm), "~{memory}");
+            }
+            std::string val = genExpr(e->args[0]);
+            return callVoid("msr " + e->asmText + ", $0", "r,~{memory}", val);
+        }
+
+        case Expr::MachineOp::MemBarrier:
+            return callVoid("dsb " + e->asmText, "~{memory}");
+
+        case Expr::MachineOp::InstrBarrier:
+            return callVoid("isb", "~{memory}");
+
+        case Expr::MachineOp::TlbInvalidate:
+            return callVoid("tlbi " + e->asmText, "~{memory}");
+
+        case Expr::MachineOp::DataCacheClean: {
+            if (e->args.empty()) return "void ";
+            std::string addr = genExpr(e->args[0]);
+            return callVoid("dc cvau, $0", "r,~{memory}", addr);
+        }
+
+        case Expr::MachineOp::InstrCacheClean:
+            return callVoid("ic iallu", "~{memory}");
+
+        case Expr::MachineOp::WaitEvent:
+            return callVoid("wfi", "~{memory}");
+
+        case Expr::MachineOp::Syscall: {
+            // 漢令 ABI v0.1: x0..x5 = 引数, x8 = 番号, 戻り値 x0。
+            if (e->args.empty()) return "i64 0";
+            // 引数はソースの左から右の順に評価する (番号が先、次に 引0..引5)。
+            std::vector<std::string> vals;
+            vals.reserve(e->args.size());
+            for (auto& a : e->args) vals.push_back(genExpr(a));
+            std::string operands;
+            for (int i = 0; i < 6; i++) {
+                if (i > 0) operands += ", ";
+                operands += (i + 1 < static_cast<int>(vals.size())) ? vals[i + 1] : "i64 0";
+            }
+            operands += ", " + vals[0];
+            return callI64("svc #0",
+                "={x0},{x0},{x1},{x2},{x3},{x4},{x5},{x8},~{memory}", operands);
+        }
+
+        case Expr::MachineOp::Breakpoint: {
+            uint64_t imm = e->args.empty() ? 0 : (e->args[0]->intValue & 0xFFFF);
+            return callVoid("brk #" + std::to_string(imm), "~{memory}");
+        }
+    }
+    return "void ";
 }
 
 std::string LLVMIRGen::genStrLen(const ExprPtr& e) {

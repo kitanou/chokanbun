@@ -78,6 +78,16 @@ enum class TokKind {
     XieHuiFa,     // 寫揮發
     ZhangBei,     // 障壁
     ZuYi,         // 組譯
+    XiTongDu,     // 系統讀
+    XiTongXie,    // 系統寫
+    JiyiZhangbi,  // 記憶障壁
+    MinglingZhangbi, // 命令障壁
+    TaiWuXiao,    // 臺無效
+    ZiQing,       // 資清
+    LingQing,     // 令清
+    DaiShiXiang,  // 待事象
+    HanLing,      // 漢令
+    YiChangLing,  // 異常令
     ChangDu,      // 長度
     Lan,          // 欄
     Xiang,        // 項

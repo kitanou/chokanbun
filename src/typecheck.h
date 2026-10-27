@@ -38,6 +38,7 @@ private:
     TypePtr checkVolatileWrite(const Expr& e);
     TypePtr checkFence(const Expr& e);
     TypePtr checkAsm(const Expr& e);
+    TypePtr checkMachine(const Expr& e);
     TypePtr checkStrLen(const Expr& e);
     TypePtr checkFieldAccess(const Expr& e);
     TypePtr checkElemAccess(const Expr& e);

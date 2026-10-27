@@ -102,6 +102,7 @@ struct Expr {
         VolatileWrite,// 寫揮發〈T〉(ptr, val)
         Fence,        // 障壁〈種〉()
         Asm,          // 組譯〈T〉(『文』, 『制約』, 引...)
+        Machine,      // 型付き機械命令 (系統讀・系統寫・記憶障壁 など)
         StrLen,       // 長度(expr)
         FieldAccess,  // 欄(lvalue, 「field」)
         ElemAccess,   // 項(lvalue, expr)
@@ -145,6 +146,20 @@ struct Expr {
     std::string asmText;
     std::string asmConstraints;
     TypePtr asmType;
+    // Machine: 型付き機械命令。machineOp が種類、asmText がレジスタ名・障壁の領域・TLB 操作名。
+    enum class MachineOp {
+        SysRegRead,       // 系統讀〈『reg』〉() -> 無符六四
+        SysRegWrite,      // 系統寫〈『reg』〉(値)
+        MemBarrier,       // 記憶障壁〈『領域』〉() -> dsb
+        InstrBarrier,     // 命令障壁() -> isb
+        TlbInvalidate,    // 臺無效〈『操作』〉() -> tlbi
+        DataCacheClean,   // 資清(址) -> dc cvau
+        InstrCacheClean,  // 令清() -> ic iallu
+        WaitEvent,        // 待事象() -> wfi
+        Syscall,          // 漢令(番 [, 引...]) -> svc #0
+        Breakpoint,       // 異常令(即値) -> brk
+    };
+    MachineOp machineOp = MachineOp::SysRegRead;
     // FieldAccess
     ExprPtr base;
     std::string fieldName;
