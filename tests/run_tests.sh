@@ -645,11 +645,21 @@ if [ -f "$OUT/kernel.elf" ]; then
             grep -a '子行程\|異常' "$KLOG" 2>/dev/null | sed 's/^/      /' | head
         fi
         K_CH="$(grep -ac '子行程起動' "$KLOG" 2>/dev/null)"
-        # 子の出力 = 検証 21 + 殻の 問安 1 + 篇試 が術のパスで起動する 問安 1 + 貯試 が起動する 3 役
-        if [ "${K_CH:-0}" -eq 26 ]; then
-            pass "kernel qemu: 起動・回収を 20 回繰り返しても頁が漏れず、毎回子が走る (子の出力 26 回 = 検証 21 + 殻 1 + 篇試 1 + 貯試 3)"
+        # 枠の枯渇: 待たずに起動し続けて行程表が満杯 (-EAGAIN)、全員を回収でき、回収後にまた起動できる
+        EX_N="$(sp_val '枯渇 起動数')"; EX_FULL="$(sp_val '枯渇 満杯')"; EX_REAP="$(sp_val '枯渇 回収')"; EX_RE="$(sp_val '枯渇 再起動')"
+        EX_NUM=$((EX_N))
+        if [ "$EX_FULL" = "0xfffffffffffffff5" ] && [ "$EX_NUM" -ge 1 ] && [ "$EX_NUM" -le 7 ] \
+                && [ "$EX_REAP" = "$EX_N" ] && [ "$EX_RE" = "0x0000000000000001" ]; then
+            pass "kernel qemu: 行程表の枯渇 (空き枠 ${EX_NUM} 個を使い切ると -EAGAIN、全員を回収し、回収後にまた起動できる)"
         else
-            fail "kernel qemu: 起動・回収の繰り返し (子の出力=${K_CH:-0} 回、期待 26)"
+            fail "kernel qemu: 行程表の枯渇 (起動数=${EX_N:-none} 満杯=${EX_FULL:-none} 回収=${EX_REAP:-none} 再起動=${EX_RE:-none})"
+            grep -a '^枯渇' "$KLOG" 2>/dev/null | sed 's/^/      /'
+        fi
+        # 子の出力 = 検証 21 + 殻の 問安 1 + 篇試 が術のパスで起動する 問安 1 + 貯試 が起動する 3 役
+        if [ "${K_CH:-0}" -eq $((26 + EX_NUM + 1)) ]; then
+            pass "kernel qemu: 起動・回収を 20 回繰り返しても頁が漏れず、毎回子が走る (子の出力 $((26 + EX_NUM + 1)) 回 = 検証 21 + 殻 1 + 篇試 1 + 貯試 3 + 枯渇の試験 $((EX_NUM + 1)))"
+        else
+            fail "kernel qemu: 起動・回収の繰り返し (子の出力=${K_CH:-0} 回、期待 $((26 + EX_NUM + 1)))"
         fi
         # --- M5/P2: 殻が外部命令を起動する (引数 argc/argv と柄の継承) ----------------
         if grep -aq '^子行程起動 日月' "$KLOG" 2>/dev/null; then
