@@ -1070,8 +1070,8 @@ if [ -f "$OUT/kernel.elf" ]; then
         P1_HDR="$(od -An -v -tx1 -j 32768 -N 4 "$PERSIST_IMG" | tr -s ' ' | sed 's/^ //; s/ $//')"
         P1_VER="$(od -An -v -tu4 -j 32772 -N 4 "$PERSIST_IMG" | tr -s ' ' | sed 's/^ //; s/ $//')"
         P1_TM_W="$(grep -a '^永試 時作 ' "$OUT/persist1.log" 2>/dev/null | head -1 | grep -oE '0x[0-9a-f]{16}')"
-        if persist_ok "$OUT/persist1.log" 'F:' && persist_ok "$OUT/persist1.log" 'F録:' && persist_ok "$OUT/persist1.log" 'W標:' && persist_ok "$OUT/persist1.log" 'W大:' && persist_ok "$OUT/persist1.log" 'W:' && [ "$P1_HDR" = "50 49 41 4e" ] && [ "$P1_VER" = "5" ]; then
-            pass "kernel qemu: 録層に 13 バイトと 6000 バイト (2 頁) のファイルを作り、篇同 で篇藏と録層の状態がスロット A のヘッダ (PIAN・版 5) としてディスクに届く"
+        if persist_ok "$OUT/persist1.log" 'F:' && persist_ok "$OUT/persist1.log" 'F録:' && persist_ok "$OUT/persist1.log" 'W標:' && persist_ok "$OUT/persist1.log" 'W大:' && persist_ok "$OUT/persist1.log" 'W:' && [ "$P1_HDR" = "50 49 41 4e" ] && [ "$P1_VER" = "6" ]; then
+            pass "kernel qemu: 録層に 13 バイトと 6000 バイト (2 頁) のファイルを作り、篇同 で篇藏と録層の状態がスロット A のヘッダ (PIAN・版 6) としてディスクに届く"
         else
             fail "kernel qemu: 篇同 の書込み (ヘッダ='$P1_HDR' 版='$P1_VER')"
             grep -a '永試' "$OUT/persist1.log" 2>/dev/null | sed 's/^/      /' | head -8
@@ -1094,12 +1094,12 @@ if [ -f "$OUT/kernel.elf" ]; then
             fail "kernel qemu: 世代 2 の読み戻しと開数 (作時='$P1_TM_W'/'$P3_TM_W')"
             grep -a '永試\|篇戻' "$OUT/persist3.log" 2>/dev/null | sed 's/^/      /' | head -10
         fi
-        # 最新 (世代 3) のスロット A のヘッダは無傷のまま、録層の本体の区画 1 つ (最初のファイルの最初の区画) を壊す
+        # 最新 (世代 3) のスロット A のヘッダは無傷のまま、篇の本文の区画 1 つ (最初に頁を持つ篇の最初の区画。録層のファイルの本体も篇の本文) を壊す
         # → データのチェックサムが合わず、世代 2 のスロット B から戻る (録層の区画の破損も検出する)
-        printf '\377\377\377\377' | dd of="$PERSIST_IMG" bs=1 seek=$((4241 * 512)) conv=notrunc 2>/dev/null
+        printf '\377\377\377\377' | dd of="$PERSIST_IMG" bs=1 seek=$((129 * 512)) conv=notrunc 2>/dev/null
         pian_boot "$OUT/persist4.log" $'永試 R\n永試 H\n終\n'
         if persist_ok "$OUT/persist4.log" 'R:' && persist_ok "$OUT/persist4.log" 'H:' && grep -aq '篇戻 世代=0x0000000000000002' "$OUT/persist4.log"; then
-            pass "kernel qemu: ヘッダが無傷でも録層の区画が壊れた最新のスロット A は使わず、世代 2 のスロット B から戻る (データのチェックサム)"
+            pass "kernel qemu: ヘッダが無傷でも本文の区画が壊れた最新のスロット A は使わず、世代 2 のスロット B から戻る (データのチェックサム)"
         else
             fail "kernel qemu: 壊れた録層の区画を持つスロットを避けて戻れない"
             grep -a '永試\|篇戻' "$OUT/persist4.log" 2>/dev/null | sed 's/^/      /' | head -6
