@@ -198,6 +198,11 @@ sh tools/mkimage.sh user/cc_cmd.mkn "$OUT/cc_cmd.zo" "$OUT" 2>"$OUT/user_cc_cmd.
         fail "user: セルフホストのコンパイラの命令 機譯 を漢像にビルド"
         sed 's/^/      /' "$OUT/user_cc_cmd.build.log" "$OUT/user_cc_cmd.gen.log" 2>/dev/null | head -10
     }
+sh tools/mkimage.sh user/src_gen.mkn "$OUT/src_gen.zo" "$OUT" 2>"$OUT/user_src_gen.build.log" \
+    && pass "user: 大きなソースを篇に作る試験用の命令 源増 を漢像にビルド" || {
+        fail "user: 源増 を漢像にビルド"
+        sed 's/^/      /' "$OUT/user_src_gen.build.log" "$OUT/user_src_gen.gen.log" 2>/dev/null | head -10
+    }
 sh tools/mkimage.sh user/btron_msg.mkn "$OUT/btron_msg.zo" "$OUT" 2>"$OUT/user_btron_msg.build.log" \
     && pass "user: BTRON3 互換層の試験 信試 (メッセージ) を漢像にビルド" || {
         fail "user: BTRON3 互換層の試験 信試 を漢像にビルド"
@@ -288,7 +293,7 @@ sh tools/mkimage.sh user/btron_task.mkn "$OUT/btron_task.zo" "$OUT" 2>"$OUT/user
         fail "user: BTRON3 互換層の試験 副試 を漢像にビルド"
         sed 's/^/      /' "$OUT/user_btron_task.build.log" | head -10
     }
-sh tools/gen-images.sh "$OUT/kernel_images.S" 問安="$OUT/hello.zo" 數="$OUT/count.zo" 異常試="$OUT/fault.zo" 識試="$OUT/btron_gtid.zo" 名試="$OUT/btron_gname.zo" 時試="$OUT/btron_clk.zo" 時元試="$OUT/time_test.zo" 時="$OUT/time_cmd.zo" 信試="$OUT/btron_msg.zo" 利試="$OUT/btron_usr.zo" 強試="$OUT/btron_term.zo" 同試="$OUT/btron_sync.zo" 緩試="$OUT/btron_comm.zo" 録試="$OUT/btron_file.zo" 篇試="$OUT/pian_test.zo" 永試="$OUT/pian_persist.zo" 貯試="$OUT/btron_mem.zo" 件試="$OUT/btron_evt.zo" 設試="$OUT/btron_dev.zo" 系試="$OUT/btron_sys.zo" 例試="$OUT/btron_exc.zo" 信手試="$OUT/btron_msg_hdr.zo" 副試="$OUT/btron_task.zo" 実試="$OUT/btron_omgr.zo" 実作="$OUT/obj.zo" 仮置="$OUT/obj.zo" 実削="$OUT/obj.zo" 実目="$OUT/obj.zo" 実名="$OUT/obj.zo" objapp="$OUT/obj_app.zo" 標="$OUT/tag_cmd.zo" 索="$OUT/tag_cmd.zo" 競試="$OUT/stress.zo" 字句="$OUT/lex_cmd.zo" 構文="$OUT/ast_cmd.zo" 型検="$OUT/tc_cmd.zo" 機譯="$OUT/cc_cmd.zo" \
+sh tools/gen-images.sh "$OUT/kernel_images.S" 問安="$OUT/hello.zo" 數="$OUT/count.zo" 異常試="$OUT/fault.zo" 識試="$OUT/btron_gtid.zo" 名試="$OUT/btron_gname.zo" 時試="$OUT/btron_clk.zo" 時元試="$OUT/time_test.zo" 時="$OUT/time_cmd.zo" 信試="$OUT/btron_msg.zo" 利試="$OUT/btron_usr.zo" 強試="$OUT/btron_term.zo" 同試="$OUT/btron_sync.zo" 緩試="$OUT/btron_comm.zo" 録試="$OUT/btron_file.zo" 篇試="$OUT/pian_test.zo" 永試="$OUT/pian_persist.zo" 貯試="$OUT/btron_mem.zo" 件試="$OUT/btron_evt.zo" 設試="$OUT/btron_dev.zo" 系試="$OUT/btron_sys.zo" 例試="$OUT/btron_exc.zo" 信手試="$OUT/btron_msg_hdr.zo" 副試="$OUT/btron_task.zo" 実試="$OUT/btron_omgr.zo" 実作="$OUT/obj.zo" 仮置="$OUT/obj.zo" 実削="$OUT/obj.zo" 実目="$OUT/obj.zo" 実名="$OUT/obj.zo" objapp="$OUT/obj_app.zo" 標="$OUT/tag_cmd.zo" 索="$OUT/tag_cmd.zo" 競試="$OUT/stress.zo" 字句="$OUT/lex_cmd.zo" 構文="$OUT/ast_cmd.zo" 型検="$OUT/tc_cmd.zo" 機譯="$OUT/cc_cmd.zo" 源増="$OUT/src_gen.zo" \
     && "$CLANG" --target=aarch64-none-elf -c "$OUT/kernel_images.S" -o "$OUT/kernel_images.o" \
         >"$OUT/kernel_images.log" 2>&1 \
     && pass "kernel: 漢像の埋め込み (像表)" || fail "kernel: 漢像の埋め込み (像表)"
@@ -1245,7 +1250,7 @@ if [ -f "$OUT/kernel.elf" ]; then
               for _ in $(seq 1 60); do grep -q "甲得" "$plog" 2>/dev/null && break; sleep 0.25; done
               printf '%s' "$pcmds" > "$PERSIST_PIPE.in" ) &
             pf=$!
-            for _ in $(seq 1 80); do
+            for _ in $(seq 1 "${PIAN_TRIES:-80}"); do
                 grep -q "殻終\|核恐慌" "$plog" 2>/dev/null && break
                 sleep 0.5
             done
@@ -1359,6 +1364,35 @@ if [ -f "$OUT/kernel.elf" ]; then
             fail "selfhost: OS 上のコンパイラの IR が C++ 版と違う"
             diff "$OUT/selfhost_os_cc_ref.ll" "$OUT/selfhost_os_cc_got.ll" 2>&1 | head -8 | sed 's/^/      /'
             grep -a '機譯' "$OUT/selfhost_os_cc.log" | head -3 | sed 's/^/      /'
+        fi
+        # --- 広域 (漢令 123): 民の窓に収まらない作業域が要る大きなソース (関数 150 個、約 25 KiB。作業域は約 3 MiB) を OS の上で IR にする ----
+        python3 -I - "$OUT/selfhost_os_big.mkn" 150 <<'PYEOF'
+import sys
+out, n = sys.argv[1], int(sys.argv[2])
+with open(out, 'w', encoding='utf-8') as f:
+    for i in range(n):
+        f.write("術曰「f%d」 受「値」之無符六四 返 無符六四\n    設「和」之無符六四 為 (値 加 %d) 乘 2\n    若 和 大於 3 則\n        歸 和\n    終若\n    歸 0\n終術\n" % (i, i))
+PYEOF
+        "$BIN" "$OUT/selfhost_os_big.mkn" -ir -o "$OUT/selfhost_os_big.ll" 2>/dev/null
+        BIG_EXPECT="$(python3 -I - "$OUT/selfhost_os_big.ll" "$OUT/selfhost_os_big.mkn" <<'PYEOF'
+import sys
+d = open(sys.argv[1], 'rb').read()
+h = 0xcbf29ce484222325
+for b in d:
+    h = ((h ^ b) * 0x100000001b3) & 0xFFFFFFFFFFFFFFFF
+print("%d 0x%016x %d" % (len(d), h, len(open(sys.argv[2], 'rb').read())))
+PYEOF
+)"
+        BIG_LEN="${BIG_EXPECT%% *}"; BIG_REST="${BIG_EXPECT#* }"; BIG_HASH="${BIG_REST%% *}"; BIG_SRC="${BIG_REST#* }"
+        PIAN_TRIES=1200 pian_boot "$OUT/selfhost_os_big.log" $'源増 大源 150\n機譯 -s 大源\n書 小 術曰「甲」 返 無 終術\n機譯 -s 小\n機譯 -s 小\n機譯 -s 小\n終\n'
+        if grep -aq "^源増 長 0x0*$(printf '%x' "$BIG_SRC")\$" "$OUT/selfhost_os_big.log" \
+           && grep -aq "^機譯 長 0x0*$(printf '%x' "$BIG_LEN")\$" "$OUT/selfhost_os_big.log" \
+           && grep -aq "^ 雑 0x0*${BIG_HASH#0x}\$" "$OUT/selfhost_os_big.log" \
+           && [ "$(grep -ac '^機譯 長 0x0*[0-9a-f]*$' "$OUT/selfhost_os_big.log")" -ge 4 ]; then
+            pass "selfhost: 広域 (漢令 123) で民の窓に収まらない作業域を取り、OS の上のコンパイラ (機譯) が ${BIG_SRC} バイトのソースから ${BIG_LEN} バイトの IR を C++ 版と同じ雑値で作る"
+        else
+            fail "selfhost: OS 上で大きなソースの IR が C++ 版と違う、または作れない (期待: 源 ${BIG_SRC} 長 ${BIG_LEN} 雑 ${BIG_HASH})"
+            grep -a '源増\|機譯\|殻誤\|核恐慌' "$OUT/selfhost_os_big.log" | head -6 | sed 's/^/      /'
         fi
         pian_boot "$OUT/panic1.log" $'異常試 k\n問安\n終\n'
         if grep -aq '^核恐慌 init終了' "$OUT/panic1.log" && ! grep -aq '殻終' "$OUT/panic1.log" \
