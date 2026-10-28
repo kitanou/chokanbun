@@ -40,8 +40,8 @@ int main(int argc, char **argv) {
             char *t2 = strchr(t1, '\t'); if (!t2) continue; *t2++ = 0;
             char *nl = strchr(t2, '\n'); if (nl) *nl = 0;
             long dl; char *data = slurp(t2, &dl);
-            char *tc = calloc(40, 1);
-            for (int i = 0; i < 40; i++) { unsigned v; sscanf(t1 + i * 2, "%2x", &v); tc[i] = (char)v; }
+            char *tc = 0; /* TC は機械漢文のリンカが名前から作る (selfhost/linker.mkn の TC作) */
+            (void)t1;
             desc[nimg * 5 + 0] = (uint64_t)strdup(line);
             desc[nimg * 5 + 1] = strlen(line);
             desc[nimg * 5 + 2] = (uint64_t)tc;
@@ -65,6 +65,7 @@ int main(int argc, char **argv) {
     char *work = malloc(workcap);
     uint64_t roextra = 4096;
     for (uint64_t i = 0; i < nimg; i++) roextra += desc[i * 5 + 4] + desc[i * 5 + 1] + 128;
+    if (getenv("KLD_NOREUSE")) roextra |= (1ull << 40);
     uint64_t be = backend_mod(ir, (uint64_t)tot, work, workcap, roextra);
     uint64_t *st = (uint64_t *)be;
     if (st[176 / 8]) {
@@ -86,5 +87,14 @@ int main(int argc, char **argv) {
     FILE *o = fopen(argv[4], "wb");
     fwrite(out, 1, r, o);
     fclose(o);
+    /* 記号の地図 (out.map): 16 進のアドレスと名前 */
+    char mp[4096]; snprintf(mp, sizeof mp, "%s.map", argv[4]);
+    FILE *mf = fopen(mp, "w");
+    uint64_t nsym = m[144 / 8]; uint64_t *tab = (uint64_t *)m[136 / 8];
+    for (uint64_t i = 0; i < nsym; i++) {
+        uint64_t *e = tab + i * 5; uint64_t nm = e[0];
+        fprintf(mf, "%016llx %.*s\n", (unsigned long long)e[4], (int)*(uint64_t *)nm, (const char *)(nm + 8));
+    }
+    fclose(mf);
     return 0;
 }

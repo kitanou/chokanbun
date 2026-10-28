@@ -15,6 +15,11 @@ LLD_BIN="${LLD_BIN:-/opt/homebrew/opt/lld/bin}"
 mkdir -p "$work"
 sh "$ROOT/tools/kernel-expand.sh" "$src" "$work/user_$name.all.mkn"
 "$BIN" "$work/user_$name.all.mkn" -ir -o "$work/user_$name.ll" 2>"$work/user_$name.gen.log"
+if [ "${TOOLCHAIN:-llvm}" = kanbun ]; then
+    # 機械漢文のバックエンドとリンカ (selfhost/backend.mkn・linker.mkn) で漢像にする。LLVM は使わない。
+    "$KLD" 2 40610000 "$work/user_$name.ll" "$out"
+    exit $?
+fi
 "$LLVM_BIN/llc" -march=aarch64 -filetype=obj "$work/user_$name.ll" -o "$work/user_$name.o"
 "$LLD_BIN/ld.lld" -T "$ROOT/user/user.lds" "$work/user_$name.o" -o "$work/user_$name.elf"
 "$LLVM_BIN/llvm-objcopy" -O binary "$work/user_$name.elf" "$out"
