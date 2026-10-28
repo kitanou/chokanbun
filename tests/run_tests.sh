@@ -203,6 +203,11 @@ sh tools/mkimage.sh user/src_gen.mkn "$OUT/src_gen.zo" "$OUT" 2>"$OUT/user_src_g
         fail "user: 源増 を漢像にビルド"
         sed 's/^/      /' "$OUT/user_src_gen.build.log" "$OUT/user_src_gen.gen.log" 2>/dev/null | head -10
     }
+sh tools/mkimage.sh user/src_in.mkn "$OUT/src_in.zo" "$OUT" 2>"$OUT/user_src_in.build.log" \
+    && pass "user: コンソールから生のバイトを篇へ受ける試験用の命令 源受 を漢像にビルド" || {
+        fail "user: 源受 を漢像にビルド"
+        sed 's/^/      /' "$OUT/user_src_in.build.log" "$OUT/user_src_in.gen.log" 2>/dev/null | head -10
+    }
 sh tools/mkimage.sh user/btron_msg.mkn "$OUT/btron_msg.zo" "$OUT" 2>"$OUT/user_btron_msg.build.log" \
     && pass "user: BTRON3 互換層の試験 信試 (メッセージ) を漢像にビルド" || {
         fail "user: BTRON3 互換層の試験 信試 を漢像にビルド"
@@ -293,7 +298,7 @@ sh tools/mkimage.sh user/btron_task.mkn "$OUT/btron_task.zo" "$OUT" 2>"$OUT/user
         fail "user: BTRON3 互換層の試験 副試 を漢像にビルド"
         sed 's/^/      /' "$OUT/user_btron_task.build.log" | head -10
     }
-sh tools/gen-images.sh "$OUT/kernel_images.S" 問安="$OUT/hello.zo" 數="$OUT/count.zo" 異常試="$OUT/fault.zo" 識試="$OUT/btron_gtid.zo" 名試="$OUT/btron_gname.zo" 時試="$OUT/btron_clk.zo" 時元試="$OUT/time_test.zo" 時="$OUT/time_cmd.zo" 信試="$OUT/btron_msg.zo" 利試="$OUT/btron_usr.zo" 強試="$OUT/btron_term.zo" 同試="$OUT/btron_sync.zo" 緩試="$OUT/btron_comm.zo" 録試="$OUT/btron_file.zo" 篇試="$OUT/pian_test.zo" 永試="$OUT/pian_persist.zo" 貯試="$OUT/btron_mem.zo" 件試="$OUT/btron_evt.zo" 設試="$OUT/btron_dev.zo" 系試="$OUT/btron_sys.zo" 例試="$OUT/btron_exc.zo" 信手試="$OUT/btron_msg_hdr.zo" 副試="$OUT/btron_task.zo" 実試="$OUT/btron_omgr.zo" 実作="$OUT/obj.zo" 仮置="$OUT/obj.zo" 実削="$OUT/obj.zo" 実目="$OUT/obj.zo" 実名="$OUT/obj.zo" objapp="$OUT/obj_app.zo" 標="$OUT/tag_cmd.zo" 索="$OUT/tag_cmd.zo" 競試="$OUT/stress.zo" 字句="$OUT/lex_cmd.zo" 構文="$OUT/ast_cmd.zo" 型検="$OUT/tc_cmd.zo" 機譯="$OUT/cc_cmd.zo" 源増="$OUT/src_gen.zo" \
+sh tools/gen-images.sh "$OUT/kernel_images.S" 問安="$OUT/hello.zo" 數="$OUT/count.zo" 異常試="$OUT/fault.zo" 識試="$OUT/btron_gtid.zo" 名試="$OUT/btron_gname.zo" 時試="$OUT/btron_clk.zo" 時元試="$OUT/time_test.zo" 時="$OUT/time_cmd.zo" 信試="$OUT/btron_msg.zo" 利試="$OUT/btron_usr.zo" 強試="$OUT/btron_term.zo" 同試="$OUT/btron_sync.zo" 緩試="$OUT/btron_comm.zo" 録試="$OUT/btron_file.zo" 篇試="$OUT/pian_test.zo" 永試="$OUT/pian_persist.zo" 貯試="$OUT/btron_mem.zo" 件試="$OUT/btron_evt.zo" 設試="$OUT/btron_dev.zo" 系試="$OUT/btron_sys.zo" 例試="$OUT/btron_exc.zo" 信手試="$OUT/btron_msg_hdr.zo" 副試="$OUT/btron_task.zo" 実試="$OUT/btron_omgr.zo" 実作="$OUT/obj.zo" 仮置="$OUT/obj.zo" 実削="$OUT/obj.zo" 実目="$OUT/obj.zo" 実名="$OUT/obj.zo" objapp="$OUT/obj_app.zo" 標="$OUT/tag_cmd.zo" 索="$OUT/tag_cmd.zo" 競試="$OUT/stress.zo" 字句="$OUT/lex_cmd.zo" 構文="$OUT/ast_cmd.zo" 型検="$OUT/tc_cmd.zo" 機譯="$OUT/cc_cmd.zo" 源増="$OUT/src_gen.zo" 源受="$OUT/src_in.zo" \
     && "$CLANG" --target=aarch64-none-elf -c "$OUT/kernel_images.S" -o "$OUT/kernel_images.o" \
         >"$OUT/kernel_images.log" 2>&1 \
     && pass "kernel: 漢像の埋め込み (像表)" || fail "kernel: 漢像の埋め込み (像表)"
@@ -1234,8 +1239,8 @@ if [ -f "$OUT/kernel.elf" ]; then
         PERSIST_IMG="$OUT/persist.img"
         PERSIST_PIPE="$OUT/persist_serial"
         dd if=/dev/zero of="$PERSIST_IMG" bs=512 count=20000 2>/dev/null
-        pian_boot() {  # $1 = ログ、$2 = 殻に流す命令 (改行区切り)
-            local plog="$1" pcmds="$2" pq pc pf
+        pian_boot() {  # $1 = ログ、$2 = 殻に流す命令 (改行区切り)、$3 = (省略可) 命令の代わりに流すファイル (生のバイトを含む入力用)
+            local plog="$1" pcmds="$2" pfile="${3:-}" pq pc pf
             rm -f "$PERSIST_PIPE.in" "$PERSIST_PIPE.out" "$plog"
             mkfifo "$PERSIST_PIPE.in" "$PERSIST_PIPE.out"
             cat "$PERSIST_PIPE.out" > "$plog" &
@@ -1248,7 +1253,7 @@ if [ -f "$OUT/kernel.elf" ]; then
             pq=$!
             ( printf 'KANBUN\n' > "$PERSIST_PIPE.in"
               for _ in $(seq 1 60); do grep -q "甲得" "$plog" 2>/dev/null && break; sleep 0.25; done
-              printf '%s' "$pcmds" > "$PERSIST_PIPE.in" ) &
+              if [ -n "$pfile" ]; then cat "$pfile" > "$PERSIST_PIPE.in"; else printf '%s' "$pcmds" > "$PERSIST_PIPE.in"; fi ) &
             pf=$!
             for _ in $(seq 1 "${PIAN_TRIES:-80}"); do
                 grep -q "殻終\|核恐慌" "$plog" 2>/dev/null && break
@@ -1393,6 +1398,42 @@ PYEOF
         else
             fail "selfhost: OS 上で大きなソースの IR が C++ 版と違う、または作れない (期待: 源 ${BIG_SRC} 長 ${BIG_LEN} 雑 ${BIG_HASH})"
             grep -a '源増\|機譯\|殻誤\|核恐慌' "$OUT/selfhost_os_big.log" | head -8 | sed 's/^/      /'
+        fi
+        # --- 核そのものを OS の上で IR にする (セルフホストの総仕上げ): 核の展開後のソース 796 KB をコンソール経由で 13 個ほどの篇へ受け、取込で束ねて 機譯 にかける ----
+        #     時間がかかる (QEMU の TCG 上で数分) ので、KERNEL_SELFBUILD=0 で省ける。
+        if [ "${KERNEL_SELFBUILD:-1}" = "1" ]; then
+            sh tools/kernel-expand.sh kernel/kernel.mkn "$OUT/selfhost_kernel_all.mkn" >/dev/null 2>&1
+            "$BIN" "$OUT/selfhost_kernel_all.mkn" -ir -o "$OUT/selfhost_kernel_ref.ll" 2>/dev/null
+            python3 -I - "$OUT/selfhost_kernel_all.mkn" "$OUT/selfhost_kernel_ref.ll" "$OUT/selfhost_kernel_stream.bin" <<'PYEOF' >"$OUT/selfhost_kernel_expect.txt"
+import sys
+src = open(sys.argv[1], 'rb').read()
+ir = open(sys.argv[2], 'rb').read()
+h = 0xcbf29ce484222325
+for b in ir:
+    h = ((h ^ b) * 0x100000001b3) & 0xFFFFFFFFFFFFFFFF
+# 行の境界で 60000 バイト以下に分ける (篇の本文は 64 KiB まで)
+parts, cur = [], b''
+for line in src.splitlines(keepends=True):
+    if len(cur) + len(line) > 60000:
+        parts.append(cur); cur = b''
+    cur += line
+parts.append(cur)
+out = b''
+for i, p in enumerate(parts):
+    out += ('源受 部%d %d\n' % (i, len(p))).encode('utf-8') + p
+out += ('源増 b 天地/典/核根 %d\n機譯 -s 天地/典/核根\n終\n' % len(parts)).encode('utf-8')
+open(sys.argv[3], 'wb').write(out)
+print(len(ir), '0x%016x' % h, len(src), len(parts))
+PYEOF
+            read -r KS_LEN KS_HASH KS_SRC KS_PARTS <"$OUT/selfhost_kernel_expect.txt"
+            PIAN_TRIES="${KERNEL_SELFBUILD_TRIES:-3600}" pian_boot "$OUT/selfhost_kernel.log" "" "$OUT/selfhost_kernel_stream.bin"
+            if grep -aq "^機譯 長 0x0*$(printf '%x' "$KS_LEN")\$" "$OUT/selfhost_kernel.log" \
+               && grep -aq "^ 雑 0x0*${KS_HASH#0x}\$" "$OUT/selfhost_kernel.log"; then
+                pass "selfhost: 核そのもの (展開後 ${KS_SRC} バイト) を OS の上で IR にする: コンソールから ${KS_PARTS} 個の篇へ受け、取込で束ねた 機譯 が ${KS_LEN} バイトの IR を C++ 版と同じ雑値で作る"
+            else
+                fail "selfhost: OS 上で核を IR にできない、または C++ 版と違う (期待: 長 ${KS_LEN} 雑 ${KS_HASH})"
+                grep -a '源受\|源増\|機譯\|殻誤\|核恐慌' "$OUT/selfhost_kernel.log" | head -8 | sed 's/^/      /'
+            fi
         fi
         pian_boot "$OUT/panic1.log" $'異常試 k\n問安\n終\n'
         if grep -aq '^核恐慌 init終了' "$OUT/panic1.log" && ! grep -aq '殻終' "$OUT/panic1.log" \
