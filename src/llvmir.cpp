@@ -65,10 +65,8 @@ static int64_t signExtendBits(uint64_t v, unsigned bits) {
 static std::string escapeIrBytes(const std::string& s) {
     std::string out;
     for (unsigned char c : s) {
-        if (c == '"' || c == '\\') {
-            out += '\\';
-            out += static_cast<char>(c);
-        } else if (c >= 0x20 && c < 0x7f) {
+        // LLVM IR の文字列では " と \ も \22・\5C の 16 進で書く (バックスラッシュ + 文字は不正)。
+        if (c >= 0x20 && c < 0x7f && c != '"' && c != '\\') {
             out += static_cast<char>(c);
         } else {
             static const char* hex = "0123456789ABCDEF";

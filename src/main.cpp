@@ -41,6 +41,7 @@ int main(int argc, char* argv[]) {
         std::cerr << "  -ir          output LLVM IR\n";
         std::cerr << "  -ast         output AST (debug)\n";
         std::cerr << "  -tokens      output tokens (debug)\n";
+        std::cerr << "  -check       type check only (diagnostics on stderr)\n";
         return 1;
     }
 
@@ -49,6 +50,7 @@ int main(int argc, char* argv[]) {
     bool emitIR = false;
     bool emitAST = false;
     bool emitTokens = false;
+    bool checkOnly = false;
 
     for (int i = 2; i < argc; i++) {
         std::string arg = argv[i];
@@ -60,6 +62,8 @@ int main(int argc, char* argv[]) {
             emitAST = true;
         } else if (arg == "-tokens") {
             emitTokens = true;
+        } else if (arg == "-check") {
+            checkOnly = true;
         } else {
             std::cerr << "unknown option: " << arg << "\n";
             return 1;
@@ -115,6 +119,8 @@ int main(int argc, char* argv[]) {
         printDiagnostics(typechecker.diagnostics());
         return 1;
     }
+
+    if (checkOnly) return 0;
 
     // Generate LLVM IR
     LLVMIRGen irgen;
