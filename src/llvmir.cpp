@@ -904,6 +904,13 @@ std::string LLVMIRGen::genMachine(const ExprPtr& e) {
         case Expr::MachineOp::HaltLoop:
             return callVoid("1:\nwfi\nb 1b", "~{memory}");
 
+        case Expr::MachineOp::Transfer: {
+            // 入口を x1、引数を x0 に入れて br する。戻らない。
+            std::string entry = genExpr(e->args[0]);
+            std::string arg = genExpr(e->args[1]);
+            return callVoid("br x1", "{x1},{x0},~{memory}", entry + ", " + arg);
+        }
+
         case Expr::MachineOp::DropToEL1:
             // CurrentEL が 1 ならそのまま。2 なら EL1 (AArch64) へ eret で降りる: HCR_EL2.RW=1、タイマーを EL1 に開放、
             // SPSR_EL2 = EL1h・DAIF マスク、ELR_EL2 = 直後。x0 (DTB) は触らない (作業は x16)。それ以外 (EL3 など) は止まる。

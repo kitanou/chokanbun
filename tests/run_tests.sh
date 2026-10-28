@@ -292,6 +292,21 @@ if [ -f "$OUT/kernel.o" ] && \
     fi
 fi
 
+# --- 独立ブートローダー「導」(boot/loader.mkn)。核のイメージ KBL1 を virtio-blk から読んで核へ移譲する -----------------
+sh tools/kernel-expand.sh boot/loader.mkn "$OUT/loader_all.mkn" \
+    && "$BIN" "$OUT/loader_all.mkn" -ir -o "$OUT/loader.ll" 2>"$OUT/loader.gen.log" \
+    && "$LLC" -march=aarch64 -filetype=obj "$OUT/loader.ll" -o "$OUT/loader.o" >"$OUT/loader.llc.log" 2>&1 \
+    && "$LD" -T boot/loader.lds "$OUT/loader.o" -o "$OUT/loader.elf" >"$OUT/loader.link.log" 2>&1 \
+    && pass "boot: 独立ブートローダー 導 をビルド (boot/loader.mkn → 0x46000000)" || {
+        fail "boot: 独立ブートローダー 導 をビルド"
+        sed 's/^/      /' "$OUT/loader.gen.log" | head -10
+    }
+if [ -f "$OUT/kernel.elf" ] && python3 tools/mkkernelimg.py "$OUT/kernel.elf" "$OUT/kernel.img" >"$OUT/kernel.img.log" 2>&1; then
+    pass "boot: 核のイメージ KBL1 を作る (tools/mkkernelimg.py: $(cat "$OUT/kernel.img.log"))"
+else
+    fail "boot: 核のイメージ KBL1 を作る"
+fi
+
 # --- type_error: 錯 E00xx must be reported --------------------------------
 "$BIN" tests/type_error.mkn -ir -o /dev/null >"$OUT/type_error.log" 2>&1 \
     && fail "type_error: unexpected success" || pass "type_error: rejected"
@@ -1209,6 +1224,46 @@ if [ -f "$OUT/kernel.elf" ]; then
             fail "kernel qemu: 差分書き込み"
             grep -a '永試\|篇戻' "$OUT/diff1.log" "$OUT/diff2.log" 2>/dev/null | cut -c1-120 | sed 's/^/      /' | head -10
         fi
+        # --- 独立ブートローダー: 導 が virtio-blk の核イメージ (KBL1) を読んで、DTB を避難させ、核へ移譲する ----------
+        loader_boot() {  # $1 = ログ、$2 = 追加の QEMU 引数 (機械 -machine など)、$3 = ディスクイメージ ("" なら装置なし)
+            rm -f "$1"
+            if [ -n "$3" ]; then
+                qemu-system-aarch64 -M virt,gic-version=2 -cpu cortex-a57 -nographic $2 \
+                    -global virtio-mmio.force-legacy=false \
+                    -drive file="$3",if=none,format=raw,id=hd0 -device virtio-blk-device,drive=hd0 \
+                    -serial "file:$1" -kernel "$OUT/loader.elf" >"$OUT/loader_qemu.console.log" 2>&1 &
+            else
+                qemu-system-aarch64 -M virt,gic-version=2 -cpu cortex-a57 -nographic $2 \
+                    -global virtio-mmio.force-legacy=false \
+                    -serial "file:$1" -kernel "$OUT/loader.elf" >"$OUT/loader_qemu.console.log" 2>&1 &
+            fi
+            local lq=$!
+            for _ in $(seq 1 60); do
+                grep -aq '記憶管理有効\|導誤' "$1" 2>/dev/null && break
+                sleep 0.25
+            done
+            kill "$lq" 2>/dev/null
+            wait "$lq" 2>/dev/null
+        }
+        loader_boot "$OUT/loader1.log" "" "$OUT/kernel.img"
+        loader_boot "$OUT/loader2.log" "-machine virtualization=on" "$OUT/kernel.img"
+        dd if=/dev/zero of="$OUT/loader_zero.img" bs=512 count=8 2>/dev/null
+        loader_boot "$OUT/loader3.log" "" "$OUT/loader_zero.img"
+        loader_boot "$OUT/loader4.log" "" ""
+        LD_OK=1
+        for lg in loader1 loader2; do
+            grep -aq '^導 開始' "$OUT/$lg.log" && grep -aq '^導 DTB 0x0000000040000000' "$OUT/$lg.log" \
+                && [ "$(grep -ac '^導 段 ' "$OUT/$lg.log")" -eq 2 ] && grep -aq '^導 移譲 0x0000000040000000' "$OUT/$lg.log" \
+                && grep -aq '^超漢文起動' "$OUT/$lg.log" && grep -aq '^樹 有効 0x0000000000000001' "$OUT/$lg.log" \
+                && grep -aq '^樹 EL 0x0000000000000001' "$OUT/$lg.log" && grep -aq '記憶管理有効' "$OUT/$lg.log" || LD_OK=0
+        done
+        if [ "$LD_OK" -eq 1 ] && grep -aq '^導誤 魔が KBL1 でない' "$OUT/loader3.log" && ! grep -aq '超漢文起動' "$OUT/loader3.log" \
+           && grep -aq '^導誤 ブロック装置が無い' "$OUT/loader4.log" && ! grep -aq '超漢文起動' "$OUT/loader4.log"; then
+            pass "boot: 独立ブートローダー 導 (DTB を避難して virtio-blk の KBL1 を読み、核へ移譲して核が DTB を読んで起動する。EL2 開始でも同じ。魔が違うイメージと装置なしは理由を出して止まる)"
+        else
+            fail "boot: 独立ブートローダー 導"
+            grep -a '^導\|^樹 有効\|^樹 EL' "$OUT/loader1.log" "$OUT/loader2.log" "$OUT/loader3.log" "$OUT/loader4.log" 2>/dev/null | cut -c1-100 | sed 's/^/      /' | head -20
+        fi
         # --- #47 T4: RTC を 1970-01-01 に固定した起動。PL031 が 0 を返し、時計は無効になる ----
         RTC_IMG="$OUT/rtc_off_serial"
         rm -f "$RTC_IMG.in" "$RTC_IMG.out" "$OUT/rtc_off.log"
@@ -1346,6 +1401,7 @@ if "$LLC" -march=aarch64 -filetype=obj "$OUT/lang_machine.ll" -o "$OUT/lang_mach
     && grep -qE 'msr[[:space:]]+HCR_EL2, x16' "$OUT/lang_machine.dis" \
     && grep -qE 'msr[[:space:]]+SPSR_EL2, x16' "$OUT/lang_machine.dis" \
     && grep -qE 'mrs[[:space:]]+x16, CurrentEL' "$OUT/lang_machine.dis" \
+    && grep -qE 'br[[:space:]]+x1' "$OUT/lang_machine.dis" \
     && "$OBJDUMP" -dr "$OUT/lang_machine.o" >"$OUT/lang_machine.rel" 2>&1 \
     && [ "$(grep -cE 'R_AARCH64_JUMP26[[:space:]]+vh_' "$OUT/lang_machine.rel")" -eq 16 ] \
     && grep -qE '^[[:space:]]*0*280:[[:space:]]+R_AARCH64_JUMP26[[:space:]]+vh_irq$' "$OUT/lang_machine.rel" \

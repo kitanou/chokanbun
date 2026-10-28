@@ -1197,6 +1197,18 @@ ExprPtr Parser::parsePrimary() {
         return e;
     }
 
+    // 移譲(入口, 引数) -> br
+    if (match(TokKind::YiRang)) {
+        e->kind = Expr::Kind::Machine;
+        e->machineOp = Expr::MachineOp::Transfer;
+        expect(TokKind::LeftParen, "(");
+        e->args.push_back(parseExpr());
+        expect(TokKind::Comma, ",");
+        e->args.push_back(parseExpr());
+        expect(TokKind::RightParen, ")");
+        return e;
+    }
+
     // 令止(番 [, 引0]) -> svc して戻らない
     if (match(TokKind::LingZhi)) {
         e->kind = Expr::Kind::Machine;
