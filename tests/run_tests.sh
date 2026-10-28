@@ -183,6 +183,11 @@ sh tools/mkimage.sh user/lex_cmd.mkn "$OUT/lex_cmd.zo" "$OUT" 2>"$OUT/user_lex_c
         fail "user: セルフホストの字句解析器の命令 字句 を漢像にビルド"
         sed 's/^/      /' "$OUT/user_lex_cmd.build.log" "$OUT/user_lex_cmd.gen.log" 2>/dev/null | head -10
     }
+sh tools/mkimage.sh user/ast_cmd.mkn "$OUT/ast_cmd.zo" "$OUT" 2>"$OUT/user_ast_cmd.build.log" \
+    && pass "user: セルフホストの構文解析器の命令 構文 を漢像にビルド" || {
+        fail "user: セルフホストの構文解析器の命令 構文 を漢像にビルド"
+        sed 's/^/      /' "$OUT/user_ast_cmd.build.log" "$OUT/user_ast_cmd.gen.log" 2>/dev/null | head -10
+    }
 sh tools/mkimage.sh user/btron_msg.mkn "$OUT/btron_msg.zo" "$OUT" 2>"$OUT/user_btron_msg.build.log" \
     && pass "user: BTRON3 互換層の試験 信試 (メッセージ) を漢像にビルド" || {
         fail "user: BTRON3 互換層の試験 信試 を漢像にビルド"
@@ -273,7 +278,7 @@ sh tools/mkimage.sh user/btron_task.mkn "$OUT/btron_task.zo" "$OUT" 2>"$OUT/user
         fail "user: BTRON3 互換層の試験 副試 を漢像にビルド"
         sed 's/^/      /' "$OUT/user_btron_task.build.log" | head -10
     }
-sh tools/gen-images.sh "$OUT/kernel_images.S" 問安="$OUT/hello.zo" 數="$OUT/count.zo" 異常試="$OUT/fault.zo" 識試="$OUT/btron_gtid.zo" 名試="$OUT/btron_gname.zo" 時試="$OUT/btron_clk.zo" 時元試="$OUT/time_test.zo" 時="$OUT/time_cmd.zo" 信試="$OUT/btron_msg.zo" 利試="$OUT/btron_usr.zo" 強試="$OUT/btron_term.zo" 同試="$OUT/btron_sync.zo" 緩試="$OUT/btron_comm.zo" 録試="$OUT/btron_file.zo" 篇試="$OUT/pian_test.zo" 永試="$OUT/pian_persist.zo" 貯試="$OUT/btron_mem.zo" 件試="$OUT/btron_evt.zo" 設試="$OUT/btron_dev.zo" 系試="$OUT/btron_sys.zo" 例試="$OUT/btron_exc.zo" 信手試="$OUT/btron_msg_hdr.zo" 副試="$OUT/btron_task.zo" 実試="$OUT/btron_omgr.zo" 実作="$OUT/obj.zo" 仮置="$OUT/obj.zo" 実削="$OUT/obj.zo" 実目="$OUT/obj.zo" 実名="$OUT/obj.zo" objapp="$OUT/obj_app.zo" 標="$OUT/tag_cmd.zo" 索="$OUT/tag_cmd.zo" 競試="$OUT/stress.zo" 字句="$OUT/lex_cmd.zo" \
+sh tools/gen-images.sh "$OUT/kernel_images.S" 問安="$OUT/hello.zo" 數="$OUT/count.zo" 異常試="$OUT/fault.zo" 識試="$OUT/btron_gtid.zo" 名試="$OUT/btron_gname.zo" 時試="$OUT/btron_clk.zo" 時元試="$OUT/time_test.zo" 時="$OUT/time_cmd.zo" 信試="$OUT/btron_msg.zo" 利試="$OUT/btron_usr.zo" 強試="$OUT/btron_term.zo" 同試="$OUT/btron_sync.zo" 緩試="$OUT/btron_comm.zo" 録試="$OUT/btron_file.zo" 篇試="$OUT/pian_test.zo" 永試="$OUT/pian_persist.zo" 貯試="$OUT/btron_mem.zo" 件試="$OUT/btron_evt.zo" 設試="$OUT/btron_dev.zo" 系試="$OUT/btron_sys.zo" 例試="$OUT/btron_exc.zo" 信手試="$OUT/btron_msg_hdr.zo" 副試="$OUT/btron_task.zo" 実試="$OUT/btron_omgr.zo" 実作="$OUT/obj.zo" 仮置="$OUT/obj.zo" 実削="$OUT/obj.zo" 実目="$OUT/obj.zo" 実名="$OUT/obj.zo" objapp="$OUT/obj_app.zo" 標="$OUT/tag_cmd.zo" 索="$OUT/tag_cmd.zo" 競試="$OUT/stress.zo" 字句="$OUT/lex_cmd.zo" 構文="$OUT/ast_cmd.zo" \
     && "$CLANG" --target=aarch64-none-elf -c "$OUT/kernel_images.S" -o "$OUT/kernel_images.o" \
         >"$OUT/kernel_images.log" 2>&1 \
     && pass "kernel: 漢像の埋め込み (像表)" || fail "kernel: 漢像の埋め込み (像表)"
@@ -334,6 +339,30 @@ if "$BIN" selfhost/lexer.mkn -ir -o "$OUT/selfhost_lexer.ll" 2>"$OUT/selfhost_le
 else
     fail "selfhost: 字句解析器をビルド"
     sed 's/^/      /' "$OUT/selfhost_lexer.gen.log" "$OUT/selfhost_lexer.cc.log" 2>/dev/null | head -10
+fi
+
+# --- セルフホスト第 2 段: 機械漢文の構文解析器 (selfhost/parser.mkn) が C++ 版 -ast と同じ出力を出す -----------------
+#     リポジトリの全ての .mkn で比べる。字句・構文の誤りは両方とも失敗すればよい。
+if sh tools/kernel-expand.sh selfhost/parser.mkn "$OUT/selfhost_parser_all.mkn" \
+   && "$BIN" "$OUT/selfhost_parser_all.mkn" -ir -o "$OUT/selfhost_parser.ll" 2>"$OUT/selfhost_parser.gen.log" \
+   && "$CLANG" -Wno-override-module -x ir "$OUT/selfhost_parser.ll" -x c selfhost/host_ast.c -o "$OUT/selfhost_parser_host" \
+        >"$OUT/selfhost_parser.cc.log" 2>&1; then
+    SP_OK=0; SP_BAD=0; SP_BADLIST=""
+    for f in $(find tests boot kernel user selfhost -name '*.mkn' | sort); do
+        "$BIN" "$f" -ast >"$OUT/selfhost_ref.txt" 2>/dev/null; rc=$?
+        "$OUT/selfhost_parser_host" "$f" >"$OUT/selfhost_got.txt" 2>/dev/null; rc2=$?
+        if [ $rc -eq 0 ] && [ $rc2 -eq 0 ] && cmp -s "$OUT/selfhost_ref.txt" "$OUT/selfhost_got.txt"; then SP_OK=$((SP_OK+1))
+        elif [ $rc -ne 0 ] && [ $rc2 -ne 0 ]; then SP_OK=$((SP_OK+1))
+        else SP_BAD=$((SP_BAD+1)); SP_BADLIST="$SP_BADLIST $f"; fi
+    done
+    if [ "$SP_BAD" -eq 0 ] && [ "$SP_OK" -ge 100 ]; then
+        pass "selfhost: 機械漢文の構文解析器 (selfhost/parser.mkn) が C++ 版と ${SP_OK} 個の .mkn で同じ AST を出す (構文の誤りも両方で失敗)"
+    else
+        fail "selfhost: 構文解析器の不一致 ${SP_BAD} 個 (${SP_OK} 個一致):$SP_BADLIST"
+    fi
+else
+    fail "selfhost: 構文解析器をビルド"
+    sed 's/^/      /' "$OUT/selfhost_parser.gen.log" "$OUT/selfhost_parser.cc.log" 2>/dev/null | head -10
 fi
 
 # --- type_error: 錯 E00xx must be reported --------------------------------
@@ -1177,6 +1206,19 @@ if [ -f "$OUT/kernel.elf" ]; then
             fail "selfhost: OS 上の字句解析器の出力が C++ 版と違う"
             diff "$OUT/selfhost_os_ref.txt" "$OUT/selfhost_os_got.txt" 2>&1 | head -8 | sed 's/^/      /'
             grep -a '字句' "$OUT/selfhost_os.log" | head -3 | sed 's/^/      /'
+        fi
+        # --- セルフホスト: OS の上で動く機械漢文の構文解析器 (構文) が、C++ 版 -ast と同じ AST を出す ----
+        SA_SRC='術曰「試」 受「値」之無符六四 返 無符六四 設「和」之無符六四 為 値 加 1 乘 2 若 和 大於 3 則 歸 和 終若 歸 0 終術'
+        printf '%s' "$SA_SRC" >"$OUT/selfhost_os_ast_src.mkn"
+        "$BIN" "$OUT/selfhost_os_ast_src.mkn" -ast >"$OUT/selfhost_os_ast_ref.txt" 2>/dev/null
+        pian_boot "$OUT/selfhost_os_ast.log" $'書 源 '"$SA_SRC"$'\n構文 源\n終\n'
+        sed -n '/^殻> 構文 源/,/^殻> 終/p' "$OUT/selfhost_os_ast.log" | sed '1d;$d' | grep -av '^頁供' | grep -av '^殻碼' >"$OUT/selfhost_os_ast_got.txt"
+        if [ -s "$OUT/selfhost_os_ast_ref.txt" ] && cmp -s "$OUT/selfhost_os_ast_ref.txt" "$OUT/selfhost_os_ast_got.txt"; then
+            pass "selfhost: OS の上で動く機械漢文の構文解析器 (構文) が C++ 版 -ast と同じ AST を出す ($(wc -l <"$OUT/selfhost_os_ast_ref.txt" | tr -d ' ') 行)"
+        else
+            fail "selfhost: OS 上の構文解析器の出力が C++ 版と違う"
+            diff "$OUT/selfhost_os_ast_ref.txt" "$OUT/selfhost_os_ast_got.txt" 2>&1 | head -8 | sed 's/^/      /'
+            grep -a '構文' "$OUT/selfhost_os_ast.log" | head -3 | sed 's/^/      /'
         fi
         pian_boot "$OUT/panic1.log" $'異常試 k\n問安\n終\n'
         if grep -aq '^核恐慌 init終了' "$OUT/panic1.log" && ! grep -aq '殻終' "$OUT/panic1.log" \
