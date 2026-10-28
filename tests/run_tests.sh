@@ -193,6 +193,11 @@ sh tools/mkimage.sh user/tc_cmd.mkn "$OUT/tc_cmd.zo" "$OUT" 2>"$OUT/user_tc_cmd.
         fail "user: セルフホストの型検査器の命令 型検 を漢像にビルド"
         sed 's/^/      /' "$OUT/user_tc_cmd.build.log" "$OUT/user_tc_cmd.gen.log" 2>/dev/null | head -10
     }
+sh tools/mkimage.sh user/cc_cmd.mkn "$OUT/cc_cmd.zo" "$OUT" 2>"$OUT/user_cc_cmd.build.log" \
+    && pass "user: セルフホストのコンパイラの命令 機譯 を漢像にビルド" || {
+        fail "user: セルフホストのコンパイラの命令 機譯 を漢像にビルド"
+        sed 's/^/      /' "$OUT/user_cc_cmd.build.log" "$OUT/user_cc_cmd.gen.log" 2>/dev/null | head -10
+    }
 sh tools/mkimage.sh user/btron_msg.mkn "$OUT/btron_msg.zo" "$OUT" 2>"$OUT/user_btron_msg.build.log" \
     && pass "user: BTRON3 互換層の試験 信試 (メッセージ) を漢像にビルド" || {
         fail "user: BTRON3 互換層の試験 信試 を漢像にビルド"
@@ -283,7 +288,7 @@ sh tools/mkimage.sh user/btron_task.mkn "$OUT/btron_task.zo" "$OUT" 2>"$OUT/user
         fail "user: BTRON3 互換層の試験 副試 を漢像にビルド"
         sed 's/^/      /' "$OUT/user_btron_task.build.log" | head -10
     }
-sh tools/gen-images.sh "$OUT/kernel_images.S" 問安="$OUT/hello.zo" 數="$OUT/count.zo" 異常試="$OUT/fault.zo" 識試="$OUT/btron_gtid.zo" 名試="$OUT/btron_gname.zo" 時試="$OUT/btron_clk.zo" 時元試="$OUT/time_test.zo" 時="$OUT/time_cmd.zo" 信試="$OUT/btron_msg.zo" 利試="$OUT/btron_usr.zo" 強試="$OUT/btron_term.zo" 同試="$OUT/btron_sync.zo" 緩試="$OUT/btron_comm.zo" 録試="$OUT/btron_file.zo" 篇試="$OUT/pian_test.zo" 永試="$OUT/pian_persist.zo" 貯試="$OUT/btron_mem.zo" 件試="$OUT/btron_evt.zo" 設試="$OUT/btron_dev.zo" 系試="$OUT/btron_sys.zo" 例試="$OUT/btron_exc.zo" 信手試="$OUT/btron_msg_hdr.zo" 副試="$OUT/btron_task.zo" 実試="$OUT/btron_omgr.zo" 実作="$OUT/obj.zo" 仮置="$OUT/obj.zo" 実削="$OUT/obj.zo" 実目="$OUT/obj.zo" 実名="$OUT/obj.zo" objapp="$OUT/obj_app.zo" 標="$OUT/tag_cmd.zo" 索="$OUT/tag_cmd.zo" 競試="$OUT/stress.zo" 字句="$OUT/lex_cmd.zo" 構文="$OUT/ast_cmd.zo" 型検="$OUT/tc_cmd.zo" \
+sh tools/gen-images.sh "$OUT/kernel_images.S" 問安="$OUT/hello.zo" 數="$OUT/count.zo" 異常試="$OUT/fault.zo" 識試="$OUT/btron_gtid.zo" 名試="$OUT/btron_gname.zo" 時試="$OUT/btron_clk.zo" 時元試="$OUT/time_test.zo" 時="$OUT/time_cmd.zo" 信試="$OUT/btron_msg.zo" 利試="$OUT/btron_usr.zo" 強試="$OUT/btron_term.zo" 同試="$OUT/btron_sync.zo" 緩試="$OUT/btron_comm.zo" 録試="$OUT/btron_file.zo" 篇試="$OUT/pian_test.zo" 永試="$OUT/pian_persist.zo" 貯試="$OUT/btron_mem.zo" 件試="$OUT/btron_evt.zo" 設試="$OUT/btron_dev.zo" 系試="$OUT/btron_sys.zo" 例試="$OUT/btron_exc.zo" 信手試="$OUT/btron_msg_hdr.zo" 副試="$OUT/btron_task.zo" 実試="$OUT/btron_omgr.zo" 実作="$OUT/obj.zo" 仮置="$OUT/obj.zo" 実削="$OUT/obj.zo" 実目="$OUT/obj.zo" 実名="$OUT/obj.zo" objapp="$OUT/obj_app.zo" 標="$OUT/tag_cmd.zo" 索="$OUT/tag_cmd.zo" 競試="$OUT/stress.zo" 字句="$OUT/lex_cmd.zo" 構文="$OUT/ast_cmd.zo" 型検="$OUT/tc_cmd.zo" 機譯="$OUT/cc_cmd.zo" \
     && "$CLANG" --target=aarch64-none-elf -c "$OUT/kernel_images.S" -o "$OUT/kernel_images.o" \
         >"$OUT/kernel_images.log" 2>&1 \
     && pass "kernel: 漢像の埋め込み (像表)" || fail "kernel: 漢像の埋め込み (像表)"
@@ -1284,7 +1289,7 @@ if [ -f "$OUT/kernel.elf" ]; then
             grep -a '字句' "$OUT/selfhost_os.log" | head -3 | sed 's/^/      /'
         fi
         # --- セルフホスト: OS の上で動く機械漢文の構文解析器 (構文) が、C++ 版 -ast と同じ AST を出す ----
-        SA_SRC='術曰「試」 受「値」之無符六四 返 無符六四 設「和」之無符六四 為 値 加 1 乘 2 若 和 大於 3 則 歸 和 終若 歸 0 終術'
+        SA_SRC='術曰「試」 受「値」之無符六四 返 無符六四 設「和」之無符六四 為 (値 加 1) 乘 2 若 和 大於 3 則 歸 和 終若 歸 0 終術'
         printf '%s' "$SA_SRC" >"$OUT/selfhost_os_ast_src.mkn"
         "$BIN" "$OUT/selfhost_os_ast_src.mkn" -ast >"$OUT/selfhost_os_ast_ref.txt" 2>/dev/null
         pian_boot "$OUT/selfhost_os_ast.log" $'書 源 '"$SA_SRC"$'\n構文 源\n終\n'
@@ -1308,6 +1313,19 @@ if [ -f "$OUT/kernel.elf" ]; then
             fail "selfhost: OS 上の型検査器の出力が C++ 版と違う"
             diff "$OUT/selfhost_os_tc_ref.txt" "$OUT/selfhost_os_tc_got.txt" 2>&1 | head -8 | sed 's/^/      /'
             grep -a '型検' "$OUT/selfhost_os_tc.log" | head -3 | sed 's/^/      /'
+        fi
+        # --- セルフホスト: OS の上で動く機械漢文のコンパイラ (機譯) が、C++ 版 -ir と同じ IR を出す ----
+        SC_SRC='術曰「試」 受「値」之無符六四 返 無符六四 設「和」之無符六四 為 (値 加 1) 乘 2 若 和 大於 3 則 歸 和 終若 歸 0 終術'
+        printf '%s' "$SC_SRC" >"$OUT/selfhost_os_cc_src.mkn"
+        "$BIN" "$OUT/selfhost_os_cc_src.mkn" -ir -o "$OUT/selfhost_os_cc_ref.ll" 2>/dev/null
+        pian_boot "$OUT/selfhost_os_cc.log" $'書 源 '"$SC_SRC"$'\n機譯 源\n終\n'
+        sed -n '/^殻> 機譯 源/,/^殻> 終/p' "$OUT/selfhost_os_cc.log" | sed '1d;$d' | grep -av '^頁供' | grep -av '^殻碼' >"$OUT/selfhost_os_cc_got.ll"
+        if [ -s "$OUT/selfhost_os_cc_ref.ll" ] && cmp -s "$OUT/selfhost_os_cc_ref.ll" "$OUT/selfhost_os_cc_got.ll"; then
+            pass "selfhost: OS の上で動く機械漢文のコンパイラ (機譯) が C++ 版 -ir と同じ IR を出す ($(wc -l <"$OUT/selfhost_os_cc_ref.ll" | tr -d ' ') 行)"
+        else
+            fail "selfhost: OS 上のコンパイラの IR が C++ 版と違う"
+            diff "$OUT/selfhost_os_cc_ref.ll" "$OUT/selfhost_os_cc_got.ll" 2>&1 | head -8 | sed 's/^/      /'
+            grep -a '機譯' "$OUT/selfhost_os_cc.log" | head -3 | sed 's/^/      /'
         fi
         pian_boot "$OUT/panic1.log" $'異常試 k\n問安\n終\n'
         if grep -aq '^核恐慌 init終了' "$OUT/panic1.log" && ! grep -aq '殻終' "$OUT/panic1.log" \
