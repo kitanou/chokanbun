@@ -866,6 +866,48 @@ std::string LLVMIRGen::genMachine(const ExprPtr& e) {
         case Expr::MachineOp::ExceptionReturn:
             return callVoid("eret", "~{memory}");
 
+        case Expr::MachineOp::CallSym:
+        case Expr::MachineOp::FrameSwitch:
+        case Expr::MachineOp::FramePark: {
+            size_t c = e->asmText.find(',');
+            std::string a = e->asmText.substr(0, c), b = e->asmText.substr(c + 1);
+            std::string text;
+            if (e->machineOp == Expr::MachineOp::CallSym) {
+                // 引種: x0/x1 に渡す値。esr_elr_ret は戻り値 x0 を ELR_EL1 へ書き戻す。
+                if (b == "sp") text += "mov x0, sp\n";
+                if (b == "esr_sp") text += "mrs x0, esr_el1\nmov x1, sp\n";
+                if (b == "esr_elr_ret") text += "mrs x0, esr_el1\nmrs x1, elr_el1\n";
+                text += "bl " + a;
+                if (b == "esr_elr_ret") text += "\nmsr elr_el1, x0";
+            } else if (e->machineOp == Expr::MachineOp::FrameSwitch) {
+                text = "cbz x0, " + a + "\nmov sp, x0\nb " + b;
+            } else {
+                text = "1:\nbl " + a + "\ncbz x0, 2f\nmov sp, x0\nb " + b + "\n2:\nwfi\nb 1b";
+            }
+            return callVoid(text, "~{memory}");
+        }
+
+        case Expr::MachineOp::StackSet: {
+            const std::string& s = e->asmText;
+            if (s[0] >= '0' && s[0] <= '9')
+                return callVoid("mov x0, #" + s + "\nmov sp, x0", "~{memory}");
+            return callVoid("adrp x0, " + s + "\nadd x0, x0, :lo12:" + s + "\nmov sp, x0", "~{memory}");
+        }
+
+        case Expr::MachineOp::SvcHalt: {
+            std::string text;
+            if (e->args.size() > 1) text += "mov x0, #" + std::to_string(e->args[1]->intValue) + "\n";
+            text += "mov x8, #" + std::to_string(e->args[0]->intValue) + "\nsvc #0\n1:\nb 1b";
+            return callVoid(text, "~{memory}");
+        }
+
+        case Expr::MachineOp::HaltLoop:
+            return callVoid("1:\nwfi\nb 1b", "~{memory}");
+
+        case Expr::MachineOp::EnterUser:
+            // enter_el0(入址 x0, 棧頭 x1, 引 x2, 核棧頭 x3): EL0t・DAIF 全マスクで eret。
+            return callVoid("mov sp, x3\nmsr elr_el1, x0\nmsr sp_el0, x1\nmov x4, #0x3C0\nmsr spsr_el1, x4\nmov x0, x2\neret", "~{memory}");
+
         case Expr::MachineOp::VectorTable: {
             // 16 項 × 0x80。項 5 = 現 EL・SPx の IRQ、項 8 = 下位 EL の同期、項 9 = 下位 EL の IRQ、他は既定。
             std::vector<std::string> sym;

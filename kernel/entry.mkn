@@ -20,7 +20,7 @@
 公開 裸 記號「exception_handler」 術曰「例外入口」 返 無
     險
         框存〈『el1』〉()
-        組譯〈無〉(『mrs x0, esr_el1\nmrs x1, elr_el1\nbl exception_dispatch\nmsr elr_el1, x0』, 『』)
+        呼出〈『exception_dispatch』, 『esr_elr_ret』〉()
         框復〈『el1』〉()
         例外歸()
     終險
@@ -30,7 +30,7 @@
 公開 裸 記號「irq_handler」 術曰「核割込入口」 返 無
     險
         框存〈『el1irq』〉()
-        組譯〈無〉(『bl irq_dispatch』, 『』)
+        呼出〈『irq_dispatch』, 『none』〉()
         框復〈『el1irq』〉()
         例外歸()
     終險
@@ -40,14 +40,14 @@
 註 例外ハンドラの戻り先。例外飛 が民のハンドラの x30 にこの番地を入れる。ret_exc を呼ばずに戻れば ret_exc(0) (番 182) として割り込まれた命令から再開する。
 公開 裸 記號「exc_return_stub」 術曰「例戻」 返 無
     險
-        組譯〈無〉(『mov x0, #0\nmov x8, #182\nsvc #0\n1:\nb 1b』, 『』)
+        令止(182, 0)
     終險
 終術
 
 註 メッセージハンドラの戻り先。ret_msg を呼ばずに戻れば ret_msg(0) (番 184) として割り込まれた位置から再開する。
 公開 裸 記號「msg_return_stub」 術曰「信戻」 返 無
     險
-        組譯〈無〉(『mov x0, #0\nmov x8, #184\nsvc #0\n1:\nb 1b』, 『』)
+        令止(184, 0)
     終險
 終術
 
@@ -68,7 +68,7 @@
 註 核は EL1h で動くので現在の sp が SP_EL1。SPSR_EL1 は EL0t・DAIF 全マスク (開先取 (番 7) まで先取りされない)。
 公開 裸 記號「enter_el0」 術曰「入民籍」 受「入址」之無符六四 受「棧頭」之無符六四 受「引」之無符六四 受「核棧頭」之無符六四 返 無
     險
-        組譯〈無〉(『mov sp, x3\nmsr elr_el1, x0\nmsr sp_el0, x1\nmov x4, #0x3C0\nmsr spsr_el1, x4\nmov x0, x2\neret』, 『』)
+        入民()
     終險
 終術
 
@@ -77,7 +77,8 @@
 公開 裸 記號「lower_sync_handler」 術曰「下位同期」 返 無
     險
         框存〈『el0』〉()
-        組譯〈無〉(『mrs x0, esr_el1\nmov x1, sp\nbl svc_dispatch\ncbz x0, el0_park\nmov sp, x0\nb el0_resume』, 『』)
+        呼出〈『svc_dispatch』, 『esr_sp』〉()
+        框移〈『el0_park』, 『el0_resume』〉()
     終險
 終術
 
@@ -86,7 +87,8 @@
 公開 裸 記號「lower_irq_handler」 術曰「下位割込」 返 無
     險
         框存〈『el0』〉()
-        組譯〈無〉(『mov x0, sp\nbl irq_switch\ncbz x0, el0_park\nmov sp, x0\nb el0_resume』, 『』)
+        呼出〈『irq_switch』, 『sp』〉()
+        框移〈『el0_park』, 『el0_resume』〉()
     終險
 終術
 
@@ -101,6 +103,6 @@
 註 走れる行程が無い間、idle_poll が返す框を待って再開する。
 公開 裸 記號「el0_park」 術曰「框待機」 返 無
     險
-        組譯〈無〉(『1:\nbl idle_poll\ncbz x0, 2f\nmov sp, x0\nb el0_resume\n2:\nwfi\nb 1b』, 『』)
+        框待〈『idle_poll』, 『el0_resume』〉()
     終險
 終術

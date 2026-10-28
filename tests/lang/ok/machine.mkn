@@ -77,3 +77,22 @@
         向量表〈『vh_default』, 『vh_irq』, 『vh_sync0』, 『vh_irq0』〉()
     終險
 終術
+
+註 入口の定型: 呼出・框移・框待・令止・棧置・永停・入民
+公開 裸 記號「entry_probe」 術曰「入口試」 返 無
+    險
+        棧置〈『ep_stack』〉()
+        棧置〈『0x40200000』〉()
+        框存〈『el0』〉()
+        呼出〈『ep_none』, 『none』〉()
+        呼出〈『ep_sp』, 『sp』〉()
+        呼出〈『ep_sync』, 『esr_sp』〉()
+        框移〈『ep_park』, 『ep_resume』〉()
+        呼出〈『ep_elr』, 『esr_elr_ret』〉()
+        框待〈『ep_poll』, 『ep_resume』〉()
+        令止(182, 0)
+        令止(2)
+        入民()
+        永停()
+    終險
+終術

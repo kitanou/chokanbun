@@ -1162,6 +1162,63 @@ ExprPtr Parser::parsePrimary() {
         return e;
     }
 
+    // 入口の定型 (呼出・框移・框待・棧置): 記号の文字列を取る。引種は none|sp|esr_sp|esr_elr_ret。
+    if (check(TokKind::HuChu) || check(TokKind::KuangYi) || check(TokKind::KuangDai) || check(TokKind::ZhanZhi)) {
+        TokKind k = current().kind;
+        std::string name = k == TokKind::HuChu ? "呼出" : k == TokKind::KuangYi ? "框移" : k == TokKind::KuangDai ? "框待" : "棧置";
+        int want = k == TokKind::ZhanZhi ? 1 : 2;
+        advance();
+        e->kind = Expr::Kind::Machine;
+        e->machineOp = k == TokKind::HuChu ? Expr::MachineOp::CallSym : k == TokKind::KuangYi ? Expr::MachineOp::FrameSwitch
+                     : k == TokKind::KuangDai ? Expr::MachineOp::FramePark : Expr::MachineOp::StackSet;
+        expect(TokKind::LeftAngle, "〈");
+        for (int i = 0; i < want; i++) {
+            if (i > 0) expect(TokKind::Comma, ",");
+            std::string sym;
+            if (check(TokKind::StringLit)) {
+                sym = current().value;
+                advance();
+            } else {
+                error(current(), "E0008", name + " requires symbol strings");
+                hasErrors_ = true;
+            }
+            bool ok = isMachineName(sym);
+            if (ok && i == 1 && k == TokKind::HuChu)
+                ok = sym == "none" || sym == "sp" || sym == "esr_sp" || sym == "esr_elr_ret";
+            if (!ok) {
+                error(current(), "E0008", "invalid " + name + " operand: " + sym);
+                hasErrors_ = true;
+            }
+            e->asmText += (i > 0 ? "," : "") + sym;
+        }
+        expect(TokKind::RightAngle, "〉");
+        expect(TokKind::LeftParen, "(");
+        expect(TokKind::RightParen, ")");
+        return e;
+    }
+
+    // 令止(番 [, 引0]) -> svc して戻らない
+    if (match(TokKind::LingZhi)) {
+        e->kind = Expr::Kind::Machine;
+        e->machineOp = Expr::MachineOp::SvcHalt;
+        expect(TokKind::LeftParen, "(");
+        e->args.push_back(parseExpr());
+        if (match(TokKind::Comma)) e->args.push_back(parseExpr());
+        expect(TokKind::RightParen, ")");
+        return e;
+    }
+
+    // 永停() / 入民()
+    if (check(TokKind::YongTing) || check(TokKind::RuMin)) {
+        bool halt = check(TokKind::YongTing);
+        advance();
+        e->kind = Expr::Kind::Machine;
+        e->machineOp = halt ? Expr::MachineOp::HaltLoop : Expr::MachineOp::EnterUser;
+        expect(TokKind::LeftParen, "(");
+        expect(TokKind::RightParen, ")");
+        return e;
+    }
+
     // 例外歸() -> eret
     if (match(TokKind::LiWaiGui)) {
         e->kind = Expr::Kind::Machine;

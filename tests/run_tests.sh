@@ -1246,6 +1246,11 @@ if "$LLC" -march=aarch64 -filetype=obj "$OUT/lang_machine.ll" -o "$OUT/lang_mach
     && grep -qE 'str[[:space:]]+x2, \[sp, #0x110\]' "$OUT/lang_machine.dis" \
     && grep -qE 'msr[[:space:]]+SP_EL0, x2' "$OUT/lang_machine.dis" \
     && grep -qE 'eret' "$OUT/lang_machine.dis" \
+    && grep -qE 'bl[[:space:]]+0x[0-9a-f]+ <entry_probe' "$OUT/lang_machine.dis" \
+    && grep -qE 'cbz[[:space:]]+x0,' "$OUT/lang_machine.dis" \
+    && grep -qE 'mov[[:space:]]+x8, #0xb6' "$OUT/lang_machine.dis" \
+    && grep -qE 'mov[[:space:]]+x4, #0x3c0' "$OUT/lang_machine.dis" \
+    && grep -qE 'msr[[:space:]]+ELR_EL1, x0' "$OUT/lang_machine.dis" \
     && "$OBJDUMP" -dr "$OUT/lang_machine.o" >"$OUT/lang_machine.rel" 2>&1 \
     && [ "$(grep -cE 'R_AARCH64_JUMP26[[:space:]]+vh_' "$OUT/lang_machine.rel")" -eq 16 ] \
     && grep -qE '^[[:space:]]*0*280:[[:space:]]+R_AARCH64_JUMP26[[:space:]]+vh_irq$' "$OUT/lang_machine.rel" \

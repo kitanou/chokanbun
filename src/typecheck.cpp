@@ -710,7 +710,28 @@ TypePtr TypeChecker::checkMachine(const Expr& e) {
         case Expr::MachineOp::FrameRestore:
         case Expr::MachineOp::ExceptionReturn:
         case Expr::MachineOp::VectorTable:
+        case Expr::MachineOp::CallSym:
+        case Expr::MachineOp::FrameSwitch:
+        case Expr::MachineOp::FramePark:
+        case Expr::MachineOp::StackSet:
+        case Expr::MachineOp::HaltLoop:
+        case Expr::MachineOp::EnterUser:
             return ret(Type::Void());
+
+        case Expr::MachineOp::SvcHalt: {
+            if (e.args.empty() || e.args.size() > 2) {
+                errorAt(e, "E0001", "令止 takes a call number and at most one argument");
+                return ret(Type::Void());
+            }
+            for (auto& a : e.args) {
+                checkValue(a, "令止 operand");
+                if (a->kind != Expr::Kind::IntegerLit)
+                    errorAt(*a, "E0001", "令止 requires integer literal operands");
+                else if (a->intValue > 0xFFFF)
+                    errorAt(*a, "E0001", "令止 operand must be 0..65535");
+            }
+            return ret(Type::Void());
+        }
 
         case Expr::MachineOp::DataCacheClean: {
             if (e.args.size() != 1) {

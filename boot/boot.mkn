@@ -4,6 +4,8 @@
 
 公開 裸 節「.text.boot」 記號「_start」 術曰「起点」 返 無
     險
-        組譯〈無〉(『mov x0, #0x40200000\nmov sp, x0\nbl main\n1:\nwfi\nb 1b』, 『』)
+        棧置〈『0x40200000』〉()
+        呼出〈『main』, 『none』〉()
+        永停()
     終險
 終術

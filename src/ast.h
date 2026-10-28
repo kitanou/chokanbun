@@ -161,6 +161,13 @@ struct Expr {
         FrameSave,        // 框存〈『種』〉() -> sp を下げて汎用レジスタ等を框へ退避
         FrameRestore,     // 框復〈『種』〉() -> 框から復帰して sp を戻す (eret は含まない)
         ExceptionReturn,  // 例外歸() -> eret
+        CallSym,          // 呼出〈『記號』,『引種』〉() -> 引数を用意して bl
+        FrameSwitch,      // 框移〈『駐』,『再開』〉() -> x0 が 0 なら駐へ、でなければ sp = x0 で再開へ
+        FramePark,        // 框待〈『問』,『再開』〉() -> 問 を繰り返し呼び、框が返れば再開、0 なら wfi
+        SvcHalt,          // 令止(番 [, 引0]) -> svc して戻らない
+        StackSet,         // 棧置〈『記号|即値』〉() -> sp を設定
+        HaltLoop,         // 永停() -> wfi の無限ループ
+        EnterUser,        // 入民() -> enter_el0 の本体 (eret で EL0 へ)
         VectorTable,      // 向量表〈『既定』,『核割込』,『下位同期』,『下位割込』〉() -> 16 項 × 0x80 の b 命令
     };
     MachineOp machineOp = MachineOp::SysRegRead;

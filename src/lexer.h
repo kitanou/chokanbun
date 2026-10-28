@@ -92,6 +92,13 @@ enum class TokKind {
     KuangFu,      // 框復
     LiWaiGui,     // 例外歸
     XiangLiangBiao, // 向量表
+    HuChu,        // 呼出
+    KuangYi,      // 框移
+    KuangDai,     // 框待
+    LingZhi,      // 令止
+    ZhanZhi,      // 棧置
+    YongTing,     // 永停
+    RuMin,        // 入民
     ChangDu,      // 長度
     Lan,          // 欄
     Xiang,        // 項
