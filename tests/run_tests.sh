@@ -1049,7 +1049,7 @@ if [ -f "$OUT/kernel.elf" ]; then
               printf '%s' "$pcmds" > "$PERSIST_PIPE.in" ) &
             pf=$!
             for _ in $(seq 1 80); do
-                grep -q "殻終" "$plog" 2>/dev/null && break
+                grep -q "殻終\|核恐慌" "$plog" 2>/dev/null && break
                 sleep 0.5
             done
             kill "$pq" 2>/dev/null
@@ -1102,6 +1102,14 @@ if [ -f "$OUT/kernel.elf" ]; then
         # スロット A のヘッダと、スロット B の篇の表の区画 (スロット先頭の 2 区画目) も壊す → どちらも使えず、初期化した状態で起動する
         dd if=/dev/zero of="$PERSIST_IMG" bs=512 seek=64 count=1 conv=notrunc 2>/dev/null
         printf '\377\377\377\377' | dd of="$PERSIST_IMG" bs=1 seek=$((5222 * 512)) conv=notrunc 2>/dev/null
+        pian_boot "$OUT/panic1.log" $'異常試 k\n問安\n終\n'
+        if grep -aq '^核恐慌 init終了' "$OUT/panic1.log" && ! grep -aq '殻終' "$OUT/panic1.log" \
+           && [ "$(grep -ac '問安' "$OUT/panic1.log")" -le 1 ]; then
+            pass "kernel qemu: init (殻行程) の終了で 核恐慌 init終了 を出して止まる (以後の命令は実行されない)"
+        else
+            fail "kernel qemu: init 終了の panic"
+            tail -5 "$OUT/panic1.log" 2>/dev/null | sed 's/^/      /'
+        fi
         pian_boot "$OUT/persist5.log" $'永試 N\n永試 M\n終\n'
         if persist_ok "$OUT/persist5.log" 'N:' && persist_ok "$OUT/persist5.log" 'M:' && ! grep -aq '篇戻' "$OUT/persist5.log"; then
             pass "kernel qemu: どのスロットも使えないときは初期化した状態で起動する (篇「永」も録層の pmem も無い)"
