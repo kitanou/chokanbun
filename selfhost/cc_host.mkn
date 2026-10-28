@@ -1,0 +1,4 @@
+註 駆動部 (selfhost/driver.mkn) のホスト版の根。ファイルの読み込みは C の file_read (selfhost/host_cc.c) に任せる。
+註 @取込 ../selfhost/driver.mkn
+
+外術曰「ファイル読」 受「路」之無符六四 受「路長」之無符六四 受「宛」之無符六四 受「容」之無符六四 返 無符六四 記號「file_read」 終外術

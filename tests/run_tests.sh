@@ -446,6 +446,39 @@ else
     sed 's/^/      /' "$OUT/selfhost_ir.gen.log" "$OUT/selfhost_ir.cc.log" 2>/dev/null | head -10
 fi
 
+# --- セルフホスト第 5 段: 機械漢文のコンパイラ (selfhost/driver.mkn。取込の展開 + 型検査 + IR 生成) ----------------
+#     根のソースを渡すだけで、tools/kernel-expand.sh + C++ 版 -ir と同じ IR を出す。さらに、機械漢文のコンパイラが
+#     自分自身を 2 回再構築しても (C++ 版 → 第 2 世代 → 第 3 世代) IR が変わらない (不動点)。
+if sh tools/kernel-expand.sh selfhost/cc_host.mkn "$OUT/selfhost_cc_all.mkn" \
+   && "$BIN" "$OUT/selfhost_cc_all.mkn" -ir -o "$OUT/selfhost_cc.ll" 2>"$OUT/selfhost_cc.gen.log" \
+   && "$CLANG" -Wno-override-module -x ir "$OUT/selfhost_cc.ll" -x c selfhost/host_cc.c -o "$OUT/selfhost_cc_host" \
+        >"$OUT/selfhost_cc.cc.log" 2>&1; then
+    SD_OK=0; SD_BAD=0; SD_BADLIST=""
+    for f in kernel/kernel.mkn boot/loader.mkn boot/boot.mkn selfhost/lexer.mkn selfhost/parser.mkn selfhost/typecheck.mkn selfhost/irgen.mkn selfhost/cc_host.mkn $(grep -l '@取込' user/*.mkn); do
+        sh tools/kernel-expand.sh "$f" "$OUT/selfhost_cc_exp.mkn" >/dev/null 2>&1
+        "$BIN" "$OUT/selfhost_cc_exp.mkn" -ir -o "$OUT/selfhost_cc_ref.ll" 2>/dev/null; rc=$?
+        "$OUT/selfhost_cc_host" "$f" >"$OUT/selfhost_cc_got.ll" 2>/dev/null; rc2=$?
+        if [ $rc -eq 0 ] && [ $rc2 -eq 0 ] && cmp -s "$OUT/selfhost_cc_ref.ll" "$OUT/selfhost_cc_got.ll"; then SD_OK=$((SD_OK+1))
+        else SD_BAD=$((SD_BAD+1)); SD_BADLIST="$SD_BADLIST $f"; fi
+    done
+    if [ "$SD_BAD" -eq 0 ] && [ "$SD_OK" -ge 10 ]; then
+        pass "selfhost: 機械漢文のコンパイラ (selfhost/driver.mkn) が根のソースだけから取込を展開して、C++ 版と ${SD_OK} 個のプログラム (核・ローダー・行程・自分自身) で同じ IR を出す"
+    else
+        fail "selfhost: コンパイラの不一致 ${SD_BAD} 個 (${SD_OK} 個一致):$SD_BADLIST"
+    fi
+    "$OUT/selfhost_cc_host" selfhost/cc_host.mkn >"$OUT/selfhost_cc_gen2.ll" 2>/dev/null \
+      && "$CLANG" -Wno-override-module -x ir "$OUT/selfhost_cc_gen2.ll" -x c selfhost/host_cc.c -o "$OUT/selfhost_cc_gen2_host" >/dev/null 2>&1 \
+      && "$OUT/selfhost_cc_gen2_host" selfhost/cc_host.mkn >"$OUT/selfhost_cc_gen3.ll" 2>/dev/null
+    if cmp -s "$OUT/selfhost_cc.ll" "$OUT/selfhost_cc_gen2.ll" && cmp -s "$OUT/selfhost_cc_gen2.ll" "$OUT/selfhost_cc_gen3.ll"; then
+        pass "selfhost: 自己再構築の不動点 (C++ 版 → 第 2 世代 → 第 3 世代のコンパイラが作る自分自身の IR が全て同じ: $(wc -l <"$OUT/selfhost_cc_gen3.ll" | tr -d ' ') 行)"
+    else
+        fail "selfhost: 自己再構築の IR が世代で違う"
+    fi
+else
+    fail "selfhost: コンパイラ (駆動部) をビルド"
+    sed 's/^/      /' "$OUT/selfhost_cc.gen.log" "$OUT/selfhost_cc.cc.log" 2>/dev/null | head -10
+fi
+
 # --- type_error: 錯 E00xx must be reported --------------------------------
 "$BIN" tests/type_error.mkn -ir -o /dev/null >"$OUT/type_error.log" 2>&1 \
     && fail "type_error: unexpected success" || pass "type_error: rejected"
