@@ -1070,17 +1070,17 @@ if [ -f "$OUT/kernel.elf" ]; then
         P1_HDR="$(od -An -v -tx1 -j 32768 -N 4 "$PERSIST_IMG" | tr -s ' ' | sed 's/^ //; s/ $//')"
         P1_VER="$(od -An -v -tu4 -j 32772 -N 4 "$PERSIST_IMG" | tr -s ' ' | sed 's/^ //; s/ $//')"
         P1_TM_W="$(grep -a '^永試 時作 ' "$OUT/persist1.log" 2>/dev/null | head -1 | grep -oE '0x[0-9a-f]{16}')"
-        if persist_ok "$OUT/persist1.log" 'F:' && persist_ok "$OUT/persist1.log" 'W標:' && persist_ok "$OUT/persist1.log" 'W:' && [ "$P1_HDR" = "50 49 41 4e" ] && [ "$P1_VER" = "4" ]; then
+        if persist_ok "$OUT/persist1.log" 'F:' && persist_ok "$OUT/persist1.log" 'F録:' && persist_ok "$OUT/persist1.log" 'W標:' && persist_ok "$OUT/persist1.log" 'W:' && [ "$P1_HDR" = "50 49 41 4e" ] && [ "$P1_VER" = "4" ]; then
             pass "kernel qemu: 録層に 13 バイトと 6000 バイト (2 頁) のファイルを作り、篇同 で篇藏と録層の状態がスロット A のヘッダ (PIAN・版 4) としてディスクに届く"
         else
             fail "kernel qemu: 篇同 の書込み (ヘッダ='$P1_HDR' 版='$P1_VER')"
             grep -a '永試' "$OUT/persist1.log" 2>/dev/null | sed 's/^/      /' | head -8
         fi
-        pian_boot "$OUT/persist2.log" $'永試 R\n永試 S\n永試 G\n永試 O\n終\n'
+        pian_boot "$OUT/persist2.log" $'永試 R\n永試 S\n永試 T\n永試 G\n永試 O\n終\n'
         P2_HDR="$(od -An -v -tx1 -j 2689536 -N 4 "$PERSIST_IMG" | tr -s ' ' | sed 's/^ //; s/ $//')"
         P2_TM_W="$(grep -a '^永試 時作 ' "$OUT/persist2.log" 2>/dev/null | head -1 | grep -oE '0x[0-9a-f]{16}')"
         P2_TM_C="$(grep -a '^永試 時改 ' "$OUT/persist2.log" 2>/dev/null | head -1 | grep -oE '0x[0-9a-f]{16}')"
-        if persist_ok "$OUT/persist2.log" 'R:' && persist_ok "$OUT/persist2.log" 'S:' && grep -aq '篇戻 世代=0x0000000000000001' "$OUT/persist2.log" && persist_ok "$OUT/persist2.log" 'G:' && persist_ok "$OUT/persist2.log" 'O:' && [ "$P2_HDR" = "50 49 41 4e" ] && [ -n "$P1_TM_W" ] && [ "$P1_TM_W" = "$P2_TM_W" ] && [ -n "$P2_TM_C" ]; then
+        if persist_ok "$OUT/persist2.log" 'R:' && persist_ok "$OUT/persist2.log" 'S:' && persist_ok "$OUT/persist2.log" 'T:' && grep -aq '篇戻 世代=0x0000000000000001' "$OUT/persist2.log" && persist_ok "$OUT/persist2.log" 'G:' && persist_ok "$OUT/persist2.log" 'O:' && [ "$P2_HDR" = "50 49 41 4e" ] && [ -n "$P1_TM_W" ] && [ "$P1_TM_W" = "$P2_TM_W" ] && [ -n "$P2_TM_C" ]; then
             pass "kernel qemu: 再起動のあとスロット A (世代 1) から戻り、篇藏の内容・録層の 2 つのファイル・篇「永」の作時を読める。戻したあとに作った録層のファイルは新しい ID になる。開いたままの 篇同 はスロット B (世代 2) へ"
         else
             fail "kernel qemu: 再起動後の読み戻しとスロット B への書込み (ヘッダ='$P2_HDR' 作時='$P1_TM_W'/'$P2_TM_W')"
