@@ -168,6 +168,11 @@ sh tools/mkimage.sh user/time_cmd.mkn "$OUT/time_cmd.zo" "$OUT" 2>"$OUT/user_tim
         fail "user: 漢殻命令 時 を漢像にビルド"
         sed 's/^/      /' "$OUT/user_time_cmd.build.log" | head -10
     }
+sh tools/mkimage.sh user/tag_cmd.mkn "$OUT/tag_cmd.zo" "$OUT" 2>"$OUT/user_tag_cmd.build.log" \
+    && pass "user: 漢殻命令 標・索 (篇の標と検索) を漢像にビルド" || {
+        fail "user: 漢殻命令 標・索 を漢像にビルド"
+        sed 's/^/      /' "$OUT/user_tag_cmd.build.log" | head -10
+    }
 sh tools/mkimage.sh user/btron_msg.mkn "$OUT/btron_msg.zo" "$OUT" 2>"$OUT/user_btron_msg.build.log" \
     && pass "user: BTRON3 互換層の試験 信試 (メッセージ) を漢像にビルド" || {
         fail "user: BTRON3 互換層の試験 信試 を漢像にビルド"
@@ -258,7 +263,7 @@ sh tools/mkimage.sh user/btron_task.mkn "$OUT/btron_task.zo" "$OUT" 2>"$OUT/user
         fail "user: BTRON3 互換層の試験 副試 を漢像にビルド"
         sed 's/^/      /' "$OUT/user_btron_task.build.log" | head -10
     }
-sh tools/gen-images.sh "$OUT/kernel_images.S" 問安="$OUT/hello.zo" 數="$OUT/count.zo" 異常試="$OUT/fault.zo" 識試="$OUT/btron_gtid.zo" 名試="$OUT/btron_gname.zo" 時試="$OUT/btron_clk.zo" 時元試="$OUT/time_test.zo" 時="$OUT/time_cmd.zo" 信試="$OUT/btron_msg.zo" 利試="$OUT/btron_usr.zo" 強試="$OUT/btron_term.zo" 同試="$OUT/btron_sync.zo" 緩試="$OUT/btron_comm.zo" 録試="$OUT/btron_file.zo" 篇試="$OUT/pian_test.zo" 永試="$OUT/pian_persist.zo" 貯試="$OUT/btron_mem.zo" 件試="$OUT/btron_evt.zo" 設試="$OUT/btron_dev.zo" 系試="$OUT/btron_sys.zo" 例試="$OUT/btron_exc.zo" 信手試="$OUT/btron_msg_hdr.zo" 副試="$OUT/btron_task.zo" 実試="$OUT/btron_omgr.zo" 実作="$OUT/obj.zo" 仮置="$OUT/obj.zo" 実削="$OUT/obj.zo" 実目="$OUT/obj.zo" 実名="$OUT/obj.zo" objapp="$OUT/obj_app.zo" \
+sh tools/gen-images.sh "$OUT/kernel_images.S" 問安="$OUT/hello.zo" 數="$OUT/count.zo" 異常試="$OUT/fault.zo" 識試="$OUT/btron_gtid.zo" 名試="$OUT/btron_gname.zo" 時試="$OUT/btron_clk.zo" 時元試="$OUT/time_test.zo" 時="$OUT/time_cmd.zo" 信試="$OUT/btron_msg.zo" 利試="$OUT/btron_usr.zo" 強試="$OUT/btron_term.zo" 同試="$OUT/btron_sync.zo" 緩試="$OUT/btron_comm.zo" 録試="$OUT/btron_file.zo" 篇試="$OUT/pian_test.zo" 永試="$OUT/pian_persist.zo" 貯試="$OUT/btron_mem.zo" 件試="$OUT/btron_evt.zo" 設試="$OUT/btron_dev.zo" 系試="$OUT/btron_sys.zo" 例試="$OUT/btron_exc.zo" 信手試="$OUT/btron_msg_hdr.zo" 副試="$OUT/btron_task.zo" 実試="$OUT/btron_omgr.zo" 実作="$OUT/obj.zo" 仮置="$OUT/obj.zo" 実削="$OUT/obj.zo" 実目="$OUT/obj.zo" 実名="$OUT/obj.zo" objapp="$OUT/obj_app.zo" 標="$OUT/tag_cmd.zo" 索="$OUT/tag_cmd.zo" \
     && "$CLANG" --target=aarch64-none-elf -c "$OUT/kernel_images.S" -o "$OUT/kernel_images.o" \
         >"$OUT/kernel_images.log" 2>&1 \
     && pass "kernel: 漢像の埋め込み (像表)" || fail "kernel: 漢像の埋め込み (像表)"
@@ -1111,15 +1116,18 @@ if [ -f "$OUT/kernel.elf" ]; then
             tail -5 "$OUT/panic1.log" 2>/dev/null | sed 's/^/      /'
         fi
         # --- 漢殻の受入試験: 起動 → 診断 (助・在・目) → 異常な子 (保護違反・BRK) → 未知の命令・異常に長い行 → 殻が生きていて 終 で閉じる ----
-        pian_boot "$OUT/accept1.log" $'響 開始\n助\n在\n目\n異常試 w\n響 保護違反の後\n異常試 b\n響 BRKの後\n未知命令\n'"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"$'\n響 長い行の後\n異常試\n響 正常の後\n終\n'
+        pian_boot "$OUT/accept1.log" $'響 開始\n助\n在\n目\n標 天地/典/史記 色 青\n標 天地/典/史記 色\n索 天地/典 色\n索 天地/典 色 赤\n標 天地/典/史記 色 -\n標 天地/典/史記 色\n索 天地/典 色\n異常試 w\n響 保護違反の後\n異常試 b\n響 BRKの後\n未知命令\n'"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"$'\n響 長い行の後\n異常試\n響 正常の後\n終\n'
         sed -n '/^殻響:開始/,$p' "$OUT/accept1.log" >"$OUT/accept1.session.log"  # 核の自己試験の出力を除き、この試験の入力以降だけを見る
         ACC="$OUT/accept1.session.log"
         acc_line() { grep -an "$1" "$ACC" 2>/dev/null | head -1 | cut -d: -f1; }
         if [ -n "$(grep -ac '^殻起動' "$OUT/accept1.log")" ] && [ -n "$(acc_line '殻響:開始')" ] && [ -n "$(acc_line '^殻命令一覧')" ] \
+           && [ -n "$(acc_line '標 完')" ] && [ -n "$(acc_line '標 値:青')" ] && [ -n "$(acc_line '索:天地/典/史記')" ] \
+           && [ "$(grep -ac '^索:' "$ACC")" -eq 1 ] && [ "$(grep -ac '^索件 0x0000000000000000' "$ACC")" -eq 2 ] \
+           && [ "$(grep -ac '^標誤 0xfffffffffffffffe' "$ACC")" -eq 1 ] && [ "$(grep -ac '^標誤 ' "$ACC")" -eq 1 ] \
            && [ -n "$(acc_line '殻在:天地/典')" ] && [ -n "$(acc_line '^殻目:')" ] \
            && [ "$(grep -ac '^異常試 開始' "$ACC")" -eq 3 ] \
            && grep -aq '殻碼 0x00000000000000a4' "$ACC" && grep -aq '殻碼 0x00000000000000bc' "$ACC" \
-           && [ "$(grep -ac '^殻碼 ' "$ACC")" -eq 3 ] \
+           && [ "$(grep -ac '^殻碼 ' "$ACC")" -eq 4 ] \
            && [ "$(acc_line '殻響:保護違反の後')" -gt "$(acc_line '殻碼 0x00000000000000a4')" ] \
            && [ "$(acc_line '殻響:BRKの後')" -gt "$(acc_line '殻碼 0x00000000000000bc')" ] \
            && [ -n "$(acc_line '殻響:長い行の後')" ] && [ -n "$(acc_line '殻響:正常の後')" ] \
