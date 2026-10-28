@@ -661,11 +661,19 @@ if [ -f "$OUT/kernel.elf" ]; then
         else
             fail "kernel qemu: 頁不足の 生行程 (資不足=$(sp_val '資不足') 期待 0x1f)"
         fi
-        # 子の出力 = 検証 21 + 殻の 問安 1 + 篇試 が術のパスで起動する 問安 1 + 貯試 が起動する 3 役
-        if [ "${K_CH:-0}" -eq $((26 + EX_NUM + 1)) ]; then
-            pass "kernel qemu: 起動・回収を 20 回繰り返しても頁が漏れず、毎回子が走る (子の出力 $((26 + EX_NUM + 1)) 回 = 検証 21 + 殻 1 + 篇試 1 + 貯試 3 + 枯渇の試験 $((EX_NUM + 1)))"
+        # 長時間: 200 回の起動・回収がすべて成功し、頁が漏れず、識が単調に増えている
+        LT_OK="$(sp_val '長時間 成功')"; LT_PG="$(sp_val '長時間 頁残差')"; LT_ID="$(sp_val '長時間 識増')"
+        if [ "$LT_OK" = "$(printf '0x%016x' 200)" ] && [ "$LT_PG" = "0x0000000000000000" ] \
+                && [ -n "$LT_ID" ] && [ "$((LT_ID))" -gt 200 ]; then
+            pass "kernel qemu: 長時間 (起動・回収 200 回が全て成功、頁が漏れない、識は $((LT_ID)) まで増えた)"
         else
-            fail "kernel qemu: 起動・回収の繰り返し (子の出力=${K_CH:-0} 回、期待 $((26 + EX_NUM + 1)))"
+            fail "kernel qemu: 長時間 (成功=${LT_OK:-none} 頁残差=${LT_PG:-none} 識=${LT_ID:-none})"
+        fi
+        # 子の出力 = 検証 21 + 殻の 問安 1 + 篇試 が術のパスで起動する 問安 1 + 貯試 が起動する 3 役
+        if [ "${K_CH:-0}" -eq $((226 + EX_NUM + 1)) ]; then
+            pass "kernel qemu: 起動・回収を 20 回繰り返しても頁が漏れず、毎回子が走る (子の出力 $((226 + EX_NUM + 1)) 回 = 検証 21 + 長時間 200 + 殻 1 + 篇試 1 + 貯試 3 + 枯渇の試験 $((EX_NUM + 1)))"
+        else
+            fail "kernel qemu: 起動・回収の繰り返し (子の出力=${K_CH:-0} 回、期待 $((226 + EX_NUM + 1)))"
         fi
         # --- M5/P2: 殻が外部命令を起動する (引数 argc/argv と柄の継承) ----------------
         if grep -aq '^子行程起動 日月' "$KLOG" 2>/dev/null; then
