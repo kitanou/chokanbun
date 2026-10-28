@@ -1117,6 +1117,37 @@ if [ -f "$OUT/kernel.elf" ]; then
             fail "kernel qemu: 両スロットが使えないときの起動"
             grep -a '永試\|篇戻' "$OUT/persist5.log" 2>/dev/null | sed 's/^/      /' | head -6
         fi
+        # --- Devicetree: x0 の DTB を解析して機器表を作る。RAM を 64 MiB に減らすと量が追従し、16 MiB では核が診断して止まる ----
+        fdt_boot() {  # $1 = ログ、$2 = QEMU の追加引数 (-m など)
+            rm -f "$1"
+            qemu-system-aarch64 -M virt,gic-version=2 -cpu cortex-a57 -nographic $2 \
+                -global virtio-mmio.force-legacy=false \
+                -serial "file:$1" -kernel "$OUT/kernel.elf" >"$OUT/fdt_qemu.console.log" 2>&1 &
+            local fq=$!
+            for _ in $(seq 1 40); do
+                grep -aq '甲得\|核恐慌' "$1" 2>/dev/null && break
+                sleep 0.25
+            done
+            kill "$fq" 2>/dev/null
+            wait "$fq" 2>/dev/null
+        }
+        fdt_boot "$OUT/fdt128.log" "-m 128M"
+        fdt_boot "$OUT/fdt64.log" "-m 64M"
+        fdt_boot "$OUT/fdt16.log" "-m 16M"
+        if grep -aq '^樹 有効 0x0000000000000001' "$OUT/fdt128.log" \
+           && grep -aq '^樹 記憶基 0x0000000040000000' "$OUT/fdt128.log" \
+           && grep -aq '^樹 記憶量 0x0000000008000000' "$OUT/fdt128.log" \
+           && grep -aq '^樹 串口 0x0000000009000000' "$OUT/fdt128.log" \
+           && grep -aq '^樹 割配 0x0000000008000000' "$OUT/fdt128.log" \
+           && grep -aq '^樹 時計 0x0000000009010000' "$OUT/fdt128.log" \
+           && grep -aq '^樹 盤 0x000000000a000000' "$OUT/fdt128.log" \
+           && grep -aq '^樹 記憶量 0x0000000004000000' "$OUT/fdt64.log" && grep -aq '日誌' "$OUT/fdt64.log" \
+           && grep -aq '^核恐慌 記憶不足' "$OUT/fdt16.log" && ! grep -aq '記憶管理有効' "$OUT/fdt16.log"; then
+            pass "kernel qemu: Devicetree を解析して RAM・UART・GIC・RTC・virtio の基底番地を得る (128 MiB と 64 MiB で量が追従し、16 MiB では 核恐慌 記憶不足)"
+        else
+            fail "kernel qemu: Devicetree の解析"
+            grep -a '^樹\|^核恐慌' "$OUT/fdt128.log" "$OUT/fdt64.log" "$OUT/fdt16.log" 2>/dev/null | sed 's/^/      /' | head -20
+        fi
         # --- #47 T4: RTC を 1970-01-01 に固定した起動。PL031 が 0 を返し、時計は無効になる ----
         RTC_IMG="$OUT/rtc_off_serial"
         rm -f "$RTC_IMG.in" "$RTC_IMG.out" "$OUT/rtc_off.log"

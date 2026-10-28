@@ -36,7 +36,7 @@
 - [x] 機械漢文ソースから生成したカーネルコードで「超漢文起動」を表示
 - [x] 例外ベクタ、例外処理、物理ページ割当の初段
 - [x] MMU、汎用タイマー、GICv2割込の初段
-- [ ] 固定メモリ配置を段階的に解消し、Devicetree情報を解析
+- [ ] 固定メモリ配置を段階的に解消し、Devicetree情報を解析（第 1 段階は完了: `kernel/proc/fdt.mkn` が x0 の DTB を MMU 前に解析し、RAM の基底・大きさ、UART・GIC・RTC・virtio の基底を機器表（0x40420100）へ写す。UART・GIC・RTC・virtio の読み書きは機器表を使う。RAM が 24 MiB 未満・基底が 0x40000000 以外なら `核恐慌 記憶不足` で止まる。DTB が無い・想定外なら従来の固定値で起動。残り: 核の内部表（0x403xxxxx）・頁池・リンカスクリプトの固定配置、`設頁表` の Device 塊、割込番号と virtio の複数枠の DTB 化）
 - [x] `組譯` の文字列を型付きの組込み（`mrs`/`msr`・バリア・`svc` など）へ分ける（段階 H。`系統讀`・`系統寫`・`記憶障壁`・`命令障壁`・`臺無效`・`資清`・`令清`・`待事象`・`漢令`・`異常令` を追加し、`kernel/proc/sysreg.mkn`・`kernel/kernel.mkn`・`user/btron_exc.mkn`・`kernel/boot.mkn`・`user/lib.mkn` の該当箇所を置換。[asm-inventory.md](asm-inventory.md) §4）
 - [x] レジスタ退避の框（`kernel/entry.mkn` の 288/256 バイト）を構造化して書けるようにする（型付き機械命令 `框存`・`框復`・`例外歸`。種は `el1`・`el1irq`・`el0`。[asm-inventory.md](asm-inventory.md) §4）
 - [x] 暫定アセンブリ依存を一覧化し、置換順序を定める（[asm-inventory.md](asm-inventory.md)）。`.S` は全て機械漢文の `組譯`（インライン asm）・型付き機械命令・`裸`・`齊`・`取址(術名)` に置き換え済み。`bl`/`cbz` の呼出し・分岐と裸の入口も型付き機械命令（`呼出`・`框移`・`框待`・`令止`・`棧置`・`永停`・`入民`）へ移し、ソースの `組譯` は試験用の `user/fault.mkn` の 1 か所だけになった

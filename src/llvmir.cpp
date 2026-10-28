@@ -890,8 +890,8 @@ std::string LLVMIRGen::genMachine(const ExprPtr& e) {
         case Expr::MachineOp::StackSet: {
             const std::string& s = e->asmText;
             if (s[0] >= '0' && s[0] <= '9')
-                return callVoid("mov x0, #" + s + "\nmov sp, x0", "~{memory}");
-            return callVoid("adrp x0, " + s + "\nadd x0, x0, :lo12:" + s + "\nmov sp, x0", "~{memory}");
+                return callVoid("mov x16, #" + s + "\nmov sp, x16", "~{memory}");
+            return callVoid("adrp x16, " + s + "\nadd x16, x16, :lo12:" + s + "\nmov sp, x16", "~{memory}");
         }
 
         case Expr::MachineOp::SvcHalt: {
