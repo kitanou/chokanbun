@@ -1110,6 +1110,26 @@ if [ -f "$OUT/kernel.elf" ]; then
             fail "kernel qemu: init 終了の panic"
             tail -5 "$OUT/panic1.log" 2>/dev/null | sed 's/^/      /'
         fi
+        # --- 漢殻の受入試験: 起動 → 診断 (助・在・目) → 異常な子 (保護違反・BRK) → 未知の命令・異常に長い行 → 殻が生きていて 終 で閉じる ----
+        pian_boot "$OUT/accept1.log" $'響 開始\n助\n在\n目\n異常試 w\n響 保護違反の後\n異常試 b\n響 BRKの後\n未知命令\n'"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"$'\n響 長い行の後\n異常試\n響 正常の後\n終\n'
+        sed -n '/^殻響:開始/,$p' "$OUT/accept1.log" >"$OUT/accept1.session.log"  # 核の自己試験の出力を除き、この試験の入力以降だけを見る
+        ACC="$OUT/accept1.session.log"
+        acc_line() { grep -an "$1" "$ACC" 2>/dev/null | head -1 | cut -d: -f1; }
+        if [ -n "$(grep -ac '^殻起動' "$OUT/accept1.log")" ] && [ -n "$(acc_line '殻響:開始')" ] && [ -n "$(acc_line '^殻命令一覧')" ] \
+           && [ -n "$(acc_line '殻在:天地/典')" ] && [ -n "$(acc_line '^殻目:')" ] \
+           && [ "$(grep -ac '^異常試 開始' "$ACC")" -eq 3 ] \
+           && grep -aq '殻碼 0x00000000000000a4' "$ACC" && grep -aq '殻碼 0x00000000000000bc' "$ACC" \
+           && [ "$(grep -ac '^殻碼 ' "$ACC")" -eq 3 ] \
+           && [ "$(acc_line '殻響:保護違反の後')" -gt "$(acc_line '殻碼 0x00000000000000a4')" ] \
+           && [ "$(acc_line '殻響:BRKの後')" -gt "$(acc_line '殻碼 0x00000000000000bc')" ] \
+           && [ -n "$(acc_line '殻響:長い行の後')" ] && [ -n "$(acc_line '殻響:正常の後')" ] \
+           && [ "$(grep -ac '^殻不明' "$ACC")" -ge 2 ] \
+           && [ -n "$(acc_line '^殻終')" ] && ! grep -aq '核恐慌\|異常 ESR=.*殻' "$ACC"; then
+            pass "kernel qemu: 漢殻の受入 (起動・助/在/目の診断・保護違反と BRK の子を殻が回収して続行・未知の命令と 400 字の行に耐え・終で閉じる)"
+        else
+            fail "kernel qemu: 漢殻の受入試験"
+            grep -a '^殻\|^異常' "$ACC" 2>/dev/null | cut -c1-80 | sed 's/^/      /' | head -30
+        fi
         pian_boot "$OUT/persist5.log" $'永試 N\n永試 M\n終\n'
         if persist_ok "$OUT/persist5.log" 'N:' && persist_ok "$OUT/persist5.log" 'M:' && ! grep -aq '篇戻' "$OUT/persist5.log"; then
             pass "kernel qemu: どのスロットも使えないときは初期化した状態で起動する (篇「永」も録層の pmem も無い)"
