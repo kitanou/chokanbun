@@ -173,6 +173,11 @@ sh tools/mkimage.sh user/tag_cmd.mkn "$OUT/tag_cmd.zo" "$OUT" 2>"$OUT/user_tag_c
         fail "user: 漢殻命令 標・索 を漢像にビルド"
         sed 's/^/      /' "$OUT/user_tag_cmd.build.log" | head -10
     }
+sh tools/mkimage.sh user/stress.mkn "$OUT/stress.zo" "$OUT" 2>"$OUT/user_stress.build.log" \
+    && pass "user: 競合のストレス試験 競試 を漢像にビルド" || {
+        fail "user: 競合のストレス試験 競試 を漢像にビルド"
+        sed 's/^/      /' "$OUT/user_stress.build.log" "$OUT/user_stress.gen.log" 2>/dev/null | head -10
+    }
 sh tools/mkimage.sh user/btron_msg.mkn "$OUT/btron_msg.zo" "$OUT" 2>"$OUT/user_btron_msg.build.log" \
     && pass "user: BTRON3 互換層の試験 信試 (メッセージ) を漢像にビルド" || {
         fail "user: BTRON3 互換層の試験 信試 を漢像にビルド"
@@ -263,7 +268,7 @@ sh tools/mkimage.sh user/btron_task.mkn "$OUT/btron_task.zo" "$OUT" 2>"$OUT/user
         fail "user: BTRON3 互換層の試験 副試 を漢像にビルド"
         sed 's/^/      /' "$OUT/user_btron_task.build.log" | head -10
     }
-sh tools/gen-images.sh "$OUT/kernel_images.S" 問安="$OUT/hello.zo" 數="$OUT/count.zo" 異常試="$OUT/fault.zo" 識試="$OUT/btron_gtid.zo" 名試="$OUT/btron_gname.zo" 時試="$OUT/btron_clk.zo" 時元試="$OUT/time_test.zo" 時="$OUT/time_cmd.zo" 信試="$OUT/btron_msg.zo" 利試="$OUT/btron_usr.zo" 強試="$OUT/btron_term.zo" 同試="$OUT/btron_sync.zo" 緩試="$OUT/btron_comm.zo" 録試="$OUT/btron_file.zo" 篇試="$OUT/pian_test.zo" 永試="$OUT/pian_persist.zo" 貯試="$OUT/btron_mem.zo" 件試="$OUT/btron_evt.zo" 設試="$OUT/btron_dev.zo" 系試="$OUT/btron_sys.zo" 例試="$OUT/btron_exc.zo" 信手試="$OUT/btron_msg_hdr.zo" 副試="$OUT/btron_task.zo" 実試="$OUT/btron_omgr.zo" 実作="$OUT/obj.zo" 仮置="$OUT/obj.zo" 実削="$OUT/obj.zo" 実目="$OUT/obj.zo" 実名="$OUT/obj.zo" objapp="$OUT/obj_app.zo" 標="$OUT/tag_cmd.zo" 索="$OUT/tag_cmd.zo" \
+sh tools/gen-images.sh "$OUT/kernel_images.S" 問安="$OUT/hello.zo" 數="$OUT/count.zo" 異常試="$OUT/fault.zo" 識試="$OUT/btron_gtid.zo" 名試="$OUT/btron_gname.zo" 時試="$OUT/btron_clk.zo" 時元試="$OUT/time_test.zo" 時="$OUT/time_cmd.zo" 信試="$OUT/btron_msg.zo" 利試="$OUT/btron_usr.zo" 強試="$OUT/btron_term.zo" 同試="$OUT/btron_sync.zo" 緩試="$OUT/btron_comm.zo" 録試="$OUT/btron_file.zo" 篇試="$OUT/pian_test.zo" 永試="$OUT/pian_persist.zo" 貯試="$OUT/btron_mem.zo" 件試="$OUT/btron_evt.zo" 設試="$OUT/btron_dev.zo" 系試="$OUT/btron_sys.zo" 例試="$OUT/btron_exc.zo" 信手試="$OUT/btron_msg_hdr.zo" 副試="$OUT/btron_task.zo" 実試="$OUT/btron_omgr.zo" 実作="$OUT/obj.zo" 仮置="$OUT/obj.zo" 実削="$OUT/obj.zo" 実目="$OUT/obj.zo" 実名="$OUT/obj.zo" objapp="$OUT/obj_app.zo" 標="$OUT/tag_cmd.zo" 索="$OUT/tag_cmd.zo" 競試="$OUT/stress.zo" \
     && "$CLANG" --target=aarch64-none-elf -c "$OUT/kernel_images.S" -o "$OUT/kernel_images.o" \
         >"$OUT/kernel_images.log" 2>&1 \
     && pass "kernel: 漢像の埋め込み (像表)" || fail "kernel: 漢像の埋め込み (像表)"
@@ -1107,6 +1112,15 @@ if [ -f "$OUT/kernel.elf" ]; then
         # スロット A のヘッダと、スロット B の篇の表の区画 (スロット先頭の 2 区画目) も壊す → どちらも使えず、初期化した状態で起動する
         dd if=/dev/zero of="$PERSIST_IMG" bs=512 seek=64 count=1 conv=notrunc 2>/dev/null
         printf '\377\377\377\377' | dd of="$PERSIST_IMG" bs=1 seek=$((8410 * 512)) conv=notrunc 2>/dev/null
+        # --- 競合のストレス: 5 つの子が同時に篇藏 (作成・書込・標・索・読戻・削除) を 40 回ずつ使う。タイマーの横取りの中でも食い違いと頁の漏れが無い ----
+        pian_boot "$OUT/stress.log" $'競試\n終\n'
+        if grep -aq '^競試 失敗数 0x0000000000000000' "$OUT/stress.log" && grep -aq '^競試 頁差 0x0000000000000000' "$OUT/stress.log" \
+           && grep -aq '^競試 合格 0x0000000000000001' "$OUT/stress.log"; then
+            pass "kernel qemu: 競合のストレス (5 行程 × 40 回 × 2 巡の作成・書込・標・索・読戻・削除が全て一致し、2 巡目の前後で頁が漏れない)"
+        else
+            fail "kernel qemu: 競合のストレス"
+            grep -a '^競試\|^殻' "$OUT/stress.log" 2>/dev/null | cut -c1-80 | sed 's/^/      /' | tail -12
+        fi
         pian_boot "$OUT/panic1.log" $'異常試 k\n問安\n終\n'
         if grep -aq '^核恐慌 init終了' "$OUT/panic1.log" && ! grep -aq '殻終' "$OUT/panic1.log" \
            && [ "$(grep -ac '問安' "$OUT/panic1.log")" -le 1 ]; then
