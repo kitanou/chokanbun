@@ -188,6 +188,11 @@ sh tools/mkimage.sh user/ast_cmd.mkn "$OUT/ast_cmd.zo" "$OUT" 2>"$OUT/user_ast_c
         fail "user: セルフホストの構文解析器の命令 構文 を漢像にビルド"
         sed 's/^/      /' "$OUT/user_ast_cmd.build.log" "$OUT/user_ast_cmd.gen.log" 2>/dev/null | head -10
     }
+sh tools/mkimage.sh user/tc_cmd.mkn "$OUT/tc_cmd.zo" "$OUT" 2>"$OUT/user_tc_cmd.build.log" \
+    && pass "user: セルフホストの型検査器の命令 型検 を漢像にビルド" || {
+        fail "user: セルフホストの型検査器の命令 型検 を漢像にビルド"
+        sed 's/^/      /' "$OUT/user_tc_cmd.build.log" "$OUT/user_tc_cmd.gen.log" 2>/dev/null | head -10
+    }
 sh tools/mkimage.sh user/btron_msg.mkn "$OUT/btron_msg.zo" "$OUT" 2>"$OUT/user_btron_msg.build.log" \
     && pass "user: BTRON3 互換層の試験 信試 (メッセージ) を漢像にビルド" || {
         fail "user: BTRON3 互換層の試験 信試 を漢像にビルド"
@@ -278,7 +283,7 @@ sh tools/mkimage.sh user/btron_task.mkn "$OUT/btron_task.zo" "$OUT" 2>"$OUT/user
         fail "user: BTRON3 互換層の試験 副試 を漢像にビルド"
         sed 's/^/      /' "$OUT/user_btron_task.build.log" | head -10
     }
-sh tools/gen-images.sh "$OUT/kernel_images.S" 問安="$OUT/hello.zo" 數="$OUT/count.zo" 異常試="$OUT/fault.zo" 識試="$OUT/btron_gtid.zo" 名試="$OUT/btron_gname.zo" 時試="$OUT/btron_clk.zo" 時元試="$OUT/time_test.zo" 時="$OUT/time_cmd.zo" 信試="$OUT/btron_msg.zo" 利試="$OUT/btron_usr.zo" 強試="$OUT/btron_term.zo" 同試="$OUT/btron_sync.zo" 緩試="$OUT/btron_comm.zo" 録試="$OUT/btron_file.zo" 篇試="$OUT/pian_test.zo" 永試="$OUT/pian_persist.zo" 貯試="$OUT/btron_mem.zo" 件試="$OUT/btron_evt.zo" 設試="$OUT/btron_dev.zo" 系試="$OUT/btron_sys.zo" 例試="$OUT/btron_exc.zo" 信手試="$OUT/btron_msg_hdr.zo" 副試="$OUT/btron_task.zo" 実試="$OUT/btron_omgr.zo" 実作="$OUT/obj.zo" 仮置="$OUT/obj.zo" 実削="$OUT/obj.zo" 実目="$OUT/obj.zo" 実名="$OUT/obj.zo" objapp="$OUT/obj_app.zo" 標="$OUT/tag_cmd.zo" 索="$OUT/tag_cmd.zo" 競試="$OUT/stress.zo" 字句="$OUT/lex_cmd.zo" 構文="$OUT/ast_cmd.zo" \
+sh tools/gen-images.sh "$OUT/kernel_images.S" 問安="$OUT/hello.zo" 數="$OUT/count.zo" 異常試="$OUT/fault.zo" 識試="$OUT/btron_gtid.zo" 名試="$OUT/btron_gname.zo" 時試="$OUT/btron_clk.zo" 時元試="$OUT/time_test.zo" 時="$OUT/time_cmd.zo" 信試="$OUT/btron_msg.zo" 利試="$OUT/btron_usr.zo" 強試="$OUT/btron_term.zo" 同試="$OUT/btron_sync.zo" 緩試="$OUT/btron_comm.zo" 録試="$OUT/btron_file.zo" 篇試="$OUT/pian_test.zo" 永試="$OUT/pian_persist.zo" 貯試="$OUT/btron_mem.zo" 件試="$OUT/btron_evt.zo" 設試="$OUT/btron_dev.zo" 系試="$OUT/btron_sys.zo" 例試="$OUT/btron_exc.zo" 信手試="$OUT/btron_msg_hdr.zo" 副試="$OUT/btron_task.zo" 実試="$OUT/btron_omgr.zo" 実作="$OUT/obj.zo" 仮置="$OUT/obj.zo" 実削="$OUT/obj.zo" 実目="$OUT/obj.zo" 実名="$OUT/obj.zo" objapp="$OUT/obj_app.zo" 標="$OUT/tag_cmd.zo" 索="$OUT/tag_cmd.zo" 競試="$OUT/stress.zo" 字句="$OUT/lex_cmd.zo" 構文="$OUT/ast_cmd.zo" 型検="$OUT/tc_cmd.zo" \
     && "$CLANG" --target=aarch64-none-elf -c "$OUT/kernel_images.S" -o "$OUT/kernel_images.o" \
         >"$OUT/kernel_images.log" 2>&1 \
     && pass "kernel: 漢像の埋め込み (像表)" || fail "kernel: 漢像の埋め込み (像表)"
@@ -363,6 +368,40 @@ if sh tools/kernel-expand.sh selfhost/parser.mkn "$OUT/selfhost_parser_all.mkn" 
 else
     fail "selfhost: 構文解析器をビルド"
     sed 's/^/      /' "$OUT/selfhost_parser.gen.log" "$OUT/selfhost_parser.cc.log" 2>/dev/null | head -10
+fi
+
+# --- セルフホスト第 3 段: 機械漢文の型検査器 (selfhost/typecheck.mkn) が C++ 版 -check と同じ診断を出す --------------
+#     リポジトリの全ての .mkn と、取込を展開した全てのプログラム (核・行程・ローダー・セルフホスト自身) で比べる。
+#     診断の文字列・位置・順序が一致すること。字句・構文の誤りは両方とも失敗すればよい。
+if sh tools/kernel-expand.sh selfhost/typecheck.mkn "$OUT/selfhost_tc_all.mkn" \
+   && "$BIN" "$OUT/selfhost_tc_all.mkn" -ir -o "$OUT/selfhost_tc.ll" 2>"$OUT/selfhost_tc.gen.log" \
+   && "$CLANG" -Wno-override-module -x ir "$OUT/selfhost_tc.ll" -x c selfhost/host_tc.c -o "$OUT/selfhost_tc_host" \
+        >"$OUT/selfhost_tc.cc.log" 2>&1; then
+    rm -rf "$OUT/selfhost_tc_exp"; mkdir -p "$OUT/selfhost_tc_exp"
+    for f in $(grep -l '@取込' $(find tests boot kernel user selfhost -name '*.mkn' | sort)); do
+        sh tools/kernel-expand.sh "$f" "$OUT/selfhost_tc_exp/$(echo "$f" | tr '/' '_')" >/dev/null 2>&1
+    done
+    ST_OK=0; ST_BAD=0; ST_DIAG=0; ST_BADLIST=""
+    for f in $(find tests boot kernel user selfhost -name '*.mkn' | sort) "$OUT"/selfhost_tc_exp/*.mkn; do
+        "$BIN" "$f" -ast >/dev/null 2>&1; prc=$?
+        "$OUT/selfhost_tc_host" "$f" 2>"$OUT/selfhost_tc_got.txt"; rc2=$?
+        if [ $prc -ne 0 ]; then
+            if [ $rc2 -eq 2 ]; then ST_OK=$((ST_OK+1)); else ST_BAD=$((ST_BAD+1)); ST_BADLIST="$ST_BADLIST $f"; fi
+            continue
+        fi
+        "$BIN" "$f" -check 2>"$OUT/selfhost_tc_ref.txt"; rc=$?
+        if [ $rc -eq 1 ] && [ $rc2 -eq 1 ] && cmp -s "$OUT/selfhost_tc_ref.txt" "$OUT/selfhost_tc_got.txt"; then ST_OK=$((ST_OK+1)); ST_DIAG=$((ST_DIAG+1))
+        elif [ $rc -eq 0 ] && [ $rc2 -eq 0 ]; then ST_OK=$((ST_OK+1))
+        else ST_BAD=$((ST_BAD+1)); ST_BADLIST="$ST_BADLIST $f"; fi
+    done
+    if [ "$ST_BAD" -eq 0 ] && [ "$ST_DIAG" -ge 100 ]; then
+        pass "selfhost: 機械漢文の型検査器 (selfhost/typecheck.mkn) が C++ 版と ${ST_OK} 個のプログラムで同じ診断を出す (うち診断あり ${ST_DIAG} 個。核を含む展開後の全プログラムは誤り無し)"
+    else
+        fail "selfhost: 型検査器の不一致 ${ST_BAD} 個 (${ST_OK} 個一致、診断あり ${ST_DIAG} 個):$ST_BADLIST"
+    fi
+else
+    fail "selfhost: 型検査器をビルド"
+    sed 's/^/      /' "$OUT/selfhost_tc.gen.log" "$OUT/selfhost_tc.cc.log" 2>/dev/null | head -10
 fi
 
 # --- type_error: 錯 E00xx must be reported --------------------------------
@@ -1219,6 +1258,19 @@ if [ -f "$OUT/kernel.elf" ]; then
             fail "selfhost: OS 上の構文解析器の出力が C++ 版と違う"
             diff "$OUT/selfhost_os_ast_ref.txt" "$OUT/selfhost_os_ast_got.txt" 2>&1 | head -8 | sed 's/^/      /'
             grep -a '構文' "$OUT/selfhost_os_ast.log" | head -3 | sed 's/^/      /'
+        fi
+        # --- セルフホスト: OS の上で動く機械漢文の型検査器 (型検) が、C++ 版 -check と同じ診断を出す ----
+        ST_SRC='術曰「試」 受「値」之無符六四 返 無符六四 設「和」之真偽 為 値 加 1 歸 和 終術'
+        printf '%s' "$ST_SRC" >"$OUT/selfhost_os_tc_src.mkn"
+        "$BIN" "$OUT/selfhost_os_tc_src.mkn" -check 2>"$OUT/selfhost_os_tc_ref.txt" >/dev/null
+        pian_boot "$OUT/selfhost_os_tc.log" $'書 源 '"$ST_SRC"$'\n型検 源\n終\n'
+        sed -n '/^殻> 型検 源/,/^殻> 終/p' "$OUT/selfhost_os_tc.log" | grep -a '^錯 ' >"$OUT/selfhost_os_tc_got.txt"
+        if [ -s "$OUT/selfhost_os_tc_ref.txt" ] && cmp -s "$OUT/selfhost_os_tc_ref.txt" "$OUT/selfhost_os_tc_got.txt"; then
+            pass "selfhost: OS の上で動く機械漢文の型検査器 (型検) が C++ 版 -check と同じ診断を出す ($(wc -l <"$OUT/selfhost_os_tc_ref.txt" | tr -d ' ') 件)"
+        else
+            fail "selfhost: OS 上の型検査器の出力が C++ 版と違う"
+            diff "$OUT/selfhost_os_tc_ref.txt" "$OUT/selfhost_os_tc_got.txt" 2>&1 | head -8 | sed 's/^/      /'
+            grep -a '型検' "$OUT/selfhost_os_tc.log" | head -3 | sed 's/^/      /'
         fi
         pian_boot "$OUT/panic1.log" $'異常試 k\n問安\n終\n'
         if grep -aq '^核恐慌 init終了' "$OUT/panic1.log" && ! grep -aq '殻終' "$OUT/panic1.log" \
