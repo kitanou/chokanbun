@@ -806,10 +806,10 @@ if [ -f "$OUT/kernel.elf" ]; then
         # --- 篇藏 F1〜F3 (#6): 篇ID・屬、章とパス、名替、權・志・器・術・法 ---------------
         PF_N="$(grep -ac '^篇試 ' "$KLOG" 2>/dev/null)"
         PF_BAD="$(grep -a '^篇試 ' "$KLOG" 2>/dev/null | grep -vc '0x0000000000000001$')"
-        if [ "${PF_N:-0}" -eq 28 ] && [ "${PF_BAD:-1}" -eq 0 ]; then
-            pass "kernel qemu: 篇藏 F1〜F3 (${PF_N} 項目)"
+        if [ "${PF_N:-0}" -eq 40 ] && [ "${PF_BAD:-1}" -eq 0 ]; then
+            pass "kernel qemu: 篇藏 F1〜F4 (標・索を含む ${PF_N} 項目)"
         else
-            fail "kernel qemu: 篇藏 F1〜F3 (項目=${PF_N:-0}/28、失敗=${PF_BAD:-?})"
+            fail "kernel qemu: 篇藏 F1〜F3 (項目=${PF_N:-0}/40、失敗=${PF_BAD:-?})"
             grep -a '^篇試 ' "$KLOG" 2>/dev/null | sed 's/^/      /'
         fi
         if grep -aq '^篇試器盤出力' "$KLOG" 2>/dev/null; then
