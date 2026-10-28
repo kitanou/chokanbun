@@ -178,6 +178,11 @@ sh tools/mkimage.sh user/stress.mkn "$OUT/stress.zo" "$OUT" 2>"$OUT/user_stress.
         fail "user: 競合のストレス試験 競試 を漢像にビルド"
         sed 's/^/      /' "$OUT/user_stress.build.log" "$OUT/user_stress.gen.log" 2>/dev/null | head -10
     }
+sh tools/mkimage.sh user/lex_cmd.mkn "$OUT/lex_cmd.zo" "$OUT" 2>"$OUT/user_lex_cmd.build.log" \
+    && pass "user: セルフホストの字句解析器の命令 字句 を漢像にビルド" || {
+        fail "user: セルフホストの字句解析器の命令 字句 を漢像にビルド"
+        sed 's/^/      /' "$OUT/user_lex_cmd.build.log" "$OUT/user_lex_cmd.gen.log" 2>/dev/null | head -10
+    }
 sh tools/mkimage.sh user/btron_msg.mkn "$OUT/btron_msg.zo" "$OUT" 2>"$OUT/user_btron_msg.build.log" \
     && pass "user: BTRON3 互換層の試験 信試 (メッセージ) を漢像にビルド" || {
         fail "user: BTRON3 互換層の試験 信試 を漢像にビルド"
@@ -268,7 +273,7 @@ sh tools/mkimage.sh user/btron_task.mkn "$OUT/btron_task.zo" "$OUT" 2>"$OUT/user
         fail "user: BTRON3 互換層の試験 副試 を漢像にビルド"
         sed 's/^/      /' "$OUT/user_btron_task.build.log" | head -10
     }
-sh tools/gen-images.sh "$OUT/kernel_images.S" 問安="$OUT/hello.zo" 數="$OUT/count.zo" 異常試="$OUT/fault.zo" 識試="$OUT/btron_gtid.zo" 名試="$OUT/btron_gname.zo" 時試="$OUT/btron_clk.zo" 時元試="$OUT/time_test.zo" 時="$OUT/time_cmd.zo" 信試="$OUT/btron_msg.zo" 利試="$OUT/btron_usr.zo" 強試="$OUT/btron_term.zo" 同試="$OUT/btron_sync.zo" 緩試="$OUT/btron_comm.zo" 録試="$OUT/btron_file.zo" 篇試="$OUT/pian_test.zo" 永試="$OUT/pian_persist.zo" 貯試="$OUT/btron_mem.zo" 件試="$OUT/btron_evt.zo" 設試="$OUT/btron_dev.zo" 系試="$OUT/btron_sys.zo" 例試="$OUT/btron_exc.zo" 信手試="$OUT/btron_msg_hdr.zo" 副試="$OUT/btron_task.zo" 実試="$OUT/btron_omgr.zo" 実作="$OUT/obj.zo" 仮置="$OUT/obj.zo" 実削="$OUT/obj.zo" 実目="$OUT/obj.zo" 実名="$OUT/obj.zo" objapp="$OUT/obj_app.zo" 標="$OUT/tag_cmd.zo" 索="$OUT/tag_cmd.zo" 競試="$OUT/stress.zo" \
+sh tools/gen-images.sh "$OUT/kernel_images.S" 問安="$OUT/hello.zo" 數="$OUT/count.zo" 異常試="$OUT/fault.zo" 識試="$OUT/btron_gtid.zo" 名試="$OUT/btron_gname.zo" 時試="$OUT/btron_clk.zo" 時元試="$OUT/time_test.zo" 時="$OUT/time_cmd.zo" 信試="$OUT/btron_msg.zo" 利試="$OUT/btron_usr.zo" 強試="$OUT/btron_term.zo" 同試="$OUT/btron_sync.zo" 緩試="$OUT/btron_comm.zo" 録試="$OUT/btron_file.zo" 篇試="$OUT/pian_test.zo" 永試="$OUT/pian_persist.zo" 貯試="$OUT/btron_mem.zo" 件試="$OUT/btron_evt.zo" 設試="$OUT/btron_dev.zo" 系試="$OUT/btron_sys.zo" 例試="$OUT/btron_exc.zo" 信手試="$OUT/btron_msg_hdr.zo" 副試="$OUT/btron_task.zo" 実試="$OUT/btron_omgr.zo" 実作="$OUT/obj.zo" 仮置="$OUT/obj.zo" 実削="$OUT/obj.zo" 実目="$OUT/obj.zo" 実名="$OUT/obj.zo" objapp="$OUT/obj_app.zo" 標="$OUT/tag_cmd.zo" 索="$OUT/tag_cmd.zo" 競試="$OUT/stress.zo" 字句="$OUT/lex_cmd.zo" \
     && "$CLANG" --target=aarch64-none-elf -c "$OUT/kernel_images.S" -o "$OUT/kernel_images.o" \
         >"$OUT/kernel_images.log" 2>&1 \
     && pass "kernel: 漢像の埋め込み (像表)" || fail "kernel: 漢像の埋め込み (像表)"
@@ -305,6 +310,30 @@ if [ -f "$OUT/kernel.elf" ] && python3 tools/mkkernelimg.py "$OUT/kernel.elf" "$
     pass "boot: 核のイメージ KBL1 を作る (tools/mkkernelimg.py: $(cat "$OUT/kernel.img.log"))"
 else
     fail "boot: 核のイメージ KBL1 を作る"
+fi
+
+# --- セルフホスト第 1 段: 機械漢文の字句解析器 (selfhost/lexer.mkn) が C++ 版 -tokens と同じ出力を出す --------------------
+#     機械漢文のコンパイラで作った IR をホストの clang で実行ファイルにし (入出力だけの selfhost/host_main.c を付ける)、
+#     リポジトリの全ての .mkn で比べる。字句の誤りは両方とも失敗すればよい。
+if "$BIN" selfhost/lexer.mkn -ir -o "$OUT/selfhost_lexer.ll" 2>"$OUT/selfhost_lexer.gen.log" \
+   && "$CLANG" -Wno-override-module -x ir "$OUT/selfhost_lexer.ll" -x c selfhost/host_main.c -o "$OUT/selfhost_lexer_host" \
+        >"$OUT/selfhost_lexer.cc.log" 2>&1; then
+    SH_OK=0; SH_BAD=0; SH_BADLIST=""
+    for f in $(find tests boot kernel user selfhost -name '*.mkn' | sort); do
+        "$BIN" "$f" -tokens >"$OUT/selfhost_ref.txt" 2>/dev/null; rc=$?
+        "$OUT/selfhost_lexer_host" "$f" >"$OUT/selfhost_got.txt" 2>/dev/null; rc2=$?
+        if [ $rc -eq 0 ] && [ $rc2 -eq 0 ] && cmp -s "$OUT/selfhost_ref.txt" "$OUT/selfhost_got.txt"; then SH_OK=$((SH_OK+1))
+        elif [ $rc -ne 0 ] && [ $rc2 -ne 0 ]; then SH_OK=$((SH_OK+1))
+        else SH_BAD=$((SH_BAD+1)); SH_BADLIST="$SH_BADLIST $f"; fi
+    done
+    if [ "$SH_BAD" -eq 0 ] && [ "$SH_OK" -ge 100 ]; then
+        pass "selfhost: 機械漢文の字句解析器 (selfhost/lexer.mkn) が C++ 版と ${SH_OK} 個の .mkn で同じトークン列を出す"
+    else
+        fail "selfhost: 字句解析器の不一致 ${SH_BAD} 個 (${SH_OK} 個一致):$SH_BADLIST"
+    fi
+else
+    fail "selfhost: 字句解析器をビルド"
+    sed 's/^/      /' "$OUT/selfhost_lexer.gen.log" "$OUT/selfhost_lexer.cc.log" 2>/dev/null | head -10
 fi
 
 # --- type_error: 錯 E00xx must be reported --------------------------------
@@ -1135,6 +1164,19 @@ if [ -f "$OUT/kernel.elf" ]; then
         else
             fail "kernel qemu: 競合のストレス"
             grep -a '^競試\|^殻' "$OUT/stress.log" 2>/dev/null | cut -c1-80 | sed 's/^/      /' | tail -12
+        fi
+        # --- セルフホスト: OS の上で動く機械漢文の字句解析器 (字句) が、C++ 版 -tokens と同じトークン列を出す ----
+        SH_SRC='常「引五」之有符六四 為 負 5 註 x'
+        printf '%s' "$SH_SRC" >"$OUT/selfhost_os_src.mkn"
+        "$BIN" "$OUT/selfhost_os_src.mkn" -tokens >"$OUT/selfhost_os_ref.txt" 2>/dev/null
+        pian_boot "$OUT/selfhost_os.log" $'書 源 '"$SH_SRC"$'\n字句 源\n終\n'
+        sed -n '/^殻> 字句 源/,/^殻> 終/p' "$OUT/selfhost_os.log" | grep -aE '^[0-9]+:[0-9]+ ' >"$OUT/selfhost_os_got.txt"
+        if [ -s "$OUT/selfhost_os_ref.txt" ] && cmp -s "$OUT/selfhost_os_ref.txt" "$OUT/selfhost_os_got.txt"; then
+            pass "selfhost: OS の上で動く機械漢文の字句解析器 (字句) が C++ 版 -tokens と同じトークン列を出す ($(wc -l <"$OUT/selfhost_os_ref.txt" | tr -d ' ') 行)"
+        else
+            fail "selfhost: OS 上の字句解析器の出力が C++ 版と違う"
+            diff "$OUT/selfhost_os_ref.txt" "$OUT/selfhost_os_got.txt" 2>&1 | head -8 | sed 's/^/      /'
+            grep -a '字句' "$OUT/selfhost_os.log" | head -3 | sed 's/^/      /'
         fi
         pian_boot "$OUT/panic1.log" $'異常試 k\n問安\n終\n'
         if grep -aq '^核恐慌 init終了' "$OUT/panic1.log" && ! grep -aq '殻終' "$OUT/panic1.log" \
