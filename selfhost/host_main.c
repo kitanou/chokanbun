@@ -19,7 +19,7 @@ int main(int argc, char **argv) {
     fclose(f);
     uint64_t cap = (uint64_t)n * 40 + 4096;
     char *out = malloc(cap);
-    uint64_t state[16] = {0};
+    uint64_t state[32] = {0};
     uint64_t r = lex_tokenize(state, src, (uint64_t)n, out, cap);
     if (r >= (UINT64_MAX - 1)) return 1;
     fwrite(out, 1, r, stdout);
