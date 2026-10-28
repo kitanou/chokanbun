@@ -1186,6 +1186,7 @@ if [ -f "$OUT/kernel.elf" ]; then
            && grep -aq '^樹 時計 0x0000000009010000' "$OUT/fdt128.log" \
            && grep -aq '^樹 盤 0x000000000a000000' "$OUT/fdt128.log" \
            && grep -aq '^樹 記憶量 0x0000000004000000' "$OUT/fdt64.log" && grep -aq '日誌' "$OUT/fdt64.log" \
+           && grep -aq '^樹 割込 0x000000000000001e' "$OUT/fdt128.log" && grep -aq '^樹 盤数 0x0000000000000020' "$OUT/fdt128.log" && grep -aq '^樹 盤幅 0x0000000000000200' "$OUT/fdt128.log" \
            && grep -aq '^樹 頁数 0x0000000000004000' "$OUT/fdt128.log" && grep -aq '^樹 頁末 0x0000000044800000' "$OUT/fdt128.log" \
            && grep -aq '^樹 頁数 0x0000000000003800' "$OUT/fdt64.log" \
            && grep -aq '^樹 頁数 0x0000000000001800' "$OUT/fdt32.log" && grep -aq '頁割当' "$OUT/fdt32.log" \
