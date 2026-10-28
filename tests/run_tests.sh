@@ -1197,6 +1197,15 @@ if [ -f "$OUT/kernel.elf" ]; then
             fail "kernel qemu: Devicetree の解析"
             grep -a '^樹\|^核恐慌' "$OUT/fdt128.log" "$OUT/fdt64.log" "$OUT/fdt16.log" 2>/dev/null | sed 's/^/      /' | head -20
         fi
+        # --- 差分書き込み: 塊 (4 KiB) ごとのハッシュで、変わった塊だけを書く。書いたスロットから再起動で戻れる ----
+        pian_boot "$OUT/diff1.log" $'永試 Y\n終\n'
+        pian_boot "$OUT/diff2.log" $'永試 Z\n終\n'
+        if persist_ok "$OUT/diff1.log" 'Y:' && persist_ok "$OUT/diff2.log" 'Z:' && grep -aq '篇戻 世代=' "$OUT/diff2.log"; then
+            pass "kernel qemu: 差分書き込み (初回は全塊、同じ状態の 3 回目は 0 塊、篇を 1 つ足した 4 回目は 8 塊以下。書いたスロットから再起動で戻る)"
+        else
+            fail "kernel qemu: 差分書き込み"
+            grep -a '永試\|篇戻' "$OUT/diff1.log" "$OUT/diff2.log" 2>/dev/null | cut -c1-120 | sed 's/^/      /' | head -10
+        fi
         # --- #47 T4: RTC を 1970-01-01 に固定した起動。PL031 が 0 を返し、時計は無効になる ----
         RTC_IMG="$OUT/rtc_off_serial"
         rm -f "$RTC_IMG.in" "$RTC_IMG.out" "$OUT/rtc_off.log"
