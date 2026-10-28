@@ -1214,7 +1214,12 @@ if "$LLC" -march=aarch64 -filetype=obj "$OUT/lang_machine.ll" -o "$OUT/lang_mach
     && grep -qE 'stp[[:space:]]+x28, x29, \[sp, #0xe0\]' "$OUT/lang_machine.dis" \
     && grep -qE 'str[[:space:]]+x2, \[sp, #0x110\]' "$OUT/lang_machine.dis" \
     && grep -qE 'msr[[:space:]]+SP_EL0, x2' "$OUT/lang_machine.dis" \
-    && grep -qE 'eret' "$OUT/lang_machine.dis"; then
+    && grep -qE 'eret' "$OUT/lang_machine.dis" \
+    && "$OBJDUMP" -dr "$OUT/lang_machine.o" >"$OUT/lang_machine.rel" 2>&1 \
+    && [ "$(grep -cE 'R_AARCH64_JUMP26[[:space:]]+vh_' "$OUT/lang_machine.rel")" -eq 16 ] \
+    && grep -qE '^[[:space:]]*0*280:[[:space:]]+R_AARCH64_JUMP26[[:space:]]+vh_irq$' "$OUT/lang_machine.rel" \
+    && grep -qE '^[[:space:]]*0*400:[[:space:]]+R_AARCH64_JUMP26[[:space:]]+vh_sync0$' "$OUT/lang_machine.rel" \
+    && grep -qE '^[[:space:]]*0*480:[[:space:]]+R_AARCH64_JUMP26[[:space:]]+vh_irq0$' "$OUT/lang_machine.rel"; then
     pass "lang ok: machine (型付き機械命令 -> AArch64 命令)"
 else
     fail "lang ok: machine (型付き機械命令 -> AArch64 命令)"

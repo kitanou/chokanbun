@@ -11,7 +11,7 @@
 註 各入口 (exception_handler・irq_handler・lower_*) は表の後ろの 裸 の関数で、表の項から b で飛ぶ。
 公開 裸 齊 2048 節「.vectors」 記號「_vectors」 術曰「向量」 返 無
     險
-        組譯〈無〉(『.p2align 7\nb exception_handler\n.p2align 7\nb exception_handler\n.p2align 7\nb exception_handler\n.p2align 7\nb exception_handler\n.p2align 7\nb exception_handler\n.p2align 7\nb irq_handler\n.p2align 7\nb exception_handler\n.p2align 7\nb exception_handler\n.p2align 7\nb lower_sync_handler\n.p2align 7\nb lower_irq_handler\n.p2align 7\nb exception_handler\n.p2align 7\nb exception_handler\n.p2align 7\nb exception_handler\n.p2align 7\nb exception_handler\n.p2align 7\nb exception_handler\n.p2align 7\nb exception_handler』, 『』)
+        向量表〈『exception_handler』, 『irq_handler』, 『lower_sync_handler』, 『lower_irq_handler』〉()
     終險
 終術
 

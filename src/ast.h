@@ -161,6 +161,7 @@ struct Expr {
         FrameSave,        // 框存〈『種』〉() -> sp を下げて汎用レジスタ等を框へ退避
         FrameRestore,     // 框復〈『種』〉() -> 框から復帰して sp を戻す (eret は含まない)
         ExceptionReturn,  // 例外歸() -> eret
+        VectorTable,      // 向量表〈『既定』,『核割込』,『下位同期』,『下位割込』〉() -> 16 項 × 0x80 の b 命令
     };
     MachineOp machineOp = MachineOp::SysRegRead;
     // FieldAccess

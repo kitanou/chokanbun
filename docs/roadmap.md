@@ -39,7 +39,7 @@
 - [ ] 固定メモリ配置を段階的に解消し、Devicetree情報を解析
 - [x] `組譯` の文字列を型付きの組込み（`mrs`/`msr`・バリア・`svc` など）へ分ける（段階 H。`系統讀`・`系統寫`・`記憶障壁`・`命令障壁`・`臺無效`・`資清`・`令清`・`待事象`・`漢令`・`異常令` を追加し、`kernel/proc/sysreg.mkn`・`kernel/kernel.mkn`・`user/btron_exc.mkn`・`kernel/boot.mkn`・`user/lib.mkn` の該当箇所を置換。[asm-inventory.md](asm-inventory.md) §4）
 - [x] レジスタ退避の框（`kernel/entry.mkn` の 288/256 バイト）を構造化して書けるようにする（型付き機械命令 `框存`・`框復`・`例外歸`。種は `el1`・`el1irq`・`el0`。[asm-inventory.md](asm-inventory.md) §4）
-- [x] 暫定アセンブリ依存を一覧化し、置換順序を定める（[asm-inventory.md](asm-inventory.md)）。`.S` は全て機械漢文の `組譯`（インライン asm）・型付き機械命令・`裸`・`齊`・`取址(術名)` に置き換え済み。残る `組譯` は 13 か所（例外ベクタと入口の呼出し・分岐、裸の入口）
+- [x] 暫定アセンブリ依存を一覧化し、置換順序を定める（[asm-inventory.md](asm-inventory.md)）。`.S` は全て機械漢文の `組譯`（インライン asm）・型付き機械命令・`裸`・`齊`・`取址(術名)` に置き換え済み。残る `組譯` は 12 か所（入口の呼出し・分岐、裸の入口。ベクタ表は `向量表`）
 
 ### F2 — 行程・記憶保護・漢令
 

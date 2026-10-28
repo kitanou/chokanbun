@@ -60,4 +60,9 @@
       (expr (例外歸))
     )
   )
+  (fn 「表試」 (params) (ret 無) public naked (align 2048) (section ".vectors") (symbol "vec_probe")
+    (unsafe
+      (expr (向量表 "vh_default,vh_irq,vh_sync0,vh_irq0"))
+    )
+  )
 )

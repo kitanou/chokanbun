@@ -230,7 +230,7 @@ private:
                 static const char* kNames[] = {
                     "系統讀", "系統寫", "記憶障壁", "命令障壁", "臺無效",
                     "資清", "令清", "待事象", "漢令", "異常令",
-                    "框存", "框復", "例外歸",
+                    "框存", "框復", "例外歸", "向量表",
                 };
                 out_ << "(" << kNames[static_cast<int>(e.machineOp)];
                 if (!e.asmText.empty()) out_ << " \"" << e.asmText << "\"";

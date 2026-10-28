@@ -866,6 +866,26 @@ std::string LLVMIRGen::genMachine(const ExprPtr& e) {
         case Expr::MachineOp::ExceptionReturn:
             return callVoid("eret", "~{memory}");
 
+        case Expr::MachineOp::VectorTable: {
+            // 16 項 × 0x80。項 5 = 現 EL・SPx の IRQ、項 8 = 下位 EL の同期、項 9 = 下位 EL の IRQ、他は既定。
+            std::vector<std::string> sym;
+            size_t from = 0;
+            for (;;) {
+                size_t c = e->asmText.find(',', from);
+                sym.push_back(e->asmText.substr(from, c == std::string::npos ? c : c - from));
+                if (c == std::string::npos) break;
+                from = c + 1;
+            }
+            if (sym.size() != 4) return "void ";
+            std::string text;
+            for (int i = 0; i < 16; i++) {
+                const std::string& target = i == 5 ? sym[1] : i == 8 ? sym[2] : i == 9 ? sym[3] : sym[0];
+                if (i > 0) text += "\n";
+                text += ".p2align 7\nb " + target;
+            }
+            return callVoid(text, "~{memory}");
+        }
+
         case Expr::MachineOp::Breakpoint: {
             uint64_t imm = e->args.empty() ? 0 : (e->args[0]->intValue & 0xFFFF);
             return callVoid("brk #" + std::to_string(imm), "~{memory}");

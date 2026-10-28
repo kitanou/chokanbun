@@ -709,6 +709,7 @@ TypePtr TypeChecker::checkMachine(const Expr& e) {
         case Expr::MachineOp::FrameSave:
         case Expr::MachineOp::FrameRestore:
         case Expr::MachineOp::ExceptionReturn:
+        case Expr::MachineOp::VectorTable:
             return ret(Type::Void());
 
         case Expr::MachineOp::DataCacheClean: {

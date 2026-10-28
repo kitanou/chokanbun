@@ -1135,6 +1135,33 @@ ExprPtr Parser::parsePrimary() {
         return e;
     }
 
+    // 向量表〈『既定』,『核割込』,『下位同期』,『下位割込』〉() -> ベクタ表 16 項
+    if (match(TokKind::XiangLiangBiao)) {
+        e->kind = Expr::Kind::Machine;
+        e->machineOp = Expr::MachineOp::VectorTable;
+        expect(TokKind::LeftAngle, "〈");
+        for (int i = 0; i < 4; i++) {
+            if (i > 0) expect(TokKind::Comma, ",");
+            std::string sym;
+            if (check(TokKind::StringLit)) {
+                sym = current().value;
+                advance();
+            } else {
+                error(current(), "E0008", "向量表 requires four handler symbol strings");
+                hasErrors_ = true;
+            }
+            if (!isMachineName(sym)) {
+                error(current(), "E0008", "invalid vector handler symbol: " + sym);
+                hasErrors_ = true;
+            }
+            e->asmText += (i > 0 ? "," : "") + sym;
+        }
+        expect(TokKind::RightAngle, "〉");
+        expect(TokKind::LeftParen, "(");
+        expect(TokKind::RightParen, ")");
+        return e;
+    }
+
     // 例外歸() -> eret
     if (match(TokKind::LiWaiGui)) {
         e->kind = Expr::Kind::Machine;

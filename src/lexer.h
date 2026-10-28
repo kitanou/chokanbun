@@ -91,6 +91,7 @@ enum class TokKind {
     KuangCun,     // 框存
     KuangFu,      // 框復
     LiWaiGui,     // 例外歸
+    XiangLiangBiao, // 向量表
     ChangDu,      // 長度
     Lan,          // 欄
     Xiang,        // 項
