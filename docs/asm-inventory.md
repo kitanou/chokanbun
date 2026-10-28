@@ -41,27 +41,8 @@
 
 ## 4. 残っているもの（アセンブリ文の数）
 
-`組譯` の呼び出し（= アセンブリ文字列）の数:
-
-| ファイル | 数 | 内容 |
-|---|---|---|
-| `kernel/entry.mkn` | 8 | `bl`/`cbz`/`b` の呼出し・分岐 5（例外・核割込・下位同期・下位割込・待機）、`enter_el0`・`例戻`・`信戻` 各 1。退避・復帰・`eret` は `框存`・`框復`・`例外歸` |
-| `kernel/boot.mkn` | 1 | 裸の `_start`（SP 設定・`kernel_early` 呼出・停止ループ） |
-| `user/lib.mkn` | 2 | 裸の `_start`（`user_main` 呼出・`終行程`）と `__task_exit_stub`（`ext_tsk`） |
-| `boot/boot.mkn` | 1 | Phase 0 スタブ（SP 設定・`main` 呼出・停止ループ） |
-| `kernel/proc/sysreg.mkn` | 0 | 型付き機械命令へ置換済み |
-| `kernel/kernel.mkn` | 0 | `漢令`・`異常令` へ置換済み |
-| `user/btron_exc.mkn` | 0 | `異常令` へ置換済み |
+`bl`/`cbz` の呼出し・分岐と裸の入口も型付き機械命令（`呼出`・`框移`・`框待`・`令止`・`棧置`・`永停`・`入民`。[language-spec.md](language-spec.md) §6）へ移した。
+カーネル・民ライブラリ・Phase 0 スタブの **`組譯` は 0 か所**。残るのは試験専用の `user/fault.mkn`（実行不可域への `br` で実行時保護を起こす 1 か所）だけである。
 
 - C の残り: `boot/uart.c`（参照用。`uart` 試験が使う）。アセンブリではないが、F9 の「手書き C の残存依存」で扱う。
-- 次に進めるなら、`bl`/`cbz` の呼出し・分岐を型付きにする。裸の入口は `置棧`・`記號址` のような組込みを足せば縮められる。
-- `組譯` はコンパイラが中身を検査しない。誤りはアセンブル時または実行時にしか分からない（逆アセンブルでの照合と QEMU 試験で補っている）。
-  型付き機械命令は、引数の型・レジスタ名の文字種・バリア領域・TLB 操作・即値の範囲をコンパイラが検査する。
-
-## 5. 実施の記録
-
-段階 A（`exc_store` → `八置`）、B（`取址` と `*_addr` の置換）、C（`sysreg.S`）、D（`svc_call`・`trigger_exception`）、E（`boot.S`）、G（`crt0.S` とヘッダ）、F（`vectors.S`・`el0.S`）の順で、各段階を `make test` 全件 PASS でコミットした。
-当初の計画は B → C → D → E → F → G だったが、最難の F を最後にして、途中で止まっても G までの成果が残るようにした。
-
-段階 H（2026-10-27）: 型付き機械命令をコンパイラへ追加し、`kernel/proc/sysreg.mkn`（13 文）、`kernel/kernel.mkn`（2 文）、`user/btron_exc.mkn`（1 文）、`kernel/boot.mkn`（2 文）、`user/lib.mkn`（1 文）を置換した。
-`make test` 全件 PASS。`tests/lang/ok/machine.mkn` が生成命令（`mrs`/`msr`/`dsb`/`isb`/`tlbi`/`dc`/`ic`/`wfi`/`svc`/`brk`）を逆アセンブルで照合する。
+- `組譯` 自体は言語に残す（コンパイラは中身を検査しない）。誤りはアセンブル時または実行時にしか分からないので、新しい用途は先に型付き命令にできないか検討する。
