@@ -1160,12 +1160,12 @@ if [ -f "$OUT/kernel.elf" ]; then
             fail "kernel qemu: 行程表 (不一致:$TBL_BAD)"
             grep -a '行程表' "$KLOG" 2>/dev/null | sed 's/^/      /'
         fi
-        # 注: 総数は、この実行で必ず virtio-blk を付けている (vda の環 2 ページが先に使われる) ことを前提にした 16382 (RAM 128 MiB: 動的頁域 64 MiB)。
+        # 注: 総数は、この実行で必ず virtio-blk を付けている (vda の環 2 ページが先に使われる) ことを前提にした 30718 (RAM 128 MiB: 動的頁域 120 MiB = 30720 ページ)。
         K_TOTAL="$(tbl_val '頁池 総')"
-        if [ "$K_TOTAL" = "$(printf '0x%016x' 16382)" ]; then
-            pass "kernel qemu: 頁池 64 MiB (RAM 128 MiB の動的頁域は上限の 16384 ページ = 空き + 行程の棧 2 ページ × 8 + vda の環 2 ページ。総数は vda の 2 ページを除く)"
+        if [ "$K_TOTAL" = "$(printf '0x%016x' 30718)" ]; then
+            pass "kernel qemu: 頁池 120 MiB (RAM 128 MiB の動的頁域は RAM の終わりまでの 30720 ページ = 空き + 行程の棧 2 ページ × 8 + vda の環 2 ページ。総数は vda の 2 ページを除く)"
         else
-            fail "kernel qemu: 頁池 64 MiB (総=${K_TOTAL:-none}、期待 0x3ffe)"
+            fail "kernel qemu: 頁池 120 MiB (総=${K_TOTAL:-none}、期待 0x77fe)"
             grep -a '頁池' "$KLOG" 2>/dev/null | sed 's/^/      /'
         fi
         # --- M5/P0: 柄表・開表 (行程ごとの柄、開くたびに独立した位置) ---------------
@@ -1365,12 +1365,13 @@ if [ -f "$OUT/kernel.elf" ]; then
             diff "$OUT/selfhost_os_cc_ref.ll" "$OUT/selfhost_os_cc_got.ll" 2>&1 | head -8 | sed 's/^/      /'
             grep -a '機譯' "$OUT/selfhost_os_cc.log" | head -3 | sed 's/^/      /'
         fi
-        # --- 広域 (漢令 123): 民の窓に収まらない作業域が要る大きなソース (関数 150 個、約 25 KiB。作業域は約 3 MiB) を OS の上で IR にする ----
-        python3 -I - "$OUT/selfhost_os_big.mkn" 150 <<'PYEOF'
+        # --- 広域 (漢令 123): 民の窓 (2 MiB) に収まらない作業域が要る大きなソースを OS の上で IR にする ----
+        #     関数 1200 個・約 220 KB を 4 つの篇 (部0〜部3。1 つの篇は 64 KiB まで) に作り、根の篇の「註 @取込」で束ねる。作業域は約 5 MiB。
+        python3 -I - "$OUT/selfhost_os_big.mkn" 4 300 <<'PYEOF'
 import sys
-out, n = sys.argv[1], int(sys.argv[2])
+out, parts, per = sys.argv[1], int(sys.argv[2]), int(sys.argv[3])
 with open(out, 'w', encoding='utf-8') as f:
-    for i in range(n):
+    for i in range(parts * per):
         f.write("術曰「f%d」 受「値」之無符六四 返 無符六四\n    設「和」之無符六四 為 (値 加 %d) 乘 2\n    若 和 大於 3 則\n        歸 和\n    終若\n    歸 0\n終術\n" % (i, i))
 PYEOF
         "$BIN" "$OUT/selfhost_os_big.mkn" -ir -o "$OUT/selfhost_os_big.ll" 2>/dev/null
@@ -1384,15 +1385,14 @@ print("%d 0x%016x %d" % (len(d), h, len(open(sys.argv[2], 'rb').read())))
 PYEOF
 )"
         BIG_LEN="${BIG_EXPECT%% *}"; BIG_REST="${BIG_EXPECT#* }"; BIG_HASH="${BIG_REST%% *}"; BIG_SRC="${BIG_REST#* }"
-        PIAN_TRIES=1200 pian_boot "$OUT/selfhost_os_big.log" $'源増 大源 150\n機譯 -s 大源\n書 小 術曰「甲」 返 無 終術\n機譯 -s 小\n機譯 -s 小\n機譯 -s 小\n終\n'
-        if grep -aq "^源増 長 0x0*$(printf '%x' "$BIG_SRC")\$" "$OUT/selfhost_os_big.log" \
-           && grep -aq "^機譯 長 0x0*$(printf '%x' "$BIG_LEN")\$" "$OUT/selfhost_os_big.log" \
+        PIAN_TRIES=2400 pian_boot "$OUT/selfhost_os_big.log" $'源増 部0 300 0\n源増 部1 300 300\n源増 部2 300 600\n源増 部3 300 900\n源増 b 天地/典/大根 4\n機譯 -s 天地/典/大根\n書 小 術曰「甲」 返 無 終術\n機譯 -s 小\n機譯 -s 小\n機譯 -s 小\n終\n'
+        if grep -aq "^機譯 長 0x0*$(printf '%x' "$BIG_LEN")\$" "$OUT/selfhost_os_big.log" \
            && grep -aq "^ 雑 0x0*${BIG_HASH#0x}\$" "$OUT/selfhost_os_big.log" \
            && [ "$(grep -ac '^機譯 長 0x0*[0-9a-f]*$' "$OUT/selfhost_os_big.log")" -ge 4 ]; then
-            pass "selfhost: 広域 (漢令 123) で民の窓に収まらない作業域を取り、OS の上のコンパイラ (機譯) が ${BIG_SRC} バイトのソースから ${BIG_LEN} バイトの IR を C++ 版と同じ雑値で作る"
+            pass "selfhost: 広域 (漢令 123) で民の窓に収まらない作業域を取り、OS の上のコンパイラ (機譯) が 4 つの篇に分けた ${BIG_SRC} バイトのソースを取込で束ねて ${BIG_LEN} バイトの IR にし、C++ 版と同じ雑値になる。行程の終了で広域は頁池へ戻り、続けて 3 回取り直せる"
         else
             fail "selfhost: OS 上で大きなソースの IR が C++ 版と違う、または作れない (期待: 源 ${BIG_SRC} 長 ${BIG_LEN} 雑 ${BIG_HASH})"
-            grep -a '源増\|機譯\|殻誤\|核恐慌' "$OUT/selfhost_os_big.log" | head -6 | sed 's/^/      /'
+            grep -a '源増\|機譯\|殻誤\|核恐慌' "$OUT/selfhost_os_big.log" | head -8 | sed 's/^/      /'
         fi
         pian_boot "$OUT/panic1.log" $'異常試 k\n問安\n終\n'
         if grep -aq '^核恐慌 init終了' "$OUT/panic1.log" && ! grep -aq '殻終' "$OUT/panic1.log" \
@@ -1461,14 +1461,14 @@ PYEOF
            && grep -aq '^樹 盤 0x000000000a000000' "$OUT/fdt128.log" \
            && grep -aq '^樹 記憶量 0x0000000004000000' "$OUT/fdt64.log" && grep -aq '日誌' "$OUT/fdt64.log" \
            && grep -aq '^樹 割込 0x000000000000001e' "$OUT/fdt128.log" && grep -aq '^樹 盤数 0x0000000000000020' "$OUT/fdt128.log" && grep -aq '^樹 盤幅 0x0000000000000200' "$OUT/fdt128.log" \
-           && grep -aq '^樹 頁数 0x0000000000004000' "$OUT/fdt128.log" && grep -aq '^樹 頁末 0x0000000044800000' "$OUT/fdt128.log" \
+           && grep -aq '^樹 頁数 0x0000000000007800' "$OUT/fdt128.log" && grep -aq '^樹 頁末 0x0000000048000000' "$OUT/fdt128.log" \
            && grep -aq '^樹 頁数 0x0000000000003800' "$OUT/fdt64.log" \
            && grep -aq '^樹 頁数 0x0000000000001800' "$OUT/fdt32.log" && grep -aq '頁割当' "$OUT/fdt32.log" \
            && grep -aq '^樹 頁数 0x0000000000001000' "$OUT/fdt24.log" && grep -aq '頁割当' "$OUT/fdt24.log" \
            && grep -aq '^樹 EL 0x0000000000000001' "$OUT/fdt128.log" \
            && grep -aq '^樹 EL 0x0000000000000001' "$OUT/fdtel2.log" && grep -aq '記憶管理有効' "$OUT/fdtel2.log" && grep -aq '^樹 有効 0x0000000000000001' "$OUT/fdtel2.log" \
            && grep -aq '^核恐慌 記憶不足' "$OUT/fdt16.log" && ! grep -aq '記憶管理有効' "$OUT/fdt16.log"; then
-            pass "kernel qemu: Devicetree を解析して RAM・UART・GIC・RTC・virtio の基底番地を得る (RAM 128・64・32・24 MiB で動的頁域が 16384・14336・6144・4096 ページに追従して起動し、16 MiB では 核恐慌 記憶不足。EL2 で始まる起動 (virtualization=on) も EL1 へ降りて同じに起動する)"
+            pass "kernel qemu: Devicetree を解析して RAM・UART・GIC・RTC・virtio の基底番地を得る (RAM 128・64・32・24 MiB で動的頁域が 30720・14336・6144・4096 ページに追従して起動し、16 MiB では 核恐慌 記憶不足。EL2 で始まる起動 (virtualization=on) も EL1 へ降りて同じに起動する)"
         else
             fail "kernel qemu: Devicetree の解析"
             grep -a '^樹\|^核恐慌' "$OUT/fdt128.log" "$OUT/fdt64.log" "$OUT/fdt16.log" 2>/dev/null | sed 's/^/      /' | head -20
