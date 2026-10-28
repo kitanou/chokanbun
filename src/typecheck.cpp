@@ -219,6 +219,8 @@ TypePtr TypeChecker::checkExpr(const Expr& e) {
             return checkFence(e);
         case Expr::Kind::Asm:
             return checkAsm(e);
+        case Expr::Kind::Machine:
+            return checkMachine(e);
         case Expr::Kind::StrLen:
             return checkStrLen(e);
         case Expr::Kind::FieldAccess:
@@ -657,6 +659,118 @@ TypePtr TypeChecker::checkAsm(const Expr& e) {
     return t;
 }
 
+TypePtr TypeChecker::checkMachine(const Expr& e) {
+    // 型付き機械命令はすべて低水準操作なので 險 の中だけで使える (spec §6)。
+    if (unsafeDepth_ == 0) {
+        errorAt(e, "E0002", "machine instruction requires 險 block");
+    }
+
+    auto ret = [&](TypePtr t) {
+        exprTypes_[&e] = t;
+        return t;
+    };
+    auto checkValue = [&](const ExprPtr& a, const char* what) -> TypePtr {
+        if (!a) return nullptr;
+        TypePtr t = checkExpr(*a);
+        if (t && !(t->isInteger() || t->kind == Type::Kind::Pointer || t->kind == Type::Kind::Bool)) {
+            errorAt(*a, "E0001", std::string(what) + " must be an integer, got " + t->toString());
+        }
+        return t;
+    };
+
+    switch (e.machineOp) {
+        case Expr::MachineOp::SysRegRead:
+            return ret(Type::U64());
+
+        case Expr::MachineOp::SysRegWrite: {
+            if (e.args.size() != 1) {
+                errorAt(e, "E0001", "系統寫 takes exactly one operand");
+                return ret(Type::Void());
+            }
+            TypePtr vt = checkValue(e.args[0], "系統寫 operand");
+            if (e.asmText == "daifset" || e.asmText == "daifclr") {
+                // msr daifset/daifclr, #imm4 は即値のみ。
+                if (e.args[0]->kind != Expr::Kind::IntegerLit) {
+                    errorAt(*e.args[0], "E0001", e.asmText + " requires an integer literal");
+                } else if (e.args[0]->intValue > 15) {
+                    errorAt(*e.args[0], "E0001", e.asmText + " immediate must be 0..15");
+                }
+            } else if (vt && vt->isInteger()) {
+                coerceLiteral(e.args[0], Type::U64());
+            }
+            return ret(Type::Void());
+        }
+
+        case Expr::MachineOp::MemBarrier:
+        case Expr::MachineOp::InstrBarrier:
+        case Expr::MachineOp::TlbInvalidate:
+        case Expr::MachineOp::InstrCacheClean:
+        case Expr::MachineOp::WaitEvent:
+        case Expr::MachineOp::FrameSave:
+        case Expr::MachineOp::FrameRestore:
+        case Expr::MachineOp::ExceptionReturn:
+        case Expr::MachineOp::VectorTable:
+        case Expr::MachineOp::CallSym:
+        case Expr::MachineOp::FrameSwitch:
+        case Expr::MachineOp::FramePark:
+        case Expr::MachineOp::StackSet:
+        case Expr::MachineOp::HaltLoop:
+        case Expr::MachineOp::EnterUser:
+            return ret(Type::Void());
+
+        case Expr::MachineOp::SvcHalt: {
+            if (e.args.empty() || e.args.size() > 2) {
+                errorAt(e, "E0001", "令止 takes a call number and at most one argument");
+                return ret(Type::Void());
+            }
+            for (auto& a : e.args) {
+                checkValue(a, "令止 operand");
+                if (a->kind != Expr::Kind::IntegerLit)
+                    errorAt(*a, "E0001", "令止 requires integer literal operands");
+                else if (a->intValue > 0xFFFF)
+                    errorAt(*a, "E0001", "令止 operand must be 0..65535");
+            }
+            return ret(Type::Void());
+        }
+
+        case Expr::MachineOp::DataCacheClean: {
+            if (e.args.size() != 1) {
+                errorAt(e, "E0001", "資清 takes exactly one address");
+                return ret(Type::Void());
+            }
+            TypePtr at = checkValue(e.args[0], "資清 address");
+            if (at && at->isInteger()) coerceLiteral(e.args[0], Type::U64());
+            return ret(Type::Void());
+        }
+
+        case Expr::MachineOp::Syscall: {
+            if (e.args.empty() || e.args.size() > 7) {
+                errorAt(e, "E0001", "漢令 takes a call number and up to 6 arguments");
+            }
+            for (auto& a : e.args) {
+                TypePtr at = checkValue(a, "漢令 operand");
+                if (at && at->isInteger()) coerceLiteral(a, Type::U64());
+            }
+            return ret(Type::U64());
+        }
+
+        case Expr::MachineOp::Breakpoint: {
+            if (e.args.size() != 1) {
+                errorAt(e, "E0001", "異常令 takes exactly one immediate");
+                return ret(Type::Void());
+            }
+            checkValue(e.args[0], "異常令 immediate");
+            if (e.args[0]->kind != Expr::Kind::IntegerLit) {
+                errorAt(*e.args[0], "E0001", "異常令 requires an integer literal immediate");
+            } else if (e.args[0]->intValue > 0xFFFF) {
+                errorAt(*e.args[0], "E0001", "異常令 immediate must be 0..65535");
+            }
+            return ret(Type::Void());
+        }
+    }
+    return ret(Type::Void());
+}
+
 TypePtr TypeChecker::checkStrLen(const Expr& e) {
     if (!e.index) {
         auto t = Type::Void();
@@ -976,8 +1090,9 @@ void TypeChecker::checkFunction(const FunctionDecl& fn) {
         std::function<void(const std::vector<StmtPtr>&)> only = [&](const std::vector<StmtPtr>& b) {
             for (auto& st : b) {
                 if (st->kind == Stmt::Kind::UnsafeBlock) { only(st->unsafeBody); continue; }
-                if (st->kind == Stmt::Kind::ExprStmt && st->expr && st->expr->kind == Expr::Kind::Asm) continue;
-                error(st->line, st->col, "E0012", "naked function " + fn.name + " may contain only 組譯");
+                if (st->kind == Stmt::Kind::ExprStmt && st->expr &&
+                    (st->expr->kind == Expr::Kind::Asm || st->expr->kind == Expr::Kind::Machine)) continue;
+                error(st->line, st->col, "E0012", "naked function " + fn.name + " may contain only 組譯 or machine instructions");
             }
         };
         only(fn.body);

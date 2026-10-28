@@ -127,6 +127,11 @@ sh tools/mkimage.sh user/hello.mkn "$OUT/hello.zo" "$OUT" 2>"$OUT/user_hello.bui
         fail "user: 外部命令 問安 を漢像にビルド"
         sed 's/^/      /' "$OUT/user_hello.build.log" | head -10
     }
+sh tools/mkimage.sh user/fault.mkn "$OUT/fault.zo" "$OUT" 2>"$OUT/user_fault.build.log" \
+    && pass "user: 異常試 (保護違反・BRK で異常終了する外部命令) を漢像にビルド" || {
+        fail "user: 異常試 を漢像にビルド"
+        sed 's/^/      /' "$OUT/user_fault.build.log" | head -10
+    }
 sh tools/mkimage.sh user/count.mkn "$OUT/count.zo" "$OUT" 2>"$OUT/user_count.build.log" \
     && pass "user: 外部命令 數 を漢像にビルド" || {
         fail "user: 外部命令 數 を漢像にビルド"
@@ -162,6 +167,11 @@ sh tools/mkimage.sh user/time_cmd.mkn "$OUT/time_cmd.zo" "$OUT" 2>"$OUT/user_tim
     && pass "user: 漢殻命令 時 (現在日時・篇時刻) を漢像にビルド" || {
         fail "user: 漢殻命令 時 を漢像にビルド"
         sed 's/^/      /' "$OUT/user_time_cmd.build.log" | head -10
+    }
+sh tools/mkimage.sh user/tag_cmd.mkn "$OUT/tag_cmd.zo" "$OUT" 2>"$OUT/user_tag_cmd.build.log" \
+    && pass "user: 漢殻命令 標・索 (篇の標と検索) を漢像にビルド" || {
+        fail "user: 漢殻命令 標・索 を漢像にビルド"
+        sed 's/^/      /' "$OUT/user_tag_cmd.build.log" | head -10
     }
 sh tools/mkimage.sh user/btron_msg.mkn "$OUT/btron_msg.zo" "$OUT" 2>"$OUT/user_btron_msg.build.log" \
     && pass "user: BTRON3 互換層の試験 信試 (メッセージ) を漢像にビルド" || {
@@ -253,7 +263,7 @@ sh tools/mkimage.sh user/btron_task.mkn "$OUT/btron_task.zo" "$OUT" 2>"$OUT/user
         fail "user: BTRON3 互換層の試験 副試 を漢像にビルド"
         sed 's/^/      /' "$OUT/user_btron_task.build.log" | head -10
     }
-sh tools/gen-images.sh "$OUT/kernel_images.S" 問安="$OUT/hello.zo" 數="$OUT/count.zo" 識試="$OUT/btron_gtid.zo" 名試="$OUT/btron_gname.zo" 時試="$OUT/btron_clk.zo" 時元試="$OUT/time_test.zo" 時="$OUT/time_cmd.zo" 信試="$OUT/btron_msg.zo" 利試="$OUT/btron_usr.zo" 強試="$OUT/btron_term.zo" 同試="$OUT/btron_sync.zo" 緩試="$OUT/btron_comm.zo" 録試="$OUT/btron_file.zo" 篇試="$OUT/pian_test.zo" 永試="$OUT/pian_persist.zo" 貯試="$OUT/btron_mem.zo" 件試="$OUT/btron_evt.zo" 設試="$OUT/btron_dev.zo" 系試="$OUT/btron_sys.zo" 例試="$OUT/btron_exc.zo" 信手試="$OUT/btron_msg_hdr.zo" 副試="$OUT/btron_task.zo" 実試="$OUT/btron_omgr.zo" 実作="$OUT/obj.zo" 仮置="$OUT/obj.zo" 実削="$OUT/obj.zo" 実目="$OUT/obj.zo" 実名="$OUT/obj.zo" objapp="$OUT/obj_app.zo" \
+sh tools/gen-images.sh "$OUT/kernel_images.S" 問安="$OUT/hello.zo" 數="$OUT/count.zo" 異常試="$OUT/fault.zo" 識試="$OUT/btron_gtid.zo" 名試="$OUT/btron_gname.zo" 時試="$OUT/btron_clk.zo" 時元試="$OUT/time_test.zo" 時="$OUT/time_cmd.zo" 信試="$OUT/btron_msg.zo" 利試="$OUT/btron_usr.zo" 強試="$OUT/btron_term.zo" 同試="$OUT/btron_sync.zo" 緩試="$OUT/btron_comm.zo" 録試="$OUT/btron_file.zo" 篇試="$OUT/pian_test.zo" 永試="$OUT/pian_persist.zo" 貯試="$OUT/btron_mem.zo" 件試="$OUT/btron_evt.zo" 設試="$OUT/btron_dev.zo" 系試="$OUT/btron_sys.zo" 例試="$OUT/btron_exc.zo" 信手試="$OUT/btron_msg_hdr.zo" 副試="$OUT/btron_task.zo" 実試="$OUT/btron_omgr.zo" 実作="$OUT/obj.zo" 仮置="$OUT/obj.zo" 実削="$OUT/obj.zo" 実目="$OUT/obj.zo" 実名="$OUT/obj.zo" objapp="$OUT/obj_app.zo" 標="$OUT/tag_cmd.zo" 索="$OUT/tag_cmd.zo" \
     && "$CLANG" --target=aarch64-none-elf -c "$OUT/kernel_images.S" -o "$OUT/kernel_images.o" \
         >"$OUT/kernel_images.log" 2>&1 \
     && pass "kernel: 漢像の埋め込み (像表)" || fail "kernel: 漢像の埋め込み (像表)"
@@ -338,7 +348,7 @@ if [ -f "$OUT/kernel.elf" ]; then
         # Then feed 殻 (shell) commands once 甲 has read that line (M4).
         ( printf 'KANBUN\n' > "$PIPE.in"
           for _ in $(seq 1 60); do grep -q "甲得" "$KLOG" 2>/dev/null && break; sleep 0.25; done
-          printf '響 天下太平\n讀 史記\n怪\n讀 無題\n目\n書 筆記 天地玄黄\n讀 筆記\n書 一二三四五六七八九十壱 x\n書 筆記\n目\n削 筆記\n讀 筆記\n目\n削 筆記\n書 新稿 草\n目\n問安 日月\n數 一 二 三\n識試\n名試\n時試\n時元試\n時\n時 史記\n信試\n信手試\n利試\n強試\n同試\n緩試\n録試\n篇試\n貯試\n件試\n設試\n系試\n例試\n副試\n実試\n章 天地/家/殻章\n移 天地/家/殻章\n在\n書 甲 一二\n改 甲 乙\n讀 乙\n改 甲\n移 ..\n在\n移 天地/典/史記\n移 天地/典\n在\n存在せず 子\n\n終了\n   \n実作 oa\n実作 ob\n実作 abcdefghijklmnopqrst\n実作 abcdefghijklmnopqrstu\n実作 日本\n実作 a/b\n実目\n仮置 oa ob\n実目\n実削 oa\n実目\n実名 ob oc\n実目\n実削 oc\n実目\n助\n終\n響 再起\n終\n' > "$PIPE.in" ) &
+          printf '響 天下太平\n讀 史記\n怪\n讀 無題\n目\n書 筆記 天地玄黄\n讀 筆記\n書 一二三四五六七八九十壱 x\n書 筆記\n目\n削 筆記\n讀 筆記\n目\n削 筆記\n書 新稿 草\n目\n問安 日月\n數 一 二 三\n識試\n名試\n時試\n時元試\n時\n時 史記\n信試\n信手試\n利試\n強試\n同試\n緩試\n録試\n篇試\n貯試\n件試\n設試\n系試\n例試\n副試\n実試\n章 天地/家/殻章\n移 天地/家/殻章\n在\n書 甲 一二\n改 甲 乙\n讀 乙\n改 甲\n移 ..\n在\n移 天地/典/史記\n移 天地/典\n在\n存在せず 子\nabcdefghijklmnopq\n\n終了\n   \n実作 oa\n実作 ob\n実作 abcdefghijklmnopqrst\n実作 abcdefghijklmnopqrstu\n実作 日本\n実作 a/b\n実目\n仮置 oa ob\n実目\n実削 oa\n実目\n実名 ob oc\n実目\n実削 oc\n実目\n助\n終\n響 再起\n終\n' > "$PIPE.in" ) &
         FEEDPID=$!
         # Wait up to ~40s for the final marker, then stop QEMU.  The generic
         # timer fires five times (5 × CNTFRQ/40 ≈ 125 ms); the long parts are the
@@ -387,13 +397,13 @@ if [ -f "$OUT/kernel.elf" ]; then
         # --- M5/P0: 頁池 (ビットマップ) の割当・解放 ---------------------------
         pool_val() { grep -a "頁池 $1 " "$KLOG" 2>/dev/null | head -1 | grep -oE '0x[0-9a-f]{16}'; }
         POOL_BAD=""
-        for kv in 異頁=1 残減=1 解放=1 二重=0 範囲外=0 境界外=0 再利用=1 零埋=0 復元=1; do
+        for kv in 異頁=1 残減=1 解放=1 二重=0 範囲外=0 境界外=0 再利用=1 零埋=0 復元=1 枯渇数=1 枯渇零=1 枯渇復元=1; do
             k="${kv%%=*}"; want="$(printf '0x%016x' "${kv##*=}")"
             got="$(pool_val "$k")"
             [ "$got" = "$want" ] || POOL_BAD="$POOL_BAD $k(want=$want got=${got:-none})"
         done
         if [ -z "$POOL_BAD" ]; then
-            pass "kernel qemu: 頁池 割当・解放・二重解放・範囲外・再利用・ゼロ埋め・空き数の復元"
+            pass "kernel qemu: 頁池 割当・解放・二重解放・範囲外・再利用・ゼロ埋め・空き数の復元・枯渇 (全頁を取り切って 0 が返り、全部放して復元)"
         else
             fail "kernel qemu: 頁池 (不一致:$POOL_BAD)"
             grep -a '頁池' "$KLOG" 2>/dev/null | sed 's/^/      /'
@@ -645,11 +655,45 @@ if [ -f "$OUT/kernel.elf" ]; then
             grep -a '子行程\|異常' "$KLOG" 2>/dev/null | sed 's/^/      /' | head
         fi
         K_CH="$(grep -ac '子行程起動' "$KLOG" 2>/dev/null)"
-        # 子の出力 = 検証 21 + 殻の 問安 1 + 篇試 が術のパスで起動する 問安 1 + 貯試 が起動する 3 役
-        if [ "${K_CH:-0}" -eq 26 ]; then
-            pass "kernel qemu: 起動・回収を 20 回繰り返しても頁が漏れず、毎回子が走る (子の出力 26 回 = 検証 21 + 殻 1 + 篇試 1 + 貯試 3)"
+        # 枠の枯渇: 待たずに起動し続けて行程表が満杯 (-EAGAIN)、全員を回収でき、回収後にまた起動できる
+        EX_N="$(sp_val '枯渇 起動数')"; EX_FULL="$(sp_val '枯渇 満杯')"; EX_REAP="$(sp_val '枯渇 回収')"; EX_RE="$(sp_val '枯渇 再起動')"
+        EX_NUM=$((EX_N))
+        if [ "$EX_FULL" = "0xfffffffffffffff5" ] && [ "$EX_NUM" -ge 1 ] && [ "$EX_NUM" -le 7 ] \
+                && [ "$EX_REAP" = "$EX_N" ] && [ "$EX_RE" = "0x0000000000000001" ]; then
+            pass "kernel qemu: 行程表の枯渇 (空き枠 ${EX_NUM} 個を使い切ると -EAGAIN、全員を回収し、回収後にまた起動できる)"
         else
-            fail "kernel qemu: 起動・回収の繰り返し (子の出力=${K_CH:-0} 回、期待 26)"
+            fail "kernel qemu: 行程表の枯渇 (起動数=${EX_N:-none} 満杯=${EX_FULL:-none} 回収=${EX_REAP:-none} 再起動=${EX_RE:-none})"
+            grep -a '^枯渇' "$KLOG" 2>/dev/null | sed 's/^/      /'
+        fi
+        # 頁が足りないとき (空き 0〜3 頁) の 生行程 は -ENOMEM で失敗し、頁が漏れず、全部放して空き数が戻る
+        if [ "$(sp_val '資不足')" = "0x000000000000001f" ]; then
+            pass "kernel qemu: 頁不足の 生行程 (空き 0〜3 頁で -ENOMEM、失敗後も頁が漏れず、全部放して空き数が戻る)"
+        else
+            fail "kernel qemu: 頁不足の 生行程 (資不足=$(sp_val '資不足') 期待 0x1f)"
+        fi
+        # 異常終了: 保護違反 (EC 36) と BRK (EC 60) は子だけを終え (128 + EC)、正常な子は 5 で終わり、親は走り続け、頁は漏れない
+        if [ "$(sp_val '異常終了 保護違反')" = "0x00000000000000a4" ] && [ "$(sp_val '異常終了 BRK')" = "0x00000000000000bc" ] \
+                && [ "$(sp_val '異常終了 正常')" = "0x0000000000000005" ] && [ "$(sp_val '異常終了 回収')" = "0x0000000000000003" ] \
+                && [ "$(sp_val '異常終了 頁残差')" = "0x0000000000000000" ] \
+                && [ "$(sp_val '異常終了 コード書込')" = "0x00000000000000a4" ] && [ "$(sp_val '異常終了 データ実行')" = "0x00000000000000a0" ]; then
+            pass "kernel qemu: 異常終了とメモリ保護 (核専用域への書込 → 164、自分のコードへの書込 → 164、データ域への飛び込み → 160、BRK → 188、正常 → 5。核は子だけを終え、親は走り続けて 3 つとも回収し、頁が漏れない)"
+        else
+            fail "kernel qemu: 異常終了 (保護違反=$(sp_val '異常終了 保護違反') BRK=$(sp_val '異常終了 BRK') 正常=$(sp_val '異常終了 正常') 回収=$(sp_val '異常終了 回収') 頁残差=$(sp_val '異常終了 頁残差'))"
+            grep -a '^異常終了\|民異常' "$KLOG" 2>/dev/null | sed 's/^/      /'
+        fi
+        # 長時間: 200 回の起動・回収がすべて成功し、頁が漏れず、識が単調に増えている
+        LT_OK="$(sp_val '長時間 成功')"; LT_PG="$(sp_val '長時間 頁残差')"; LT_ID="$(sp_val '長時間 識増')"
+        if [ "$LT_OK" = "$(printf '0x%016x' 200)" ] && [ "$LT_PG" = "0x0000000000000000" ] \
+                && [ -n "$LT_ID" ] && [ "$((LT_ID))" -gt 200 ]; then
+            pass "kernel qemu: 長時間 (起動・回収 200 回が全て成功、頁が漏れない、識は $((LT_ID)) まで増えた)"
+        else
+            fail "kernel qemu: 長時間 (成功=${LT_OK:-none} 頁残差=${LT_PG:-none} 識=${LT_ID:-none})"
+        fi
+        # 子の出力 = 検証 21 + 殻の 問安 1 + 篇試 が術のパスで起動する 問安 1 + 貯試 が起動する 3 役
+        if [ "${K_CH:-0}" -eq $((226 + EX_NUM + 1)) ]; then
+            pass "kernel qemu: 起動・回収を 20 回繰り返しても頁が漏れず、毎回子が走る (子の出力 $((226 + EX_NUM + 1)) 回 = 検証 21 + 長時間 200 + 殻 1 + 篇試 1 + 貯試 3 + 枯渇の試験 $((EX_NUM + 1)))"
+        else
+            fail "kernel qemu: 起動・回収の繰り返し (子の出力=${K_CH:-0} 回、期待 $((226 + EX_NUM + 1)))"
         fi
         # --- M5/P2: 殻が外部命令を起動する (引数 argc/argv と柄の継承) ----------------
         if grep -aq '^子行程起動 日月' "$KLOG" 2>/dev/null; then
@@ -767,10 +811,10 @@ if [ -f "$OUT/kernel.elf" ]; then
         # --- 篇藏 F1〜F3 (#6): 篇ID・屬、章とパス、名替、權・志・器・術・法 ---------------
         PF_N="$(grep -ac '^篇試 ' "$KLOG" 2>/dev/null)"
         PF_BAD="$(grep -a '^篇試 ' "$KLOG" 2>/dev/null | grep -vc '0x0000000000000001$')"
-        if [ "${PF_N:-0}" -eq 28 ] && [ "${PF_BAD:-1}" -eq 0 ]; then
-            pass "kernel qemu: 篇藏 F1〜F3 (${PF_N} 項目)"
+        if [ "${PF_N:-0}" -eq 41 ] && [ "${PF_BAD:-1}" -eq 0 ]; then
+            pass "kernel qemu: 篇藏 F1〜F4 (標・索を含む ${PF_N} 項目)"
         else
-            fail "kernel qemu: 篇藏 F1〜F3 (項目=${PF_N:-0}/28、失敗=${PF_BAD:-?})"
+            fail "kernel qemu: 篇藏 F1〜F3 (項目=${PF_N:-0}/41、失敗=${PF_BAD:-?})"
             grep -a '^篇試 ' "$KLOG" 2>/dev/null | sed 's/^/      /'
         fi
         if grep -aq '^篇試器盤出力' "$KLOG" 2>/dev/null; then
@@ -881,10 +925,10 @@ if [ -f "$OUT/kernel.elf" ]; then
         fi
         K_UNK="$(grep -ac '殻不明' "$KLOG" 2>/dev/null)"
         K_SERR="$(grep -ac '^殻誤' "$KLOG" 2>/dev/null)"  # 空行・空白だけの行が 殻誤 を出さないこと (他の試験の 3 件だけ)
-        if [ "${K_UNK:-0}" -eq 3 ] && [ "${K_SERR:-0}" -eq 3 ]; then
-            pass "kernel qemu: 像の無い命令は 殻不明 (怪・存在せず 子・終了 の 3 件。空行と空白だけの行は何も出さず、終了 は 終 と取り違えて殻を終えない)"
+        if [ "${K_UNK:-0}" -eq 4 ] && [ "${K_SERR:-0}" -eq 3 ]; then
+            pass "kernel qemu: 像の無い命令は 殻不明 (怪・存在せず 子・17 バイトの長い名前・終了 の 4 件。空行と空白だけの行は何も出さず、終了 は 終 と取り違えて殻を終えない)"
         else
-            fail "kernel qemu: 像の無い命令は 殻不明 (件数=${K_UNK:-0}、期待 3。殻誤=${K_SERR:-0}、期待 3)"
+            fail "kernel qemu: 像の無い命令は 殻不明 (件数=${K_UNK:-0}、期待 4。殻誤=${K_SERR:-0}、期待 3)"
         fi
         # --- 実身・仮身の漢殻の命令 (docs/design-object-model.md V5): 実作・仮置・実削・実目・実名 -------
         OB_LAST="$(LC_ALL=C awk '/^実目 ID=0 /{buf=""} /^実目 /{buf=buf $0 "\n"} END{printf "%s", buf}' "$KLOG" 2>/dev/null)"
@@ -989,10 +1033,10 @@ if [ -f "$OUT/kernel.elf" ]; then
             sed 's/^/      /' "$KLOG" 2>/dev/null | head -20
         fi
         # --- 篇藏の永続化 (docs/design-persistence.md): 書いて 篇同 → 再起動 → 読める。壊れたスロットは使わない -------
-        # 同じディスクイメージ (10378 区画以上。12288 区画) で 5 回起動し、そのたびに殻へ命令を流して 殻終 を待つ。
+        # 同じディスクイメージ (16754 区画以上。20000 区画) で 5 回起動し、そのたびに殻へ命令を流して 殻終 を待つ。
         PERSIST_IMG="$OUT/persist.img"
         PERSIST_PIPE="$OUT/persist_serial"
-        dd if=/dev/zero of="$PERSIST_IMG" bs=512 count=12288 2>/dev/null
+        dd if=/dev/zero of="$PERSIST_IMG" bs=512 count=20000 2>/dev/null
         pian_boot() {  # $1 = ログ、$2 = 殻に流す命令 (改行区切り)
             local plog="$1" pcmds="$2" pq pc pf
             rm -f "$PERSIST_PIPE.in" "$PERSIST_PIPE.out" "$plog"
@@ -1010,7 +1054,7 @@ if [ -f "$OUT/kernel.elf" ]; then
               printf '%s' "$pcmds" > "$PERSIST_PIPE.in" ) &
             pf=$!
             for _ in $(seq 1 80); do
-                grep -q "殻終" "$plog" 2>/dev/null && break
+                grep -q "殻終\|核恐慌" "$plog" 2>/dev/null && break
                 sleep 0.5
             done
             kill "$pq" 2>/dev/null
@@ -1026,17 +1070,17 @@ if [ -f "$OUT/kernel.elf" ]; then
         P1_HDR="$(od -An -v -tx1 -j 32768 -N 4 "$PERSIST_IMG" | tr -s ' ' | sed 's/^ //; s/ $//')"
         P1_VER="$(od -An -v -tu4 -j 32772 -N 4 "$PERSIST_IMG" | tr -s ' ' | sed 's/^ //; s/ $//')"
         P1_TM_W="$(grep -a '^永試 時作 ' "$OUT/persist1.log" 2>/dev/null | head -1 | grep -oE '0x[0-9a-f]{16}')"
-        if persist_ok "$OUT/persist1.log" 'F:' && persist_ok "$OUT/persist1.log" 'W:' && [ "$P1_HDR" = "50 49 41 4e" ] && [ "$P1_VER" = "3" ]; then
-            pass "kernel qemu: 録層に 13 バイトと 6000 バイト (2 頁) のファイルを作り、篇同 で篇藏と録層の状態がスロット A のヘッダ (PIAN・版 3) としてディスクに届く"
+        if persist_ok "$OUT/persist1.log" 'F:' && persist_ok "$OUT/persist1.log" 'F録:' && persist_ok "$OUT/persist1.log" 'W標:' && persist_ok "$OUT/persist1.log" 'W大:' && persist_ok "$OUT/persist1.log" 'W:' && [ "$P1_HDR" = "50 49 41 4e" ] && [ "$P1_VER" = "5" ]; then
+            pass "kernel qemu: 録層に 13 バイトと 6000 バイト (2 頁) のファイルを作り、篇同 で篇藏と録層の状態がスロット A のヘッダ (PIAN・版 5) としてディスクに届く"
         else
             fail "kernel qemu: 篇同 の書込み (ヘッダ='$P1_HDR' 版='$P1_VER')"
             grep -a '永試' "$OUT/persist1.log" 2>/dev/null | sed 's/^/      /' | head -8
         fi
-        pian_boot "$OUT/persist2.log" $'永試 R\n永試 G\n永試 O\n終\n'
-        P2_HDR="$(od -An -v -tx1 -j 2673152 -N 4 "$PERSIST_IMG" | tr -s ' ' | sed 's/^ //; s/ $//')"
+        pian_boot "$OUT/persist2.log" $'永試 R\n永試 S\n永試 T\n永試 V\n永試 G\n永試 O\n終\n'
+        P2_HDR="$(od -An -v -tx1 -j 4305408 -N 4 "$PERSIST_IMG" | tr -s ' ' | sed 's/^ //; s/ $//')"
         P2_TM_W="$(grep -a '^永試 時作 ' "$OUT/persist2.log" 2>/dev/null | head -1 | grep -oE '0x[0-9a-f]{16}')"
         P2_TM_C="$(grep -a '^永試 時改 ' "$OUT/persist2.log" 2>/dev/null | head -1 | grep -oE '0x[0-9a-f]{16}')"
-        if persist_ok "$OUT/persist2.log" 'R:' && grep -aq '篇戻 世代=0x0000000000000001' "$OUT/persist2.log" && persist_ok "$OUT/persist2.log" 'G:' && persist_ok "$OUT/persist2.log" 'O:' && [ "$P2_HDR" = "50 49 41 4e" ] && [ -n "$P1_TM_W" ] && [ "$P1_TM_W" = "$P2_TM_W" ] && [ -n "$P2_TM_C" ]; then
+        if persist_ok "$OUT/persist2.log" 'R:' && persist_ok "$OUT/persist2.log" 'S:' && persist_ok "$OUT/persist2.log" 'T:' && persist_ok "$OUT/persist2.log" 'V:' && grep -aq '篇戻 世代=0x0000000000000001' "$OUT/persist2.log" && persist_ok "$OUT/persist2.log" 'G:' && persist_ok "$OUT/persist2.log" 'O:' && [ "$P2_HDR" = "50 49 41 4e" ] && [ -n "$P1_TM_W" ] && [ "$P1_TM_W" = "$P2_TM_W" ] && [ -n "$P2_TM_C" ]; then
             pass "kernel qemu: 再起動のあとスロット A (世代 1) から戻り、篇藏の内容・録層の 2 つのファイル・篇「永」の作時を読める。戻したあとに作った録層のファイルは新しい ID になる。開いたままの 篇同 はスロット B (世代 2) へ"
         else
             fail "kernel qemu: 再起動後の読み戻しとスロット B への書込み (ヘッダ='$P2_HDR' 作時='$P1_TM_W'/'$P2_TM_W')"
@@ -1052,7 +1096,7 @@ if [ -f "$OUT/kernel.elf" ]; then
         fi
         # 最新 (世代 3) のスロット A のヘッダは無傷のまま、録層の本体の区画 1 つ (最初のファイルの最初の区画) を壊す
         # → データのチェックサムが合わず、世代 2 のスロット B から戻る (録層の区画の破損も検出する)
-        printf '\377\377\377\377' | dd of="$PERSIST_IMG" bs=1 seek=$((1121 * 512)) conv=notrunc 2>/dev/null
+        printf '\377\377\377\377' | dd of="$PERSIST_IMG" bs=1 seek=$((4241 * 512)) conv=notrunc 2>/dev/null
         pian_boot "$OUT/persist4.log" $'永試 R\n永試 H\n終\n'
         if persist_ok "$OUT/persist4.log" 'R:' && persist_ok "$OUT/persist4.log" 'H:' && grep -aq '篇戻 世代=0x0000000000000002' "$OUT/persist4.log"; then
             pass "kernel qemu: ヘッダが無傷でも録層の区画が壊れた最新のスロット A は使わず、世代 2 のスロット B から戻る (データのチェックサム)"
@@ -1062,13 +1106,75 @@ if [ -f "$OUT/kernel.elf" ]; then
         fi
         # スロット A のヘッダと、スロット B の篇の表の区画 (スロット先頭の 2 区画目) も壊す → どちらも使えず、初期化した状態で起動する
         dd if=/dev/zero of="$PERSIST_IMG" bs=512 seek=64 count=1 conv=notrunc 2>/dev/null
-        printf '\377\377\377\377' | dd of="$PERSIST_IMG" bs=1 seek=$((5222 * 512)) conv=notrunc 2>/dev/null
+        printf '\377\377\377\377' | dd of="$PERSIST_IMG" bs=1 seek=$((8410 * 512)) conv=notrunc 2>/dev/null
+        pian_boot "$OUT/panic1.log" $'異常試 k\n問安\n終\n'
+        if grep -aq '^核恐慌 init終了' "$OUT/panic1.log" && ! grep -aq '殻終' "$OUT/panic1.log" \
+           && [ "$(grep -ac '問安' "$OUT/panic1.log")" -le 1 ]; then
+            pass "kernel qemu: init (殻行程) の終了で 核恐慌 init終了 を出して止まる (以後の命令は実行されない)"
+        else
+            fail "kernel qemu: init 終了の panic"
+            tail -5 "$OUT/panic1.log" 2>/dev/null | sed 's/^/      /'
+        fi
+        # --- 漢殻の受入試験: 起動 → 診断 (助・在・目) → 異常な子 (保護違反・BRK) → 未知の命令・異常に長い行 → 殻が生きていて 終 で閉じる ----
+        pian_boot "$OUT/accept1.log" $'響 開始\n助\n在\n目\n標 天地/典/史記 色 青\n標 天地/典/史記 色\n索 天地/典 色\n索 天地/典 色 赤\n標 天地/典/史記 色 -\n標 天地/典/史記 色\n索 天地/典 色\n異常試 w\n響 保護違反の後\n異常試 b\n響 BRKの後\n未知命令\n'"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"$'\n響 長い行の後\n異常試\n響 正常の後\n終\n'
+        sed -n '/^殻響:開始/,$p' "$OUT/accept1.log" >"$OUT/accept1.session.log"  # 核の自己試験の出力を除き、この試験の入力以降だけを見る
+        ACC="$OUT/accept1.session.log"
+        acc_line() { grep -an "$1" "$ACC" 2>/dev/null | head -1 | cut -d: -f1; }
+        if [ -n "$(grep -ac '^殻起動' "$OUT/accept1.log")" ] && [ -n "$(acc_line '殻響:開始')" ] && [ -n "$(acc_line '^殻命令一覧')" ] \
+           && [ -n "$(acc_line '標 完')" ] && [ -n "$(acc_line '標 値:青')" ] && [ -n "$(acc_line '索:天地/典/史記')" ] \
+           && [ "$(grep -ac '^索:' "$ACC")" -eq 1 ] && [ "$(grep -ac '^索件 0x0000000000000000' "$ACC")" -eq 2 ] \
+           && [ "$(grep -ac '^標誤 0xfffffffffffffffe' "$ACC")" -eq 1 ] && [ "$(grep -ac '^標誤 ' "$ACC")" -eq 1 ] \
+           && [ -n "$(acc_line '殻在:天地/典')" ] && [ -n "$(acc_line '^殻目:')" ] \
+           && [ "$(grep -ac '^異常試 開始' "$ACC")" -eq 3 ] \
+           && grep -aq '殻碼 0x00000000000000a4' "$ACC" && grep -aq '殻碼 0x00000000000000bc' "$ACC" \
+           && [ "$(grep -ac '^殻碼 ' "$ACC")" -eq 4 ] \
+           && [ "$(acc_line '殻響:保護違反の後')" -gt "$(acc_line '殻碼 0x00000000000000a4')" ] \
+           && [ "$(acc_line '殻響:BRKの後')" -gt "$(acc_line '殻碼 0x00000000000000bc')" ] \
+           && [ -n "$(acc_line '殻響:長い行の後')" ] && [ -n "$(acc_line '殻響:正常の後')" ] \
+           && [ "$(grep -ac '^殻不明' "$ACC")" -ge 2 ] \
+           && [ -n "$(acc_line '^殻終')" ] && ! grep -aq '核恐慌\|異常 ESR=.*殻' "$ACC"; then
+            pass "kernel qemu: 漢殻の受入 (起動・助/在/目の診断・保護違反と BRK の子を殻が回収して続行・未知の命令と 400 字の行に耐え・終で閉じる)"
+        else
+            fail "kernel qemu: 漢殻の受入試験"
+            grep -a '^殻\|^異常' "$ACC" 2>/dev/null | cut -c1-80 | sed 's/^/      /' | head -30
+        fi
         pian_boot "$OUT/persist5.log" $'永試 N\n永試 M\n終\n'
         if persist_ok "$OUT/persist5.log" 'N:' && persist_ok "$OUT/persist5.log" 'M:' && ! grep -aq '篇戻' "$OUT/persist5.log"; then
             pass "kernel qemu: どのスロットも使えないときは初期化した状態で起動する (篇「永」も録層の pmem も無い)"
         else
             fail "kernel qemu: 両スロットが使えないときの起動"
             grep -a '永試\|篇戻' "$OUT/persist5.log" 2>/dev/null | sed 's/^/      /' | head -6
+        fi
+        # --- Devicetree: x0 の DTB を解析して機器表を作る。RAM を 64 MiB に減らすと量が追従し、16 MiB では核が診断して止まる ----
+        fdt_boot() {  # $1 = ログ、$2 = QEMU の追加引数 (-m など)
+            rm -f "$1"
+            qemu-system-aarch64 -M virt,gic-version=2 -cpu cortex-a57 -nographic $2 \
+                -global virtio-mmio.force-legacy=false \
+                -serial "file:$1" -kernel "$OUT/kernel.elf" >"$OUT/fdt_qemu.console.log" 2>&1 &
+            local fq=$!
+            for _ in $(seq 1 40); do
+                grep -aq '甲得\|核恐慌' "$1" 2>/dev/null && break
+                sleep 0.25
+            done
+            kill "$fq" 2>/dev/null
+            wait "$fq" 2>/dev/null
+        }
+        fdt_boot "$OUT/fdt128.log" "-m 128M"
+        fdt_boot "$OUT/fdt64.log" "-m 64M"
+        fdt_boot "$OUT/fdt16.log" "-m 16M"
+        if grep -aq '^樹 有効 0x0000000000000001' "$OUT/fdt128.log" \
+           && grep -aq '^樹 記憶基 0x0000000040000000' "$OUT/fdt128.log" \
+           && grep -aq '^樹 記憶量 0x0000000008000000' "$OUT/fdt128.log" \
+           && grep -aq '^樹 串口 0x0000000009000000' "$OUT/fdt128.log" \
+           && grep -aq '^樹 割配 0x0000000008000000' "$OUT/fdt128.log" \
+           && grep -aq '^樹 時計 0x0000000009010000' "$OUT/fdt128.log" \
+           && grep -aq '^樹 盤 0x000000000a000000' "$OUT/fdt128.log" \
+           && grep -aq '^樹 記憶量 0x0000000004000000' "$OUT/fdt64.log" && grep -aq '日誌' "$OUT/fdt64.log" \
+           && grep -aq '^核恐慌 記憶不足' "$OUT/fdt16.log" && ! grep -aq '記憶管理有効' "$OUT/fdt16.log"; then
+            pass "kernel qemu: Devicetree を解析して RAM・UART・GIC・RTC・virtio の基底番地を得る (128 MiB と 64 MiB で量が追従し、16 MiB では 核恐慌 記憶不足)"
+        else
+            fail "kernel qemu: Devicetree の解析"
+            grep -a '^樹\|^核恐慌' "$OUT/fdt128.log" "$OUT/fdt64.log" "$OUT/fdt16.log" 2>/dev/null | sed 's/^/      /' | head -20
         fi
         # --- #47 T4: RTC を 1970-01-01 に固定した起動。PL031 が 0 を返し、時計は無効になる ----
         RTC_IMG="$OUT/rtc_off_serial"
@@ -1178,6 +1284,42 @@ else
     fail "lang ok: consts (定数式の畳み込み・単項 負 -> AArch64 object)"
     sed 's/^/      /' "$OUT/lang_consts.llc.log" | head -10
     grep -nE 'neg|147244780800|add i64 7' "$OUT/lang_consts.ll" | sed 's/^/      /' | head -10
+fi
+# 型付き機械命令が AArch64 の命令 (mrs/msr/dsb/isb/tlbi/dc/ic/wfi/svc/brk) になること。
+if "$LLC" -march=aarch64 -filetype=obj "$OUT/lang_machine.ll" -o "$OUT/lang_machine.o" \
+        >"$OUT/lang_machine.llc.log" 2>&1 \
+    && "$OBJDUMP" -d "$OUT/lang_machine.o" >"$OUT/lang_machine.dis" 2>&1 \
+    && grep -qE 'mrs[[:space:]]+x[0-9]+, CNTFRQ_EL0' "$OUT/lang_machine.dis" \
+    && grep -qE 'msr[[:space:]]+TPIDR_EL1' "$OUT/lang_machine.dis" \
+    && grep -qE 'msr[[:space:]]+DAIFClr, #0x2' "$OUT/lang_machine.dis" \
+    && grep -qE 'dsb[[:space:]]+sy' "$OUT/lang_machine.dis" \
+    && grep -qE 'tlbi[[:space:]]+vmalle1' "$OUT/lang_machine.dis" \
+    && grep -qE 'dc[[:space:]]+cvau' "$OUT/lang_machine.dis" \
+    && grep -qE 'ic[[:space:]]+iallu' "$OUT/lang_machine.dis" \
+    && grep -qE 'wfi' "$OUT/lang_machine.dis" \
+    && grep -qE 'svc[[:space:]]+#0' "$OUT/lang_machine.dis" \
+    && grep -qE 'brk[[:space:]]+#0' "$OUT/lang_machine.dis" \
+    && grep -qE 'sub[[:space:]]+sp, sp, #0x120' "$OUT/lang_machine.dis" \
+    && grep -qE 'sub[[:space:]]+sp, sp, #0x100' "$OUT/lang_machine.dis" \
+    && grep -qE 'stp[[:space:]]+x28, x29, \[sp, #0xe0\]' "$OUT/lang_machine.dis" \
+    && grep -qE 'str[[:space:]]+x2, \[sp, #0x110\]' "$OUT/lang_machine.dis" \
+    && grep -qE 'msr[[:space:]]+SP_EL0, x2' "$OUT/lang_machine.dis" \
+    && grep -qE 'eret' "$OUT/lang_machine.dis" \
+    && grep -qE 'bl[[:space:]]+0x[0-9a-f]+ <entry_probe' "$OUT/lang_machine.dis" \
+    && grep -qE 'cbz[[:space:]]+x0,' "$OUT/lang_machine.dis" \
+    && grep -qE 'mov[[:space:]]+x8, #0xb6' "$OUT/lang_machine.dis" \
+    && grep -qE 'mov[[:space:]]+x4, #0x3c0' "$OUT/lang_machine.dis" \
+    && grep -qE 'msr[[:space:]]+ELR_EL1, x0' "$OUT/lang_machine.dis" \
+    && "$OBJDUMP" -dr "$OUT/lang_machine.o" >"$OUT/lang_machine.rel" 2>&1 \
+    && [ "$(grep -cE 'R_AARCH64_JUMP26[[:space:]]+vh_' "$OUT/lang_machine.rel")" -eq 16 ] \
+    && grep -qE '^[[:space:]]*0*280:[[:space:]]+R_AARCH64_JUMP26[[:space:]]+vh_irq$' "$OUT/lang_machine.rel" \
+    && grep -qE '^[[:space:]]*0*400:[[:space:]]+R_AARCH64_JUMP26[[:space:]]+vh_sync0$' "$OUT/lang_machine.rel" \
+    && grep -qE '^[[:space:]]*0*480:[[:space:]]+R_AARCH64_JUMP26[[:space:]]+vh_irq0$' "$OUT/lang_machine.rel"; then
+    pass "lang ok: machine (型付き機械命令 -> AArch64 命令)"
+else
+    fail "lang ok: machine (型付き機械命令 -> AArch64 命令)"
+    sed 's/^/      /' "$OUT/lang_machine.llc.log" | head -10
+    grep -E 'mrs|msr|dsb|tlbi|dc |ic |wfi|svc|brk' "$OUT/lang_machine.dis" 2>/dev/null | sed 's/^/      /' | head -20
 fi
 # 全キーワードが golden テストのどこかで実際に使われていること (言語仕様 §10 条件 1)
 : >"$OUT/lang_tokens.txt"

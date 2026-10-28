@@ -420,6 +420,7 @@ std::string LLVMIRGen::genExpr(const ExprPtr& e) {
         case Expr::Kind::VolatileWrite: return genVolatileWrite(e);
         case Expr::Kind::Fence: return genFence(e);
         case Expr::Kind::Asm: return genAsm(e);
+        case Expr::Kind::Machine: return genMachine(e);
         case Expr::Kind::StrLen: return genStrLen(e);
         case Expr::Kind::FieldAccess: return genFieldAccess(e);
         case Expr::Kind::ElemAccess: return genElemAccess(e);
@@ -740,6 +741,199 @@ std::string LLVMIRGen::genAsm(const ExprPtr& e) {
     std::string result = freshName("asm");
     emit("%" + result + " = call " + ty + " " + text);
     return ty + " %" + result;
+}
+
+// 例外の框の退避 (save) / 復帰 (!save) の命令列。x0..x30 は +0..+240、
+// el1irq は +248 に NZCV、el0 はさらに ELR_EL1 +256・SPSR_EL1 +264・SP_EL0 +272 (docs/abi-aarch64.md)。
+// 退避の途中で x2 を作業用に使う (x0..x30 を保存した後なので壊してよい)。
+static std::string frameAsm(const std::string& kind, bool save) {
+    bool el0 = kind == "el0";
+    bool nzcv = el0 || kind == "el1irq";
+    int size = el0 ? 288 : 256;
+    std::string s;
+    auto line = [&](const std::string& t) { s += t + "\n"; };
+    auto sysSave = [&](const char* reg, int off) {
+        line(std::string("mrs x2, ") + reg);
+        line("str x2, [sp, #" + std::to_string(off) + "]");
+    };
+    auto sysLoad = [&](const char* reg, int off) {
+        line("ldr x2, [sp, #" + std::to_string(off) + "]");
+        line(std::string("msr ") + reg + ", x2");
+    };
+    if (save) {
+        line("sub sp, sp, #" + std::to_string(size));
+        for (int r = 0; r < 30; r += 2)
+            line("stp x" + std::to_string(r) + ", x" + std::to_string(r + 1) +
+                 ", [sp, #" + std::to_string(r * 8) + "]");
+        line("str x30, [sp, #240]");
+        if (nzcv) sysSave("nzcv", 248);
+        if (el0) {
+            sysSave("elr_el1", 256);
+            sysSave("spsr_el1", 264);
+            sysSave("sp_el0", 272);
+        }
+    } else {
+        if (nzcv) sysLoad("nzcv", 248);
+        if (el0) {
+            sysLoad("elr_el1", 256);
+            sysLoad("spsr_el1", 264);
+            sysLoad("sp_el0", 272);
+        }
+        line("ldr x30, [sp, #240]");
+        for (int r = 28; r >= 0; r -= 2)
+            line("ldp x" + std::to_string(r) + ", x" + std::to_string(r + 1) +
+                 ", [sp, #" + std::to_string(r * 8) + "]");
+        line("add sp, sp, #" + std::to_string(size));
+    }
+    if (!s.empty()) s.pop_back();
+    return s;
+}
+
+std::string LLVMIRGen::genMachine(const ExprPtr& e) {
+    // 型付き機械命令 -> コンパイラが生成した inline asm。ソースには asm 文を書かない。
+    auto callVoid = [&](const std::string& text, const std::string& constraints,
+                        const std::string& operands = "") {
+        emit("call void asm sideeffect \"" + irEscape(text) + "\", \"" +
+             irEscape(constraints) + "\"(" + operands + ")");
+        return std::string("void ");
+    };
+    auto callI64 = [&](const std::string& text, const std::string& constraints,
+                       const std::string& operands = "") {
+        std::string result = freshName("mach");
+        emit("%" + result + " = call i64 asm sideeffect \"" + irEscape(text) + "\", \"" +
+             irEscape(constraints) + "\"(" + operands + ")");
+        return "i64 %" + result;
+    };
+
+    switch (e->machineOp) {
+        case Expr::MachineOp::SysRegRead:
+            return callI64("mrs $0, " + e->asmText, "=r");
+
+        case Expr::MachineOp::SysRegWrite: {
+            if (e->args.empty()) return "void ";
+            if (e->asmText == "daifset" || e->asmText == "daifclr") {
+                uint64_t imm = e->args[0]->intValue & 0xF;
+                return callVoid("msr " + e->asmText + ", #" + std::to_string(imm), "~{memory}");
+            }
+            std::string val = genExpr(e->args[0]);
+            return callVoid("msr " + e->asmText + ", $0", "r,~{memory}", val);
+        }
+
+        case Expr::MachineOp::MemBarrier:
+            return callVoid("dsb " + e->asmText, "~{memory}");
+
+        case Expr::MachineOp::InstrBarrier:
+            return callVoid("isb", "~{memory}");
+
+        case Expr::MachineOp::TlbInvalidate:
+            return callVoid("tlbi " + e->asmText, "~{memory}");
+
+        case Expr::MachineOp::DataCacheClean: {
+            if (e->args.empty()) return "void ";
+            std::string addr = genExpr(e->args[0]);
+            return callVoid("dc cvau, $0", "r,~{memory}", addr);
+        }
+
+        case Expr::MachineOp::InstrCacheClean:
+            return callVoid("ic iallu", "~{memory}");
+
+        case Expr::MachineOp::WaitEvent:
+            return callVoid("wfi", "~{memory}");
+
+        case Expr::MachineOp::Syscall: {
+            // 漢令 ABI v0.1: x0..x5 = 引数, x8 = 番号, 戻り値 x0。
+            if (e->args.empty()) return "i64 0";
+            // 引数はソースの左から右の順に評価する (番号が先、次に 引0..引5)。
+            std::vector<std::string> vals;
+            vals.reserve(e->args.size());
+            for (auto& a : e->args) vals.push_back(genExpr(a));
+            std::string operands;
+            for (int i = 0; i < 6; i++) {
+                if (i > 0) operands += ", ";
+                operands += (i + 1 < static_cast<int>(vals.size())) ? vals[i + 1] : "i64 0";
+            }
+            operands += ", " + vals[0];
+            return callI64("svc #0",
+                "={x0},{x0},{x1},{x2},{x3},{x4},{x5},{x8},~{memory}", operands);
+        }
+
+        case Expr::MachineOp::FrameSave:
+            return callVoid(frameAsm(e->asmText, true), "~{memory}");
+
+        case Expr::MachineOp::FrameRestore:
+            return callVoid(frameAsm(e->asmText, false), "~{memory}");
+
+        case Expr::MachineOp::ExceptionReturn:
+            return callVoid("eret", "~{memory}");
+
+        case Expr::MachineOp::CallSym:
+        case Expr::MachineOp::FrameSwitch:
+        case Expr::MachineOp::FramePark: {
+            size_t c = e->asmText.find(',');
+            std::string a = e->asmText.substr(0, c), b = e->asmText.substr(c + 1);
+            std::string text;
+            if (e->machineOp == Expr::MachineOp::CallSym) {
+                // 引種: x0/x1 に渡す値。esr_elr_ret は戻り値 x0 を ELR_EL1 へ書き戻す。
+                if (b == "sp") text += "mov x0, sp\n";
+                if (b == "esr_sp") text += "mrs x0, esr_el1\nmov x1, sp\n";
+                if (b == "esr_elr_ret") text += "mrs x0, esr_el1\nmrs x1, elr_el1\n";
+                text += "bl " + a;
+                if (b == "esr_elr_ret") text += "\nmsr elr_el1, x0";
+            } else if (e->machineOp == Expr::MachineOp::FrameSwitch) {
+                text = "cbz x0, " + a + "\nmov sp, x0\nb " + b;
+            } else {
+                text = "1:\nbl " + a + "\ncbz x0, 2f\nmov sp, x0\nb " + b + "\n2:\nwfi\nb 1b";
+            }
+            return callVoid(text, "~{memory}");
+        }
+
+        case Expr::MachineOp::StackSet: {
+            const std::string& s = e->asmText;
+            if (s[0] >= '0' && s[0] <= '9')
+                return callVoid("mov x16, #" + s + "\nmov sp, x16", "~{memory}");
+            return callVoid("adrp x16, " + s + "\nadd x16, x16, :lo12:" + s + "\nmov sp, x16", "~{memory}");
+        }
+
+        case Expr::MachineOp::SvcHalt: {
+            std::string text;
+            if (e->args.size() > 1) text += "mov x0, #" + std::to_string(e->args[1]->intValue) + "\n";
+            text += "mov x8, #" + std::to_string(e->args[0]->intValue) + "\nsvc #0\n1:\nb 1b";
+            return callVoid(text, "~{memory}");
+        }
+
+        case Expr::MachineOp::HaltLoop:
+            return callVoid("1:\nwfi\nb 1b", "~{memory}");
+
+        case Expr::MachineOp::EnterUser:
+            // enter_el0(入址 x0, 棧頭 x1, 引 x2, 核棧頭 x3): EL0t・DAIF 全マスクで eret。
+            return callVoid("mov sp, x3\nmsr elr_el1, x0\nmsr sp_el0, x1\nmov x4, #0x3C0\nmsr spsr_el1, x4\nmov x0, x2\neret", "~{memory}");
+
+        case Expr::MachineOp::VectorTable: {
+            // 16 項 × 0x80。項 5 = 現 EL・SPx の IRQ、項 8 = 下位 EL の同期、項 9 = 下位 EL の IRQ、他は既定。
+            std::vector<std::string> sym;
+            size_t from = 0;
+            for (;;) {
+                size_t c = e->asmText.find(',', from);
+                sym.push_back(e->asmText.substr(from, c == std::string::npos ? c : c - from));
+                if (c == std::string::npos) break;
+                from = c + 1;
+            }
+            if (sym.size() != 4) return "void ";
+            std::string text;
+            for (int i = 0; i < 16; i++) {
+                const std::string& target = i == 5 ? sym[1] : i == 8 ? sym[2] : i == 9 ? sym[3] : sym[0];
+                if (i > 0) text += "\n";
+                text += ".p2align 7\nb " + target;
+            }
+            return callVoid(text, "~{memory}");
+        }
+
+        case Expr::MachineOp::Breakpoint: {
+            uint64_t imm = e->args.empty() ? 0 : (e->args[0]->intValue & 0xFFFF);
+            return callVoid("brk #" + std::to_string(imm), "~{memory}");
+        }
+    }
+    return "void ";
 }
 
 std::string LLVMIRGen::genStrLen(const ExprPtr& e) {

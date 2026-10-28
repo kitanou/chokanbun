@@ -185,7 +185,16 @@ static const std::vector<std::pair<std::string, TokKind>>& allKeywords() {
         {"取址", TokKind::QuZhi}, {"取值", TokKind::QuZhi2},
         {"呼", TokKind::Hu}, {"轉", TokKind::Zhuan},
         {"讀揮發", TokKind::DuHuiFa}, {"寫揮發", TokKind::XieHuiFa},
-        {"障壁", TokKind::ZhangBei}, {"組譯", TokKind::ZuYi}, {"長度", TokKind::ChangDu},
+        {"障壁", TokKind::ZhangBei}, {"組譯", TokKind::ZuYi},
+        {"系統讀", TokKind::XiTongDu}, {"系統寫", TokKind::XiTongXie},
+        {"記憶障壁", TokKind::JiyiZhangbi}, {"命令障壁", TokKind::MinglingZhangbi},
+        {"臺無效", TokKind::TaiWuXiao}, {"資清", TokKind::ZiQing},
+        {"令清", TokKind::LingQing}, {"待事象", TokKind::DaiShiXiang},
+        {"漢令", TokKind::HanLing}, {"異常令", TokKind::YiChangLing},
+        {"框存", TokKind::KuangCun}, {"框復", TokKind::KuangFu}, {"例外歸", TokKind::LiWaiGui}, {"向量表", TokKind::XiangLiangBiao},
+        {"呼出", TokKind::HuChu}, {"框移", TokKind::KuangYi}, {"框待", TokKind::KuangDai}, {"令止", TokKind::LingZhi},
+        {"棧置", TokKind::ZhanZhi}, {"永停", TokKind::YongTing}, {"入民", TokKind::RuMin},
+        {"長度", TokKind::ChangDu},
         {"欄", TokKind::Lan}, {"項", TokKind::Xiang},
         {"加", TokKind::Jia}, {"減", TokKind::Jian},
         {"乘", TokKind::Cheng}, {"除", TokKind::Chu}, {"餘", TokKind::Yu},
@@ -650,6 +659,27 @@ const char* Token::kindName() const {
         case TokKind::XieHuiFa: return "寫揮發";
         case TokKind::ZhangBei: return "障壁";
         case TokKind::ZuYi: return "組譯";
+        case TokKind::XiTongDu: return "系統讀";
+        case TokKind::XiTongXie: return "系統寫";
+        case TokKind::JiyiZhangbi: return "記憶障壁";
+        case TokKind::MinglingZhangbi: return "命令障壁";
+        case TokKind::TaiWuXiao: return "臺無效";
+        case TokKind::ZiQing: return "資清";
+        case TokKind::LingQing: return "令清";
+        case TokKind::DaiShiXiang: return "待事象";
+        case TokKind::HanLing: return "漢令";
+        case TokKind::YiChangLing: return "異常令";
+        case TokKind::KuangCun: return "框存";
+        case TokKind::KuangFu: return "框復";
+        case TokKind::LiWaiGui: return "例外歸";
+        case TokKind::XiangLiangBiao: return "向量表";
+        case TokKind::HuChu: return "呼出";
+        case TokKind::KuangYi: return "框移";
+        case TokKind::KuangDai: return "框待";
+        case TokKind::LingZhi: return "令止";
+        case TokKind::ZhanZhi: return "棧置";
+        case TokKind::YongTing: return "永停";
+        case TokKind::RuMin: return "入民";
         case TokKind::ChangDu: return "長度";
         case TokKind::Lan: return "欄";
         case TokKind::Xiang: return "項";

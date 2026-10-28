@@ -9,11 +9,13 @@
 
 公開 裸 節「.text.boot」 記號「_start」 術曰「起点」 返 無
     險
-        組譯〈無〉(『adrp x0, _stack_top\nadd x0, x0, :lo12:_stack_top\nmov sp, x0\nbl kernel_early\n1:\nwfi\nb 1b』, 『』)
+        棧置〈『_stack_top』〉()
+        呼出〈『kernel_early』, 『none』〉()
+        永停()
     終險
 終術
 
-公開 記號「kernel_early」 術曰「早起動」 返 無
+公開 記號「kernel_early」 術曰「早起動」 受「樹址」之無符六四 返 無
     設「頭」之無符六四 為 取址(零域始)
     設「尾」之無符六四 為 取址(零域終)
     當 頭 小於 尾 則
@@ -24,12 +26,14 @@
     終當
     設「表」之無符六四 為 取址(向量)
     險
-        組譯〈無〉(『msr vbar_el1, $0\nisb』, 『r,~{memory}』, 表)
+        系統寫〈『vbar_el1』〉(表)
+        命令障壁()
     終險
+    行「樹初期化」以(樹址)
     行「核主」以()
     當 真 則
         險
-            組譯〈無〉(『wfi』, 『』)
+            待事象()
         終險
     終當
 終術
