@@ -655,6 +655,12 @@ if [ -f "$OUT/kernel.elf" ]; then
             fail "kernel qemu: 行程表の枯渇 (起動数=${EX_N:-none} 満杯=${EX_FULL:-none} 回収=${EX_REAP:-none} 再起動=${EX_RE:-none})"
             grep -a '^枯渇' "$KLOG" 2>/dev/null | sed 's/^/      /'
         fi
+        # 頁が足りないとき (空き 0〜3 頁) の 生行程 は -ENOMEM で失敗し、頁が漏れず、全部放して空き数が戻る
+        if [ "$(sp_val '資不足')" = "0x000000000000001f" ]; then
+            pass "kernel qemu: 頁不足の 生行程 (空き 0〜3 頁で -ENOMEM、失敗後も頁が漏れず、全部放して空き数が戻る)"
+        else
+            fail "kernel qemu: 頁不足の 生行程 (資不足=$(sp_val '資不足') 期待 0x1f)"
+        fi
         # 子の出力 = 検証 21 + 殻の 問安 1 + 篇試 が術のパスで起動する 問安 1 + 貯試 が起動する 3 役
         if [ "${K_CH:-0}" -eq $((26 + EX_NUM + 1)) ]; then
             pass "kernel qemu: 起動・回収を 20 回繰り返しても頁が漏れず、毎回子が走る (子の出力 $((26 + EX_NUM + 1)) 回 = 検証 21 + 殻 1 + 篇試 1 + 貯試 3 + 枯渇の試験 $((EX_NUM + 1)))"
