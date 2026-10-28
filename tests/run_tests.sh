@@ -404,6 +404,43 @@ else
     sed 's/^/      /' "$OUT/selfhost_tc.gen.log" "$OUT/selfhost_tc.cc.log" 2>/dev/null | head -10
 fi
 
+# --- セルフホスト第 4 段: 機械漢文の IR 生成器 (selfhost/irgen.mkn) が C++ 版 -ir と同じ IR を出す ------------------
+#     型検査を通る全てのプログラム (核・行程・ローダー・セルフホスト自身を取込展開したもの) で、IR が 1 バイトも違わないこと。
+#     型検査や IR 生成の診断で失敗するものは、診断の文字列が一致すること。字句・構文の誤りは両方とも失敗すればよい。
+if sh tools/kernel-expand.sh selfhost/irgen.mkn "$OUT/selfhost_ir_all.mkn" \
+   && "$BIN" "$OUT/selfhost_ir_all.mkn" -ir -o "$OUT/selfhost_ir.ll" 2>"$OUT/selfhost_ir.gen.log" \
+   && "$CLANG" -Wno-override-module -x ir "$OUT/selfhost_ir.ll" -x c selfhost/host_ir.c -o "$OUT/selfhost_ir_host" \
+        >"$OUT/selfhost_ir.cc.log" 2>&1; then
+    SI_OK=0; SI_BAD=0; SI_IR=0; SI_BADLIST=""
+    for f in $(find tests/lang tests/*.mkn boot kernel user selfhost -name '*.mkn' | sort) "$OUT"/selfhost_tc_exp/*.mkn "$OUT/selfhost_ir_all.mkn"; do
+        "$BIN" "$f" -ast >/dev/null 2>&1; prc=$?
+        "$OUT/selfhost_ir_host" "$f" >"$OUT/selfhost_ir_got.txt" 2>"$OUT/selfhost_ir_goterr.txt"; rc2=$?
+        if [ $prc -ne 0 ]; then
+            if [ $rc2 -eq 2 ]; then SI_OK=$((SI_OK+1)); else SI_BAD=$((SI_BAD+1)); SI_BADLIST="$SI_BADLIST $f"; fi
+            continue
+        fi
+        "$BIN" "$f" -ir -o "$OUT/selfhost_ir_ref.ll" 2>"$OUT/selfhost_ir_referr.txt"; rc=$?
+        if [ $rc -eq 0 ] && [ $rc2 -eq 0 ] && cmp -s "$OUT/selfhost_ir_ref.ll" "$OUT/selfhost_ir_got.txt"; then SI_OK=$((SI_OK+1)); SI_IR=$((SI_IR+1))
+        elif [ $rc -ne 0 ] && [ $rc2 -eq 1 ] && cmp -s "$OUT/selfhost_ir_referr.txt" "$OUT/selfhost_ir_goterr.txt"; then SI_OK=$((SI_OK+1))
+        else SI_BAD=$((SI_BAD+1)); SI_BADLIST="$SI_BADLIST $f"; fi
+    done
+    if [ "$SI_BAD" -eq 0 ] && [ "$SI_IR" -ge 50 ]; then
+        pass "selfhost: 機械漢文の IR 生成器 (selfhost/irgen.mkn) が C++ 版と ${SI_IR} 個のプログラムで同じ IR を出す (核・IR 生成器自身を含む。診断で失敗するものも一致、計 ${SI_OK} 個)"
+    else
+        fail "selfhost: IR 生成器の不一致 ${SI_BAD} 個 (${SI_OK} 個一致、IR 一致 ${SI_IR} 個):$SI_BADLIST"
+    fi
+    # 自己再構築の予行: 機械漢文の IR 生成器 (ホストで動く) が自分自身のソースから作る IR が、C++ 版が作った IR と同じ
+    "$OUT/selfhost_ir_host" "$OUT/selfhost_ir_all.mkn" >"$OUT/selfhost_ir_self.ll" 2>/dev/null
+    if cmp -s "$OUT/selfhost_ir_self.ll" "$OUT/selfhost_ir.ll"; then
+        pass "selfhost: 機械漢文の IR 生成器が自分自身のソースから作る IR が、C++ 版の作る IR と一致する ($(wc -l <"$OUT/selfhost_ir_self.ll" | tr -d ' ') 行)"
+    else
+        fail "selfhost: IR 生成器の自己再構築の IR が C++ 版と違う"
+    fi
+else
+    fail "selfhost: IR 生成器をビルド"
+    sed 's/^/      /' "$OUT/selfhost_ir.gen.log" "$OUT/selfhost_ir.cc.log" 2>/dev/null | head -10
+fi
+
 # --- type_error: 錯 E00xx must be reported --------------------------------
 "$BIN" tests/type_error.mkn -ir -o /dev/null >"$OUT/type_error.log" 2>&1 \
     && fail "type_error: unexpected success" || pass "type_error: rejected"
