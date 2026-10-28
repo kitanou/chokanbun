@@ -968,12 +968,12 @@ if [ -f "$OUT/kernel.elf" ]; then
             fail "kernel qemu: 行程表 (不一致:$TBL_BAD)"
             grep -a '行程表' "$KLOG" 2>/dev/null | sed 's/^/      /'
         fi
-        # 注: 総数は、この実行で必ず virtio-blk を付けている (vda の環 2 ページが先に使われる) ことを前提にした 4094。
+        # 注: 総数は、この実行で必ず virtio-blk を付けている (vda の環 2 ページが先に使われる) ことを前提にした 16382 (RAM 128 MiB: 動的頁域 64 MiB)。
         K_TOTAL="$(tbl_val '頁池 総')"
-        if [ "$K_TOTAL" = "$(printf '0x%016x' 4094)" ]; then
-            pass "kernel qemu: 頁池 16 MiB (4096 ページ = 空き + 行程の棧 2 ページ × 8 + vda の環 2 ページ。総数は vda の 2 ページを除く)"
+        if [ "$K_TOTAL" = "$(printf '0x%016x' 16382)" ]; then
+            pass "kernel qemu: 頁池 64 MiB (RAM 128 MiB の動的頁域は上限の 16384 ページ = 空き + 行程の棧 2 ページ × 8 + vda の環 2 ページ。総数は vda の 2 ページを除く)"
         else
-            fail "kernel qemu: 頁池 16 MiB (総=${K_TOTAL:-none}、期待 0xffe)"
+            fail "kernel qemu: 頁池 64 MiB (総=${K_TOTAL:-none}、期待 0x3ffe)"
             grep -a '頁池' "$KLOG" 2>/dev/null | sed 's/^/      /'
         fi
         # --- M5/P0: 柄表・開表 (行程ごとの柄、開くたびに独立した位置) ---------------
@@ -1167,7 +1167,7 @@ if [ -f "$OUT/kernel.elf" ]; then
                 -serial "file:$1" -kernel "$OUT/kernel.elf" >"$OUT/fdt_qemu.console.log" 2>&1 &
             local fq=$!
             for _ in $(seq 1 40); do
-                grep -aq '甲得\|核恐慌' "$1" 2>/dev/null && break
+                grep -aq '頁割当\|核恐慌' "$1" 2>/dev/null && break
                 sleep 0.25
             done
             kill "$fq" 2>/dev/null
@@ -1176,6 +1176,8 @@ if [ -f "$OUT/kernel.elf" ]; then
         fdt_boot "$OUT/fdt128.log" "-m 128M"
         fdt_boot "$OUT/fdt64.log" "-m 64M"
         fdt_boot "$OUT/fdt16.log" "-m 16M"
+        fdt_boot "$OUT/fdt32.log" "-m 32M"
+        fdt_boot "$OUT/fdt24.log" "-m 24M"
         if grep -aq '^樹 有効 0x0000000000000001' "$OUT/fdt128.log" \
            && grep -aq '^樹 記憶基 0x0000000040000000' "$OUT/fdt128.log" \
            && grep -aq '^樹 記憶量 0x0000000008000000' "$OUT/fdt128.log" \
@@ -1184,8 +1186,12 @@ if [ -f "$OUT/kernel.elf" ]; then
            && grep -aq '^樹 時計 0x0000000009010000' "$OUT/fdt128.log" \
            && grep -aq '^樹 盤 0x000000000a000000' "$OUT/fdt128.log" \
            && grep -aq '^樹 記憶量 0x0000000004000000' "$OUT/fdt64.log" && grep -aq '日誌' "$OUT/fdt64.log" \
+           && grep -aq '^樹 頁数 0x0000000000004000' "$OUT/fdt128.log" && grep -aq '^樹 頁末 0x0000000044800000' "$OUT/fdt128.log" \
+           && grep -aq '^樹 頁数 0x0000000000003800' "$OUT/fdt64.log" \
+           && grep -aq '^樹 頁数 0x0000000000001800' "$OUT/fdt32.log" && grep -aq '頁割当' "$OUT/fdt32.log" \
+           && grep -aq '^樹 頁数 0x0000000000001000' "$OUT/fdt24.log" && grep -aq '頁割当' "$OUT/fdt24.log" \
            && grep -aq '^核恐慌 記憶不足' "$OUT/fdt16.log" && ! grep -aq '記憶管理有効' "$OUT/fdt16.log"; then
-            pass "kernel qemu: Devicetree を解析して RAM・UART・GIC・RTC・virtio の基底番地を得る (128 MiB と 64 MiB で量が追従し、16 MiB では 核恐慌 記憶不足)"
+            pass "kernel qemu: Devicetree を解析して RAM・UART・GIC・RTC・virtio の基底番地を得る (RAM 128・64・32・24 MiB で動的頁域が 16384・14336・6144・4096 ページに追従して起動し、16 MiB では 核恐慌 記憶不足)"
         else
             fail "kernel qemu: Devicetree の解析"
             grep -a '^樹\|^核恐慌' "$OUT/fdt128.log" "$OUT/fdt64.log" "$OUT/fdt16.log" 2>/dev/null | sed 's/^/      /' | head -20
