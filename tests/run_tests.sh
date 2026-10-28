@@ -127,6 +127,11 @@ sh tools/mkimage.sh user/hello.mkn "$OUT/hello.zo" "$OUT" 2>"$OUT/user_hello.bui
         fail "user: 外部命令 問安 を漢像にビルド"
         sed 's/^/      /' "$OUT/user_hello.build.log" | head -10
     }
+sh tools/mkimage.sh user/fault.mkn "$OUT/fault.zo" "$OUT" 2>"$OUT/user_fault.build.log" \
+    && pass "user: 異常試 (保護違反・BRK で異常終了する外部命令) を漢像にビルド" || {
+        fail "user: 異常試 を漢像にビルド"
+        sed 's/^/      /' "$OUT/user_fault.build.log" | head -10
+    }
 sh tools/mkimage.sh user/count.mkn "$OUT/count.zo" "$OUT" 2>"$OUT/user_count.build.log" \
     && pass "user: 外部命令 數 を漢像にビルド" || {
         fail "user: 外部命令 數 を漢像にビルド"
@@ -253,7 +258,7 @@ sh tools/mkimage.sh user/btron_task.mkn "$OUT/btron_task.zo" "$OUT" 2>"$OUT/user
         fail "user: BTRON3 互換層の試験 副試 を漢像にビルド"
         sed 's/^/      /' "$OUT/user_btron_task.build.log" | head -10
     }
-sh tools/gen-images.sh "$OUT/kernel_images.S" 問安="$OUT/hello.zo" 數="$OUT/count.zo" 識試="$OUT/btron_gtid.zo" 名試="$OUT/btron_gname.zo" 時試="$OUT/btron_clk.zo" 時元試="$OUT/time_test.zo" 時="$OUT/time_cmd.zo" 信試="$OUT/btron_msg.zo" 利試="$OUT/btron_usr.zo" 強試="$OUT/btron_term.zo" 同試="$OUT/btron_sync.zo" 緩試="$OUT/btron_comm.zo" 録試="$OUT/btron_file.zo" 篇試="$OUT/pian_test.zo" 永試="$OUT/pian_persist.zo" 貯試="$OUT/btron_mem.zo" 件試="$OUT/btron_evt.zo" 設試="$OUT/btron_dev.zo" 系試="$OUT/btron_sys.zo" 例試="$OUT/btron_exc.zo" 信手試="$OUT/btron_msg_hdr.zo" 副試="$OUT/btron_task.zo" 実試="$OUT/btron_omgr.zo" 実作="$OUT/obj.zo" 仮置="$OUT/obj.zo" 実削="$OUT/obj.zo" 実目="$OUT/obj.zo" 実名="$OUT/obj.zo" objapp="$OUT/obj_app.zo" \
+sh tools/gen-images.sh "$OUT/kernel_images.S" 問安="$OUT/hello.zo" 數="$OUT/count.zo" 異常試="$OUT/fault.zo" 識試="$OUT/btron_gtid.zo" 名試="$OUT/btron_gname.zo" 時試="$OUT/btron_clk.zo" 時元試="$OUT/time_test.zo" 時="$OUT/time_cmd.zo" 信試="$OUT/btron_msg.zo" 利試="$OUT/btron_usr.zo" 強試="$OUT/btron_term.zo" 同試="$OUT/btron_sync.zo" 緩試="$OUT/btron_comm.zo" 録試="$OUT/btron_file.zo" 篇試="$OUT/pian_test.zo" 永試="$OUT/pian_persist.zo" 貯試="$OUT/btron_mem.zo" 件試="$OUT/btron_evt.zo" 設試="$OUT/btron_dev.zo" 系試="$OUT/btron_sys.zo" 例試="$OUT/btron_exc.zo" 信手試="$OUT/btron_msg_hdr.zo" 副試="$OUT/btron_task.zo" 実試="$OUT/btron_omgr.zo" 実作="$OUT/obj.zo" 仮置="$OUT/obj.zo" 実削="$OUT/obj.zo" 実目="$OUT/obj.zo" 実名="$OUT/obj.zo" objapp="$OUT/obj_app.zo" \
     && "$CLANG" --target=aarch64-none-elf -c "$OUT/kernel_images.S" -o "$OUT/kernel_images.o" \
         >"$OUT/kernel_images.log" 2>&1 \
     && pass "kernel: 漢像の埋め込み (像表)" || fail "kernel: 漢像の埋め込み (像表)"
@@ -660,6 +665,16 @@ if [ -f "$OUT/kernel.elf" ]; then
             pass "kernel qemu: 頁不足の 生行程 (空き 0〜3 頁で -ENOMEM、失敗後も頁が漏れず、全部放して空き数が戻る)"
         else
             fail "kernel qemu: 頁不足の 生行程 (資不足=$(sp_val '資不足') 期待 0x1f)"
+        fi
+        # 異常終了: 保護違反 (EC 36) と BRK (EC 60) は子だけを終え (128 + EC)、正常な子は 5 で終わり、親は走り続け、頁は漏れない
+        if [ "$(sp_val '異常終了 保護違反')" = "0x00000000000000a4" ] && [ "$(sp_val '異常終了 BRK')" = "0x00000000000000bc" ] \
+                && [ "$(sp_val '異常終了 正常')" = "0x0000000000000005" ] && [ "$(sp_val '異常終了 回収')" = "0x0000000000000003" ] \
+                && [ "$(sp_val '異常終了 頁残差')" = "0x0000000000000000" ] \
+                && [ "$(sp_val '異常終了 コード書込')" = "0x00000000000000a4" ] && [ "$(sp_val '異常終了 データ実行')" = "0x00000000000000a0" ]; then
+            pass "kernel qemu: 異常終了とメモリ保護 (核専用域への書込 → 164、自分のコードへの書込 → 164、データ域への飛び込み → 160、BRK → 188、正常 → 5。核は子だけを終え、親は走り続けて 3 つとも回収し、頁が漏れない)"
+        else
+            fail "kernel qemu: 異常終了 (保護違反=$(sp_val '異常終了 保護違反') BRK=$(sp_val '異常終了 BRK') 正常=$(sp_val '異常終了 正常') 回収=$(sp_val '異常終了 回収') 頁残差=$(sp_val '異常終了 頁残差'))"
+            grep -a '^異常終了\|民異常' "$KLOG" 2>/dev/null | sed 's/^/      /'
         fi
         # 長時間: 200 回の起動・回収がすべて成功し、頁が漏れず、識が単調に増えている
         LT_OK="$(sp_val '長時間 成功')"; LT_PG="$(sp_val '長時間 頁残差')"; LT_ID="$(sp_val '長時間 識増')"
