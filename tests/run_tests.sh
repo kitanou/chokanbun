@@ -1178,6 +1178,7 @@ if [ -f "$OUT/kernel.elf" ]; then
         fdt_boot "$OUT/fdt16.log" "-m 16M"
         fdt_boot "$OUT/fdt32.log" "-m 32M"
         fdt_boot "$OUT/fdt24.log" "-m 24M"
+        fdt_boot "$OUT/fdtel2.log" "-machine virtualization=on"
         if grep -aq '^樹 有効 0x0000000000000001' "$OUT/fdt128.log" \
            && grep -aq '^樹 記憶基 0x0000000040000000' "$OUT/fdt128.log" \
            && grep -aq '^樹 記憶量 0x0000000008000000' "$OUT/fdt128.log" \
@@ -1191,8 +1192,10 @@ if [ -f "$OUT/kernel.elf" ]; then
            && grep -aq '^樹 頁数 0x0000000000003800' "$OUT/fdt64.log" \
            && grep -aq '^樹 頁数 0x0000000000001800' "$OUT/fdt32.log" && grep -aq '頁割当' "$OUT/fdt32.log" \
            && grep -aq '^樹 頁数 0x0000000000001000' "$OUT/fdt24.log" && grep -aq '頁割当' "$OUT/fdt24.log" \
+           && grep -aq '^樹 EL 0x0000000000000001' "$OUT/fdt128.log" \
+           && grep -aq '^樹 EL 0x0000000000000001' "$OUT/fdtel2.log" && grep -aq '記憶管理有効' "$OUT/fdtel2.log" && grep -aq '^樹 有効 0x0000000000000001' "$OUT/fdtel2.log" \
            && grep -aq '^核恐慌 記憶不足' "$OUT/fdt16.log" && ! grep -aq '記憶管理有効' "$OUT/fdt16.log"; then
-            pass "kernel qemu: Devicetree を解析して RAM・UART・GIC・RTC・virtio の基底番地を得る (RAM 128・64・32・24 MiB で動的頁域が 16384・14336・6144・4096 ページに追従して起動し、16 MiB では 核恐慌 記憶不足)"
+            pass "kernel qemu: Devicetree を解析して RAM・UART・GIC・RTC・virtio の基底番地を得る (RAM 128・64・32・24 MiB で動的頁域が 16384・14336・6144・4096 ページに追従して起動し、16 MiB では 核恐慌 記憶不足。EL2 で始まる起動 (virtualization=on) も EL1 へ降りて同じに起動する)"
         else
             fail "kernel qemu: Devicetree の解析"
             grep -a '^樹\|^核恐慌' "$OUT/fdt128.log" "$OUT/fdt64.log" "$OUT/fdt16.log" 2>/dev/null | sed 's/^/      /' | head -20
@@ -1340,6 +1343,9 @@ if "$LLC" -march=aarch64 -filetype=obj "$OUT/lang_machine.ll" -o "$OUT/lang_mach
     && grep -qE 'mov[[:space:]]+x8, #0xb6' "$OUT/lang_machine.dis" \
     && grep -qE 'mov[[:space:]]+x4, #0x3c0' "$OUT/lang_machine.dis" \
     && grep -qE 'msr[[:space:]]+ELR_EL1, x0' "$OUT/lang_machine.dis" \
+    && grep -qE 'msr[[:space:]]+HCR_EL2, x16' "$OUT/lang_machine.dis" \
+    && grep -qE 'msr[[:space:]]+SPSR_EL2, x16' "$OUT/lang_machine.dis" \
+    && grep -qE 'mrs[[:space:]]+x16, CurrentEL' "$OUT/lang_machine.dis" \
     && "$OBJDUMP" -dr "$OUT/lang_machine.o" >"$OUT/lang_machine.rel" 2>&1 \
     && [ "$(grep -cE 'R_AARCH64_JUMP26[[:space:]]+vh_' "$OUT/lang_machine.rel")" -eq 16 ] \
     && grep -qE '^[[:space:]]*0*280:[[:space:]]+R_AARCH64_JUMP26[[:space:]]+vh_irq$' "$OUT/lang_machine.rel" \

@@ -904,6 +904,13 @@ std::string LLVMIRGen::genMachine(const ExprPtr& e) {
         case Expr::MachineOp::HaltLoop:
             return callVoid("1:\nwfi\nb 1b", "~{memory}");
 
+        case Expr::MachineOp::DropToEL1:
+            // CurrentEL が 1 ならそのまま。2 なら EL1 (AArch64) へ eret で降りる: HCR_EL2.RW=1、タイマーを EL1 に開放、
+            // SPSR_EL2 = EL1h・DAIF マスク、ELR_EL2 = 直後。x0 (DTB) は触らない (作業は x16)。それ以外 (EL3 など) は止まる。
+            return callVoid("mrs x16, CurrentEL\nlsr x16, x16, #2\ncmp x16, #1\nb.eq 1f\ncmp x16, #2\nb.ne 3f\n"
+                            "movz x16, #0x8000, lsl #16\nmsr hcr_el2, x16\nmov x16, #3\nmsr cnthctl_el2, x16\nmsr cntvoff_el2, xzr\n"
+                            "mov x16, #0x3c5\nmsr spsr_el2, x16\nadr x16, 1f\nmsr elr_el2, x16\neret\n3:\nwfe\nb 3b\n1:", "~{memory},~{x16}");
+
         case Expr::MachineOp::EnterUser:
             // enter_el0(入址 x0, 棧頭 x1, 引 x2, 核棧頭 x3): EL0t・DAIF 全マスクで eret。
             return callVoid("mov sp, x3\nmsr elr_el1, x0\nmsr sp_el0, x1\nmov x4, #0x3C0\nmsr spsr_el1, x4\nmov x0, x2\neret", "~{memory}");

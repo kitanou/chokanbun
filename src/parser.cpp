@@ -1209,11 +1209,12 @@ ExprPtr Parser::parsePrimary() {
     }
 
     // 永停() / 入民()
-    if (check(TokKind::YongTing) || check(TokKind::RuMin)) {
-        bool halt = check(TokKind::YongTing);
+    if (check(TokKind::YongTing) || check(TokKind::RuMin) || check(TokKind::JiangWei)) {
+        TokKind k = current().kind;
         advance();
         e->kind = Expr::Kind::Machine;
-        e->machineOp = halt ? Expr::MachineOp::HaltLoop : Expr::MachineOp::EnterUser;
+        e->machineOp = k == TokKind::YongTing ? Expr::MachineOp::HaltLoop
+                     : k == TokKind::RuMin ? Expr::MachineOp::EnterUser : Expr::MachineOp::DropToEL1;
         expect(TokKind::LeftParen, "(");
         expect(TokKind::RightParen, ")");
         return e;

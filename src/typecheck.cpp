@@ -716,6 +716,7 @@ TypePtr TypeChecker::checkMachine(const Expr& e) {
         case Expr::MachineOp::StackSet:
         case Expr::MachineOp::HaltLoop:
         case Expr::MachineOp::EnterUser:
+        case Expr::MachineOp::DropToEL1:
             return ret(Type::Void());
 
         case Expr::MachineOp::SvcHalt: {
