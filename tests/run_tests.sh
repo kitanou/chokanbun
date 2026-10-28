@@ -338,7 +338,7 @@ if [ -f "$OUT/kernel.elf" ]; then
         # Then feed 殻 (shell) commands once 甲 has read that line (M4).
         ( printf 'KANBUN\n' > "$PIPE.in"
           for _ in $(seq 1 60); do grep -q "甲得" "$KLOG" 2>/dev/null && break; sleep 0.25; done
-          printf '響 天下太平\n讀 史記\n怪\n讀 無題\n目\n書 筆記 天地玄黄\n讀 筆記\n書 一二三四五六七八九十壱 x\n書 筆記\n目\n削 筆記\n讀 筆記\n目\n削 筆記\n書 新稿 草\n目\n問安 日月\n數 一 二 三\n識試\n名試\n時試\n時元試\n時\n時 史記\n信試\n信手試\n利試\n強試\n同試\n緩試\n録試\n篇試\n貯試\n件試\n設試\n系試\n例試\n副試\n実試\n章 天地/家/殻章\n移 天地/家/殻章\n在\n書 甲 一二\n改 甲 乙\n讀 乙\n改 甲\n移 ..\n在\n移 天地/典/史記\n移 天地/典\n在\n存在せず 子\n\n終了\n   \n実作 oa\n実作 ob\n実作 abcdefghijklmnopqrst\n実作 abcdefghijklmnopqrstu\n実作 日本\n実作 a/b\n実目\n仮置 oa ob\n実目\n実削 oa\n実目\n実名 ob oc\n実目\n実削 oc\n実目\n助\n終\n響 再起\n終\n' > "$PIPE.in" ) &
+          printf '響 天下太平\n讀 史記\n怪\n讀 無題\n目\n書 筆記 天地玄黄\n讀 筆記\n書 一二三四五六七八九十壱 x\n書 筆記\n目\n削 筆記\n讀 筆記\n目\n削 筆記\n書 新稿 草\n目\n問安 日月\n數 一 二 三\n識試\n名試\n時試\n時元試\n時\n時 史記\n信試\n信手試\n利試\n強試\n同試\n緩試\n録試\n篇試\n貯試\n件試\n設試\n系試\n例試\n副試\n実試\n章 天地/家/殻章\n移 天地/家/殻章\n在\n書 甲 一二\n改 甲 乙\n讀 乙\n改 甲\n移 ..\n在\n移 天地/典/史記\n移 天地/典\n在\n存在せず 子\nabcdefghijklmnopq\n\n終了\n   \n実作 oa\n実作 ob\n実作 abcdefghijklmnopqrst\n実作 abcdefghijklmnopqrstu\n実作 日本\n実作 a/b\n実目\n仮置 oa ob\n実目\n実削 oa\n実目\n実名 ob oc\n実目\n実削 oc\n実目\n助\n終\n響 再起\n終\n' > "$PIPE.in" ) &
         FEEDPID=$!
         # Wait up to ~40s for the final marker, then stop QEMU.  The generic
         # timer fires five times (5 × CNTFRQ/40 ≈ 125 ms); the long parts are the
@@ -891,10 +891,10 @@ if [ -f "$OUT/kernel.elf" ]; then
         fi
         K_UNK="$(grep -ac '殻不明' "$KLOG" 2>/dev/null)"
         K_SERR="$(grep -ac '^殻誤' "$KLOG" 2>/dev/null)"  # 空行・空白だけの行が 殻誤 を出さないこと (他の試験の 3 件だけ)
-        if [ "${K_UNK:-0}" -eq 3 ] && [ "${K_SERR:-0}" -eq 3 ]; then
-            pass "kernel qemu: 像の無い命令は 殻不明 (怪・存在せず 子・終了 の 3 件。空行と空白だけの行は何も出さず、終了 は 終 と取り違えて殻を終えない)"
+        if [ "${K_UNK:-0}" -eq 4 ] && [ "${K_SERR:-0}" -eq 3 ]; then
+            pass "kernel qemu: 像の無い命令は 殻不明 (怪・存在せず 子・17 バイトの長い名前・終了 の 4 件。空行と空白だけの行は何も出さず、終了 は 終 と取り違えて殻を終えない)"
         else
-            fail "kernel qemu: 像の無い命令は 殻不明 (件数=${K_UNK:-0}、期待 3。殻誤=${K_SERR:-0}、期待 3)"
+            fail "kernel qemu: 像の無い命令は 殻不明 (件数=${K_UNK:-0}、期待 4。殻誤=${K_SERR:-0}、期待 3)"
         fi
         # --- 実身・仮身の漢殻の命令 (docs/design-object-model.md V5): 実作・仮置・実削・実目・実名 -------
         OB_LAST="$(LC_ALL=C awk '/^実目 ID=0 /{buf=""} /^実目 /{buf=buf $0 "\n"} END{printf "%s", buf}' "$KLOG" 2>/dev/null)"
