@@ -716,7 +716,20 @@ TypePtr TypeChecker::checkMachine(const Expr& e) {
         case Expr::MachineOp::StackSet:
         case Expr::MachineOp::HaltLoop:
         case Expr::MachineOp::EnterUser:
+        case Expr::MachineOp::DropToEL1:
             return ret(Type::Void());
+
+        case Expr::MachineOp::Transfer: {
+            if (e.args.size() != 2) {
+                errorAt(e, "E0001", "移譲 takes an entry address and an argument");
+                return ret(Type::Void());
+            }
+            for (auto& a : e.args) {
+                TypePtr at = checkValue(a, "移譲 operand");
+                if (at && at->isInteger()) coerceLiteral(a, Type::U64());
+            }
+            return ret(Type::Void());
+        }
 
         case Expr::MachineOp::SvcHalt: {
             if (e.args.empty() || e.args.size() > 2) {

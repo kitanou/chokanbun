@@ -193,7 +193,7 @@ static const std::vector<std::pair<std::string, TokKind>>& allKeywords() {
         {"漢令", TokKind::HanLing}, {"異常令", TokKind::YiChangLing},
         {"框存", TokKind::KuangCun}, {"框復", TokKind::KuangFu}, {"例外歸", TokKind::LiWaiGui}, {"向量表", TokKind::XiangLiangBiao},
         {"呼出", TokKind::HuChu}, {"框移", TokKind::KuangYi}, {"框待", TokKind::KuangDai}, {"令止", TokKind::LingZhi},
-        {"棧置", TokKind::ZhanZhi}, {"永停", TokKind::YongTing}, {"入民", TokKind::RuMin},
+        {"棧置", TokKind::ZhanZhi}, {"永停", TokKind::YongTing}, {"入民", TokKind::RuMin}, {"降位", TokKind::JiangWei}, {"移譲", TokKind::YiRang},
         {"長度", TokKind::ChangDu},
         {"欄", TokKind::Lan}, {"項", TokKind::Xiang},
         {"加", TokKind::Jia}, {"減", TokKind::Jian},
@@ -680,6 +680,8 @@ const char* Token::kindName() const {
         case TokKind::ZhanZhi: return "棧置";
         case TokKind::YongTing: return "永停";
         case TokKind::RuMin: return "入民";
+        case TokKind::JiangWei: return "降位";
+        case TokKind::YiRang: return "移譲";
         case TokKind::ChangDu: return "長度";
         case TokKind::Lan: return "欄";
         case TokKind::Xiang: return "項";

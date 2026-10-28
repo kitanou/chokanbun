@@ -9,6 +9,7 @@
 
 公開 裸 節「.text.boot」 記號「_start」 術曰「起点」 返 無
     險
+        降位()
         棧置〈『_stack_top』〉()
         呼出〈『kernel_early』, 『none』〉()
         永停()

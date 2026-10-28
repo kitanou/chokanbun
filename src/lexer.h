@@ -99,6 +99,8 @@ enum class TokKind {
     ZhanZhi,      // 棧置
     YongTing,     // 永停
     RuMin,        // 入民
+    JiangWei,     // 降位
+    YiRang,       // 移譲
     ChangDu,      // 長度
     Lan,          // 欄
     Xiang,        // 項

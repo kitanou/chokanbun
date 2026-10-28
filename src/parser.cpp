@@ -1197,6 +1197,18 @@ ExprPtr Parser::parsePrimary() {
         return e;
     }
 
+    // 移譲(入口, 引数) -> br
+    if (match(TokKind::YiRang)) {
+        e->kind = Expr::Kind::Machine;
+        e->machineOp = Expr::MachineOp::Transfer;
+        expect(TokKind::LeftParen, "(");
+        e->args.push_back(parseExpr());
+        expect(TokKind::Comma, ",");
+        e->args.push_back(parseExpr());
+        expect(TokKind::RightParen, ")");
+        return e;
+    }
+
     // 令止(番 [, 引0]) -> svc して戻らない
     if (match(TokKind::LingZhi)) {
         e->kind = Expr::Kind::Machine;
@@ -1209,11 +1221,12 @@ ExprPtr Parser::parsePrimary() {
     }
 
     // 永停() / 入民()
-    if (check(TokKind::YongTing) || check(TokKind::RuMin)) {
-        bool halt = check(TokKind::YongTing);
+    if (check(TokKind::YongTing) || check(TokKind::RuMin) || check(TokKind::JiangWei)) {
+        TokKind k = current().kind;
         advance();
         e->kind = Expr::Kind::Machine;
-        e->machineOp = halt ? Expr::MachineOp::HaltLoop : Expr::MachineOp::EnterUser;
+        e->machineOp = k == TokKind::YongTing ? Expr::MachineOp::HaltLoop
+                     : k == TokKind::RuMin ? Expr::MachineOp::EnterUser : Expr::MachineOp::DropToEL1;
         expect(TokKind::LeftParen, "(");
         expect(TokKind::RightParen, ")");
         return e;

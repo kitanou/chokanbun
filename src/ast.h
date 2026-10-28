@@ -168,6 +168,8 @@ struct Expr {
         StackSet,         // 棧置〈『記号|即値』〉() -> sp を設定
         HaltLoop,         // 永停() -> wfi の無限ループ
         EnterUser,        // 入民() -> enter_el0 の本体 (eret で EL0 へ)
+        Transfer,         // 移譲(入口, 引数) -> x0 = 引数 にして入口へ br する (戻らない。ローダーが核へ制御を渡す)
+        DropToEL1,        // 降位() -> EL2 で始まったら EL1 へ降りる (EL1 ならそのまま。x0 は保つ)。EL3 は止まる
         VectorTable,      // 向量表〈『既定』,『核割込』,『下位同期』,『下位割込』〉() -> 16 項 × 0x80 の b 命令
     };
     MachineOp machineOp = MachineOp::SysRegRead;

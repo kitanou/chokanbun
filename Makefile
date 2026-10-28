@@ -29,7 +29,7 @@ BIN := chokanbun
 SRCS := $(SRC_DIR)/lexer.cpp $(SRC_DIR)/ast.cpp $(SRC_DIR)/parser.cpp $(SRC_DIR)/typecheck.cpp $(SRC_DIR)/llvmir.cpp $(SRC_DIR)/astdump.cpp $(SRC_DIR)/main.cpp
 OBJS := $(SRCS:$(SRC_DIR)/%.cpp=$(OBJ_DIR)/%.o)
 
-.PHONY: all test run clean
+.PHONY: all test run run-loader clean
 
 all: $(BIN)
 
@@ -52,13 +52,21 @@ test: $(BIN)
 run: test
 	@echo "=== Running QEMU (漢極 kernel) ==="
 	@# 殻の 同 で篇藏を保存すると、再起動で戻る。make test が作り直さないイメージ (make clean で消える)。
-	@test -f tests/output/run-disk.img || dd if=/dev/zero of=tests/output/run-disk.img bs=512 count=12288 2>/dev/null
-	@# 版 1 のときの 4096 区画のイメージは永続化に足りない (要 10370 区画)ので、中身を残したまま 12288 区画へ広げる。
-	@test "$$(wc -c < tests/output/run-disk.img)" -ge 6291456 || dd if=/dev/null of=tests/output/run-disk.img bs=512 seek=12288 count=0 2>/dev/null
+	@test -f tests/output/run-disk.img || dd if=/dev/zero of=tests/output/run-disk.img bs=512 count=20000 2>/dev/null
+	@# 古いイメージは永続化に足りない (要 16754 区画)ので、中身を残したまま 20000 区画へ広げる。
+	@test "$$(wc -c < tests/output/run-disk.img)" -ge 10240000 || dd if=/dev/null of=tests/output/run-disk.img bs=512 seek=20000 count=0 2>/dev/null
 	qemu-system-aarch64 -M virt,gic-version=2 -cpu cortex-a57 -nographic -serial mon:stdio \
 		-global virtio-mmio.force-legacy=false \
 		-drive file=tests/output/run-disk.img,if=none,format=raw,id=hd0 -device virtio-blk-device,drive=hd0 \
 		-kernel tests/output/kernel.elf
+
+# 独立ブートローダー 導 から核を起動する (導 が virtio-blk の核イメージ KBL1 を読む。永続化用のディスクは付けない)。
+run-loader: test
+	@echo "=== Running QEMU (導 → 漢極 kernel) ==="
+	qemu-system-aarch64 -M virt,gic-version=2 -cpu cortex-a57 -nographic -serial mon:stdio \
+		-global virtio-mmio.force-legacy=false \
+		-drive file=tests/output/kernel.img,if=none,format=raw,id=hd0 -device virtio-blk-device,drive=hd0 \
+		-kernel tests/output/loader.elf
 
 clean:
 	rm -rf $(OBJ_DIR) $(BIN) tests/output
