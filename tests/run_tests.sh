@@ -964,7 +964,7 @@ if [ -f "$OUT/kernel.elf" ]; then
         # --- #42 G0: BTRON3 互換層 (user/btron/) の get_tid と ER_* ----------------
         btron_val() { grep -a "^識試 $1 " "$KLOG" 2>/dev/null | head -1 | grep -oE '0x[0-9a-f]{16}'; }
         BTRON_BAD=""
-        for k in 'get_tid=識別' 'get_tid>0' 'ER_負' '錯換' 'H=符号付16' 'H=32767' 'H=-32768' 'H隣欄保持' 'Bool=False0True1' 'SIZE配置' 'PNT配置' 'RECT4辺' 'RECT共用体' 'ErrCode共用体LE' 'ER_全名eclass=-1' 'ER_全名detail通し番号' '制御0000-0020/007F' 'TC_A=2121-7E7E' 'TC_B=8021-FD7E' 'TC_C=2180-7EFD' 'TC_D=8080-FDFD' '言語指定FE21-FEFE' '特殊FF21-FF7E/ESC FF80-FFFE/EOF' '空白3種' 'TC至UC記号' 'TC至UC仮名漢字' 'TC至UC割当なし' 'UC至TC' 'A全往復6877' 'TAD書き可変' 'TAD読み戻し' 'TAD異常' 'TADラージ' 'TAD管理情報' 'TAD管理情報読み' 'TAD文章始終' 'TAD図形始終' 'TAD始異常'; do
+        for k in 'get_tid=識別' 'get_tid>0' 'ER_負' '錯換' 'H=符号付16' 'H=32767' 'H=-32768' 'H隣欄保持' 'Bool=False0True1' 'SIZE配置' 'PNT配置' 'RECT4辺' 'RECT共用体' 'ErrCode共用体LE' 'ER_全名eclass=-1' 'ER_全名detail通し番号' '制御0000-0020/007F' 'TC_A=2121-7E7E' 'TC_B=8021-FD7E' 'TC_C=2180-7EFD' 'TC_D=8080-FDFD' '言語指定FE21-FEFE' '特殊FF21-FF7E/ESC FF80-FFFE/EOF' '空白3種' 'TC至UC記号' 'TC至UC仮名漢字' 'TC至UC割当なし' 'UC至TC' 'A全往復6877' 'TAD書き可変' 'TAD読み戻し' 'TAD異常' 'TADラージ' 'TAD管理情報' 'TAD管理情報読み' 'TAD文章始終' 'TAD図形始終' 'TAD始異常' 'TAD仮身書き' 'TAD仮身読み' 'TAD仮身データ' 'TAD仮身異常'; do
             got="$(btron_val "$k")"
             [ "$got" = "0x0000000000000001" ] || BTRON_BAD="$BTRON_BAD $k(got=${got:-none})"
         done

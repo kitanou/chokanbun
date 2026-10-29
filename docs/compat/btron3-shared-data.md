@@ -95,7 +95,7 @@
 
 ## 3. TAD（tad1.html〜tad3.html）
 
-**実装（セグメントの枠、済）**: `user/btron/tad.mkn`。固定長（16 ビットの TC）と可変長セグメント（FF・ID・LEN〈UH〉・偶数長の本体）の読み（`TAD次`）と書き（`TAD可変書`）、ID 定数（`TS_INFO` 0xE0〜`TS_SFUSEN` 0xE9）、ビッグエンディアンの読み書き。予約 ID（0x80〜0x9F）・奇数長・切れた列・容量不足を拒む。`識試` に 4 項目（計 33 項目）。**管理情報・開始終了の実装（済）**: `TS_INFO`（項目の繰り返しを読み、未知の項目は sublen で読み飛ばす。バージョン項目 subid 0 の BCD〈`TAD版`〉の読み書き）、`TS_TEXT`/`TS_TEXTEND`・`TS_FIG`/`TS_FIGEND`（LEN 24 の欄 view・draw・h_unit・v_unit・lang・bgpat／ratio の読み書き。LEN は実際の値に従い 24 以上を許す）。`識試` に 5 項目（計 38 項目）。画像・仮身・付箋（文章付箋 0xA0〜、図形描画 0xB0〜、指定・機能・設定付箋）の中身は未実装。\n\n**ラージセグメントの長さ欄は原文の図 3（`gif/variable_seg.gif`）で確認済み**: `FF`・ID・`FF FF`・長さ（4 バイト、65536〜2^32−2）・データ本体。通常のセグメントの長さは 0〜65534 で偶数。実装と一致した。
+**実装（セグメントの枠、済）**: `user/btron/tad.mkn`。固定長（16 ビットの TC）と可変長セグメント（FF・ID・LEN〈UH〉・偶数長の本体）の読み（`TAD次`）と書き（`TAD可変書`）、ID 定数（`TS_INFO` 0xE0〜`TS_SFUSEN` 0xE9）、ビッグエンディアンの読み書き。予約 ID（0x80〜0x9F）・奇数長・切れた列・容量不足を拒む。`識試` に 4 項目（計 33 項目）。**管理情報・開始終了の実装（済）**: `TS_INFO`（項目の繰り返しを読み、未知の項目は sublen で読み飛ばす。バージョン項目 subid 0 の BCD〈`TAD版`〉の読み書き）、`TS_TEXT`/`TS_TEXTEND`・`TS_FIG`/`TS_FIGEND`（LEN 24 の欄 view・draw・h_unit・v_unit・lang・bgpat／ratio の読み書き。LEN は実際の値に従い 24 以上を許す）。`識試` に 5 項目（計 38 項目）。**仮身セグメント `TS_VOBJ`**（view・height・chsz・色 4 つ・dlen・固有データ。LEN は 30+dlen を偶数に詰める）を `TAD仮身書`・`TAD仮身読` で読み書きできる。`識試` に 4 項目を足した（計 42 項目）。**画像 `TS_IMAGE`** は欄の配置が図 12（`gif/data_struct.gif`）にあり未取得のため未実装（文章に書かれた color・cinfo・ext・mask・compac の意味は上の要約のとおり）。機能・指定・設定付箋と、文章付箋 0xA0〜・図形描画 0xB0〜 の中身も未実装。\n\n**ラージセグメントの長さ欄は原文の図 3（`gif/variable_seg.gif`）で確認済み**: `FF`・ID・`FF FF`・長さ（4 バイト、65536〜2^32−2）・データ本体。通常のセグメントの長さは 0〜65534 で偶数。実装と一致した。
 
 ### 3.1 データ構造の概要（tad1）
 
