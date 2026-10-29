@@ -42,7 +42,7 @@
 | | `gfra_rec` | 部分（回転なし。線属性は実線のみ＝線種 T が 0 以外は `EG_NOSPT`。太さは内側へ、はみ出す太さは全面、0 は描かない） |
 | | `gcop_bmp` | 部分（拡大縮小と mask は `EG_NOSPT`。形式違いは `EG_FORM`、`G_CVFORM` があれば小さいほうの深さの下位ビットを写す。重なる転送は向きを選ぶ。カラー変換は未対応＝カラー情報なし） |
 | | 上記以外の 2.4 の関数（約 36） | 未実装 |
-| 2.5 | 文字（列）描画 20 関数 | 未実装（フォントと TRON コードが前提） |
+| 2.5 | 文字（列）描画 20 関数 | **一部済 12 関数**（`user/btron/dpchr.mkn`）: `gset_chp`・`gget_chp`・`gset_chc`・`gget_chc`・`gget_chw`・`gget_chh`・`gget_stw`・`gget_sth`・`gdra_chr`・`gdra_chp`・`gdra_str`・`gdra_stp`。フォントは自作の固定幅 8×8 の ASCII（`tools/gen-font5x7.py` が生成。外部のフォントは使わない）。全角（A ゾーンなど）は幅 16 の枠線だけ。制御コードと言語指定コード（0xFE00 以上）は幅 0。文字描画方向は横書き・文字間隔 0 だけで、`gap` は NULL だけ（指定すると `EG_NOSPT`）。未実装: `gset_chd`・`gget_chd`・`gset_fon`・`gget_fon`・`gset_scr`・`gget_scr`・`gget_str`・`gcop_chr` |
 | 2.6 | ポインタ制御 6 関数 | 未実装 |
 
 ## 未了と次の段階
