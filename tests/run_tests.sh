@@ -1678,7 +1678,7 @@ ev = [{"type": "abs", "data": {"axis": "x", "value": 16384}}, {"type": "abs", "d
 s.sendall(json.dumps({"execute": "input-send-event", "arguments": {"events": ev}}).encode() + b"\n"); rd()
 PYEOF
             sleep 0.3
-            for icmd in "sendkey a" "mouse_button 1" "mouse_button 0"; do
+            for icmd in "sendkey a" "sendkey shift-a" "mouse_button 1" "mouse_button 0"; do
                 printf '%s\n' "$icmd" | nc -U "$itmp/mon.sock" -w 1 >/dev/null 2>&1
                 sleep 0.3
             done
@@ -1690,8 +1690,8 @@ PYEOF
             rm -rf "$itmp"
         }
         input_boot "$OUT/input_on.log"
-        if [ "$(grep -a '^件試 入力 ' "$OUT/input_on.log" | sed 's/^件試 入力 //' | tr '\n' '|')" = "待機 0x0000000000000000|型 0x0000000000000003|情 0x000000000061001e|型 0x0000000000000004|情 0x000000000061001e|型 0x0000000000000001|情 0x0000000000000000|型 0x0000000000000002|情 0x0000000000000000|座 0x00000000003c00a0|" ]; then
-            pass "kernel qemu: 入力装置 (virtio-input): キーボードの a の押下・離しが EV_KEYDWN/EV_KEYUP (キーコード 0x1e と文字 'a')、タブレットのボタンが EV_BUTDWN/EV_BUTUP、絶対位置 (16384, 8192) が画面座標 (160, 60) で get_pdp に出る"
+        if [ "$(grep -a '^件試 入力 ' "$OUT/input_on.log" | sed 's/^件試 入力 //' | tr '\n' '|')" = "待機 0x0000000000000000|型 0x0000000000000003|情 0x000000000061001e|型 0x0000000000000004|情 0x000000000061001e|型 0x0000000000000003|情 0x000000000041001e|型 0x0000000000000004|情 0x000000000041001e|型 0x0000000000000001|情 0x0000000000000000|型 0x0000000000000002|情 0x0000000000000000|座 0x00000000003c00a0|" ]; then
+            pass "kernel qemu: 入力装置 (virtio-input): キーボードの a の押下・離しが EV_KEYDWN/EV_KEYUP (キーコード 0x1e と文字 'a'、シフトで 'A'・シフトキー自体はイベントなし)、タブレットのボタンが EV_BUTDWN/EV_BUTUP、絶対位置 (16384, 8192) が画面座標 (160, 60) で get_pdp に出る"
         else
             fail "kernel qemu: 入力装置 (virtio-input)"
             grep -a '^件試 入力 ' "$OUT/input_on.log" 2>/dev/null | sed 's/^/      /' | head -12
