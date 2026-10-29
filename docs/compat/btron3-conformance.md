@@ -97,7 +97,7 @@ API 一覧: [btron3-api-inventory.md](btron3-api-inventory.md)（約 247 関数�
 
 | § | 項目 | 参照 | 状態 |
 |---|---|---|---|
-| 3.1 | ウィンドウマネージャ | shell/window.html | 未実装（API 棚卸し済） |
+| 3.1 | ウィンドウマネージャ | shell/window.html | 要求の整理済（[btron3-window.md](btron3-window.md)）。実装は未着手 |
 | 3.2 | メニューマネージャ（標準／常駐メニュー） | shell/menu.html | 未実装（API 棚卸し済） |
 | 3.3 | パーツマネージャ（11 種のパーツ） | shell/parts.html | 未実装（API 棚卸し済） |
 | 3.4 | パネルマネージャ | shell/panel.html | 未実装（API 棚卸し済） |
