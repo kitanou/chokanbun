@@ -66,6 +66,8 @@
 常「EX_NOEXS」之無符六四 為 0xFFFFFFFFFFFE0008
 常「EX_PWD」之無符六四 為 0xFFFFFFFFFFFE0009
 常「EX_EXS」之無符六四 為 0xFFFFFFFFFFFE000A
+常「EX_WND」之無符六四 為 0xFFFFFFFFFFFE000B
+常「EX_WPRC」之無符六四 為 0xFFFFFFFFFFFE000C
 
 註 漢令の誤り番号 (x0 の負の errno、abi-aarch64.md) を ER_* に変える。0 以上はそのまま返す。
 註 対応が定まらないものは ER_PAR にする (ER_PAR = 引数が不正)。対応表は次の表のとおり。
