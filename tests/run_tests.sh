@@ -915,10 +915,10 @@ if [ -f "$OUT/kernel.elf" ]; then
             grep -a '^枯渇' "$KLOG" 2>/dev/null | sed 's/^/      /'
         fi
         # 頁が足りないとき (空き 0〜3 頁) の 生行程 は -ENOMEM で失敗し、頁が漏れず、全部放して空き数が戻る
-        if [ "$(sp_val '資不足')" = "0x000000000000001f" ]; then
+        if [ "$(sp_val '資不足')" = "0x000000000000003f" ]; then
             pass "kernel qemu: 頁不足の 生行程 (空き 0〜3 頁で -ENOMEM、失敗後も頁が漏れず、全部放して空き数が戻る)"
         else
-            fail "kernel qemu: 頁不足の 生行程 (資不足=$(sp_val '資不足') 期待 0x1f)"
+            fail "kernel qemu: 頁不足の 生行程 (資不足=$(sp_val '資不足') 期待 0x3f)"
         fi
         # 異常終了: 保護違反 (EC 36) と BRK (EC 60) は子だけを終え (128 + EC)、正常な子は 5 で終わり、親は走り続け、頁は漏れない
         if [ "$(sp_val '異常終了 保護違反')" = "0x00000000000000a4" ] && [ "$(sp_val '異常終了 BRK')" = "0x00000000000000bc" ] \
