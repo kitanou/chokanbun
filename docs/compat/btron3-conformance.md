@@ -11,7 +11,7 @@
 - 第2編 第1章（カーネル）は [btron3-os.md](btron3-os.md) で照合済み（以前の読みは文字化けによる。上記の確認で更新する）。第2章・第3章は API 名のみ [btron3-api-inventory.md](btron3-api-inventory.md) に棚卸し済み（約 352 関数、全て未実装）。共有データ編は [btron3-shared-data.md](btron3-shared-data.md) に要約済み（原文の文字化けで要確認事項が多い）。「関連する既存実装」欄は照合の出発点であり、適合の根拠ではない。
 - 仕様書本文は転載しない。要求は独自の言い回しで要約し、参照箇所（章・節・URL アンカー）を記す。
 - `ER_*` の API 別対応と、試験が参照していない 5 名は [`ER_*` 網羅表](btron3-error-coverage.md) にまとめた。
-- B-right/V の補足・拡張は本書の対象外。別表（`btron3-bright-v.md`、未作成）で管理する。
+- B-right/V の補足・拡張は本書の対象外。別表 [btron3-bright-v.md](btron3-bright-v.md) で管理する。
 
 ## 状態の定義
 
@@ -42,16 +42,16 @@
 
 | § | 項目 | 参照 | 関連する既存実装 | 差分 | 試験方法 | 状態 |
 |---|---|---|---|---|---|---|
-| 1 | 基本データタイプ | data_type.html | 言語仕様の整数型、`user/btron/types.mkn` | 一部のみ照合（[詳細](btron3-shared-data.md)） | 型幅・符号・順序の単体試験 | 部分適合（浮動小数点は意図的に未対応〈非適合として記録〉。`ErrCode` は LE の定義で実装・試験済み。`SIZE`/`PNT`/`RECT`/`Bool` は実装済・未検証） |
-| 2.1 | TRON 標準コードの概要（多国語、文字セット、書体セット） | tron_code.html#aat | 内部は漢字文字列（UTF-8 想定） | 未照合（[詳細](btron3-shared-data.md)） | — | 未実装 |
-| 2.2 | 既存コード体系との関連（JIS X 0201 / 0208） | tron_code.html#aax | なし | 未照合（[詳細](btron3-shared-data.md)） | 変換表の往復試験 | 未実装 |
-| 2.3 | TRON 標準文字コード | tron_code.html#aba | なし | 未照合（[詳細](btron3-shared-data.md)） | テストベクトル | 未実装 |
-| 3.1–3.2 | TAD 概要 | tad1.html#abj | なし | 未照合（[詳細](btron3-shared-data.md)） | — | 未実装 |
-| 3.3 | TAD データ構成の概要（文章／図形／画像／構造定義） | tad1.html#abn | なし | 未照合（[詳細](btron3-shared-data.md)） | — | 未実装 |
-| 3.4 | TAD データ構成の詳細（管理情報、文章・図形・画像・階層・機能付加・指定付加セグメント） | tad1.html#aby | なし | 未照合（[詳細](btron3-shared-data.md)） | 読み書きの往復試験 | 未実装 |
-| 3.5 | 文章付加セグメント（ページ割付け、行書式、文字、文字割付け、修飾、変数参照、メモ、アプリ指定） | tad2.html#ack | なし | 未照合（[詳細](btron3-shared-data.md)） | セグメント別試験 | 未実装 |
-| 3.6 | 図形描画セグメント（要素、データ定義、グループ、マクロ、修飾、ページ割付け、メモ、アプリ指定） | tad3.html#aec | なし | 未照合（[詳細](btron3-shared-data.md)） | セグメント別試験 | 未実装 |
-| 付録A | TAD セグメント一覧 | tad3.html#aet | なし | 未照合（[詳細](btron3-shared-data.md)） | 網羅表 | 未実装 |
+| 1 | 基本データタイプ | data_type.html | `user/btron/types.mkn`・`er.mkn` | 全項目を照合（[詳細](btron3-shared-data.md)） | 型幅・符号・順序の単体試験 | 実装済・試験済（`識試`。浮動小数点は意図的な非適合）。「適合確認済」への格上げは未判定 |
+| 2.1 | TRON 標準コードの概要（多国語、文字セット、書体セット） | tron_code.html#aat | `user/btron/tcode.mkn` | 原文を iso-2022-jp で読み直して確定（[詳細](btron3-shared-data.md)） | — | 部分適合（符号領域の分類） |
+| 2.2 | 既存コード体系との関連（JIS X 0201 / 0208） | tron_code.html#aax | `user/btron/tconv.mkn`・`jis0208.mkn`・`tools/gen-jis0208.py` | A ゾーンは JIS X 0208 と同位置（[詳細](btron3-shared-data.md)） | 変換表の往復試験 | 部分適合（JIS X 0208↔Unicode の 6,877 字。JIS X 0201 の 1 バイト系は日本語では使わない規定） |
+| 2.3 | TRON 標準文字コード | tron_code.html#aba | `tcode.mkn`・`tconv.mkn` | 構造は確定。B〜D ゾーンの文字割当は出典なし（[詳細](btron3-shared-data.md)） | テストベクトル | 部分適合（A ゾーンのみ。B〜D は未対応） |
+| 3.1–3.2 | TAD 概要 | tad1.html#abj | `user/btron/tad.mkn` | 原文確認済（[詳細](btron3-shared-data.md)） | — | 部分適合（セグメントの枠） |
+| 3.3 | TAD データ構成の概要（文章／図形／画像／構造定義） | tad1.html#abn | `tad.mkn` | 固定長・可変長・ラージを図 3 で確認（[詳細](btron3-shared-data.md)） | — | 実装済・試験済（枠の読み書き） |
+| 3.4 | TAD データ構成の詳細（管理情報、文章・図形・画像・階層・機能付加・指定付加セグメント） | tad1.html#aby | `tad.mkn` | 管理情報・文章／図形の開始終了・画像（図 10）・仮身・機能／指定付箋を実装。設定付箋は形式が見当たらず未確認（[詳細](btron3-shared-data.md)） | 読み書きの往復試験 | 部分適合 |
+| 3.5 | 文章付加セグメント（ページ割付け、行書式、文字、文字割付け、修飾、変数参照、メモ、アプリ指定） | tad2.html#ack | `tad.mkn` | 付箋の枠と用紙・マージン指定、サブ ID ごとの LEN の検査のみ（[詳細](btron3-shared-data.md)） | セグメント別試験 | 部分適合（本体の欄は未実装） |
+| 3.6 | 図形描画セグメント（要素、データ定義、グループ、マクロ、修飾、ページ割付け、メモ、アプリ指定） | tad3.html#aec | `tad.mkn` | 付箋の枠、LEN の検査、長方形セグメント、線属性のみ（[詳細](btron3-shared-data.md)） | セグメント別試験 | 部分適合（長方形以外の要素・データ定義・修飾は未実装） |
+| 付録A | TAD セグメント一覧 | tad3.html#aet | `tad.mkn`（ID の定数） | ID 一覧を実装。0xA3 は付録の TS_TUB を採用（[詳細](btron3-shared-data.md)） | 網羅表 | 実装済・試験済（ID） |
 | 付録B | 準 TAD 規格 | tad3.html#aev | なし | 未照合（[詳細](btron3-shared-data.md)） | — | 未実装 |
 | 4.1–4.2 | フロッピーディスク形式: ファイルシステム構成 | fd_format.html#afa | RAMFS（形式は無関係） | 未照合（[詳細](btron3-shared-data.md)） | イメージ読み書き | 未実装 |
 | 4.3 | フロッピーディスク形式: ファイル構成（ヘッダ、フラグメント、レコードインデックス等） | fd_format.html#afn | 同上 | 未照合（[詳細](btron3-shared-data.md)） | 同上 | 未実装 |
@@ -80,14 +80,14 @@
 
 ### 第2章 ディスプレイプリミティブ
 
-API 一覧: [btron3-api-inventory.md](btron3-api-inventory.md)（2.3: 37、2.4: 42、2.5: 20、2.6: 6 関数）。現状は全て未実装。
+API 一覧: [btron3-api-inventory.md](btron3-api-inventory.md)（2.3: 37、2.4: 42、2.5: 20、2.6: 6 関数）。要求と関数ごとの状態は [btron3-dp.md](btron3-dp.md)。汎用メモリ描画環境と点・長方形・枠・転送まで実装（`描試` 28 項目）。
 
 | § | 項目 | 参照 | 状態 |
 |---|---|---|---|
-| 2.1 | 概要 | dp/intro.html | 未調査 |
-| 2.2 | 基本概念（座標、ビットマップ、ブラシ、描画環境） | dp/basic_concept.html | 未調査 |
-| 2.3 | 基本関数（描画環境、カラーマップ、座標変換） | dp/basic_func.html | 未実装（API 棚卸し済） |
-| 2.4 | 図形描画関数（線、矩形、多角形、円、弧、曲線、塗り、ビットマップ、クリップ） | dp/figure_func.html | 未実装（API 棚卸し済） |
+| 2.1 | 概要 | dp/intro.html | 調査済（[btron3-dp.md](btron3-dp.md)） |
+| 2.2 | 基本概念（座標、ビットマップ、ブラシ、描画環境） | dp/basic_concept.html | 調査済・部分実装（汎用メモリ描画環境のみ。[btron3-dp.md](btron3-dp.md)） |
+| 2.3 | 基本関数（描画環境、カラーマップ、座標変換） | dp/basic_func.html | 部分適合（`gopn_mem`・`gcls_env`・`gnew_env`・`gini_env`・環境のデータ・座標変換。カラーマップ・デバイス描画環境・クリッピング領域は未実装） |
+| 2.4 | 図形描画関数（線、矩形、多角形、円、弧、曲線、塗り、ビットマップ、クリップ） | dp/figure_func.html | 部分適合（`gdra_pnt`・`gtst_pnt`・`gfil_pnt`・`gfil_rec`・`gfra_rec`・`gcop_bmp`。約 36 関数は未実装） |
 | 2.5 | 文字（列）描画関数 | dp/character_func.html | 未実装（API 棚卸し済） |
 | 2.6 | ポインタ制御関数、標準ポインタ形状 | dp/pointer_func.html | 未実装（API 棚卸し済） |
 
@@ -111,13 +111,13 @@ API 一覧: [btron3-api-inventory.md](btron3-api-inventory.md)（約 247 関数�
 
 **注**: 第3.8 節の「アプリケーション」は原文の日本語タイトルが取得時に判読できなかった。実身／仮身／虚身・付箋の規定位置は原文確認のうえ確定する（取得した英語訳は機械的な当て字である）。
 
-## 進捗の集計（2026-10-22）
+## 進捗の集計（2026-10-29）
 
 | 区分 | 節・関数 | 適合確認済 | 実装済・未検証 | 部分適合 | 未実装 | 未調査 |
 |---|---|---|---|---|---|---|
-| 第1編 共有データ | 14 節 | 0 | 0 | 1（§1） | 13 | 0 |
+| 第1編 共有データ | 14 節 | 0 | 3（§1、§3.3、付録A） | 7（§2.1〜2.3、§3.1–3.2、§3.4〜3.6） | 4（付録B、§4.1–4.2、§4.3、付録A–B） | 0 |
 | 第2編 第1章 カーネル | 10 節 | 0 | 5（1.3、1.4、1.5、1.7、1.8） | 5（1.1、1.2、1.6、1.9、1.10） | 0 | 0 |
-| 第2編 第2章 描画 | 6 節・105 関数 | 0 | 0 | 0 | 4 節（2.3〜2.6） | 2 節（2.1、2.2） |
+| 第2編 第2章 描画 | 6 節・105 関数 | 0 | 0 | 4 節（2.1〜2.4。実装は約 12 関数） | 2 節（2.5、2.6） | 0 |
 | 第2編 第3章 シェル | 11 節・約 247 関数 | 0 | 0 | 0 | 11 節 | 0 |
 
 - 節単位の状態は最も低い API に引きずられるため、実質の進捗は第1章の API 単位表（[btron3-os.md](btron3-os.md)）で見る。
@@ -131,4 +131,4 @@ API 一覧: [btron3-api-inventory.md](btron3-api-inventory.md)（約 247 関数�
 3. 第2章・第3章の要求を抽出し、`btron3-os.md` に要約と参照箇所を記録する（API 名は [btron3-api-inventory.md](btron3-api-inventory.md) に済み）。
 4. 共有データ編を `btron3-shared-data.md` に要約し、既存実装との差分と試験方法を埋める。
 5. 重複を確認のうえ、機能別の子Issueを作成する。
-6. `btron3-bright-v.md` を作成する。`btron3-test-plan.md` は作成済み。
+6. `btron3-bright-v.md`（作成済み。[btron3-bright-v.md](btron3-bright-v.md)）と `btron3-test-plan.md`（作成済み）。
