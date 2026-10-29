@@ -112,5 +112,27 @@
         終若
     終若
     置「失」為 失 加 呼「判定」以(取址(『RECT共用体』), 長度(『RECT共用体』), 共)
+    註 --- ErrCode の二定義 (data_type.html): リトルエンディアンは detail が下位 16 ビット、eclass が上位 16 ビット ---
+    行「W置」以(域, 「ER_NOEXS」)
+    設「共用」之無符六四 為 0
+    若 (呼「H読」以(域) 等於 0x16) 且 (呼「H読」以(域 加 2) 等於 全一) 則
+        行「W置」以(域, 「ER_XFS」)
+        若 (呼「H読」以(域) 等於 0x2A) 且 (呼「H読」以(域 加 2) 等於 全一) 則
+            置「共用」為 1
+        終若
+    終若
+    置「失」為 失 加 呼「判定」以(取址(『ErrCode共用体LE』), 長度(『ErrCode共用体LE』), 共用)
+    註 全 42 名が eclass=-1 で、detail は 1..42 の通し番号 (総和 903)。
+    設「全類」之無符六四 為 「ER_ACCES」 位與 「ER_ADR」 位與 「ER_BUSY」 位與 「ER_CTX」 位與 「ER_DD」 位與 「ER_DEV」 位與 「ER_DLT」 位與 「ER_ENDR」 位與 「ER_ERDEV」 位與 「ER_EXS」 位與 「ER_FD」 位與 「ER_FNAME」 位與 「ER_ID」 位與 「ER_IO」 位與 「ER_LEVEL」 位與 「ER_LIMIT」 位與 「ER_LOCK」 位與 「ER_MINTR」 位與 「ER_MPTR」 位與 「ER_NODEV」 位與 「ER_NODSK」 位與 「ER_NOEXS」 位與 「ER_NOFS」 位與 「ER_NOLNK」 位與 「ER_NOMDA」 位與 「ER_NOME」 位與 「ER_NOMEM」 位與 「ER_NONE」 位與 「ER_NOPRC」 位與 「ER_NOSPC」 位與 「ER_NOSPT」 位與 「ER_OBJ」 位與 「ER_PAR」 位與 「ER_PERM」 位與 「ER_PPRI」 位與 「ER_PWD」 位與 「ER_REC」 位與 「ER_RONLY」 位與 「ER_SELF」 位與 「ER_SZOVR」 位與 「ER_TRON」 位與 「ER_XFS」
+    設「類」之無符六四 為 0
+    若 (全類 位與 0xFFFFFFFFFFFF0000) 等於 0xFFFFFFFFFFFF0000 則
+        置「類」為 1
+    終若
+    置「失」為 失 加 呼「判定」以(取址(『ER_全名eclass=-1』), 長度(『ER_全名eclass=-1』), 類)
+    設「詳」之無符六四 為 0
+    若 ((「ER_ACCES」 位與 0xFFFF) 加 (「ER_ADR」 位與 0xFFFF) 加 (「ER_BUSY」 位與 0xFFFF) 加 (「ER_CTX」 位與 0xFFFF) 加 (「ER_DD」 位與 0xFFFF) 加 (「ER_DEV」 位與 0xFFFF) 加 (「ER_DLT」 位與 0xFFFF) 加 (「ER_ENDR」 位與 0xFFFF) 加 (「ER_ERDEV」 位與 0xFFFF) 加 (「ER_EXS」 位與 0xFFFF) 加 (「ER_FD」 位與 0xFFFF) 加 (「ER_FNAME」 位與 0xFFFF) 加 (「ER_ID」 位與 0xFFFF) 加 (「ER_IO」 位與 0xFFFF) 加 (「ER_LEVEL」 位與 0xFFFF) 加 (「ER_LIMIT」 位與 0xFFFF) 加 (「ER_LOCK」 位與 0xFFFF) 加 (「ER_MINTR」 位與 0xFFFF) 加 (「ER_MPTR」 位與 0xFFFF) 加 (「ER_NODEV」 位與 0xFFFF) 加 (「ER_NODSK」 位與 0xFFFF) 加 (「ER_NOEXS」 位與 0xFFFF) 加 (「ER_NOFS」 位與 0xFFFF) 加 (「ER_NOLNK」 位與 0xFFFF) 加 (「ER_NOMDA」 位與 0xFFFF) 加 (「ER_NOME」 位與 0xFFFF) 加 (「ER_NOMEM」 位與 0xFFFF) 加 (「ER_NONE」 位與 0xFFFF) 加 (「ER_NOPRC」 位與 0xFFFF) 加 (「ER_NOSPC」 位與 0xFFFF) 加 (「ER_NOSPT」 位與 0xFFFF) 加 (「ER_OBJ」 位與 0xFFFF) 加 (「ER_PAR」 位與 0xFFFF) 加 (「ER_PERM」 位與 0xFFFF) 加 (「ER_PPRI」 位與 0xFFFF) 加 (「ER_PWD」 位與 0xFFFF) 加 (「ER_REC」 位與 0xFFFF) 加 (「ER_RONLY」 位與 0xFFFF) 加 (「ER_SELF」 位與 0xFFFF) 加 (「ER_SZOVR」 位與 0xFFFF) 加 (「ER_TRON」 位與 0xFFFF) 加 (「ER_XFS」 位與 0xFFFF)) 等於 903 則
+        置「詳」為 1
+    終若
+    置「失」為 失 加 呼「判定」以(取址(『ER_全名detail通し番号』), 長度(『ER_全名detail通し番号』), 詳)
     歸 失
 終術

@@ -964,7 +964,7 @@ if [ -f "$OUT/kernel.elf" ]; then
         # --- #42 G0: BTRON3 互換層 (user/btron/) の get_tid と ER_* ----------------
         btron_val() { grep -a "^識試 $1 " "$KLOG" 2>/dev/null | head -1 | grep -oE '0x[0-9a-f]{16}'; }
         BTRON_BAD=""
-        for k in 'get_tid=識別' 'get_tid>0' 'ER_負' '錯換' 'H=符号付16' 'H=32767' 'H=-32768' 'H隣欄保持' 'Bool=False0True1' 'SIZE配置' 'PNT配置' 'RECT4辺' 'RECT共用体'; do
+        for k in 'get_tid=識別' 'get_tid>0' 'ER_負' '錯換' 'H=符号付16' 'H=32767' 'H=-32768' 'H隣欄保持' 'Bool=False0True1' 'SIZE配置' 'PNT配置' 'RECT4辺' 'RECT共用体' 'ErrCode共用体LE' 'ER_全名eclass=-1' 'ER_全名detail通し番号'; do
             got="$(btron_val "$k")"
             [ "$got" = "0x0000000000000001" ] || BTRON_BAD="$BTRON_BAD $k(got=${got:-none})"
         done
