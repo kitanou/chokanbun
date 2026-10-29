@@ -1,0 +1,2 @@
+註 セルフホスト第 6 段の根: バックエンドとリンカをまとめる (selfhost/host_ld.c が使う)。
+註 @取込 ../selfhost/linker.mkn

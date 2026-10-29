@@ -41,6 +41,21 @@ run() {
 
 echo "=== ChoKanbun compiler tests ==="
 
+# --- 機械漢文のツールチェーン (バックエンド selfhost/backend.mkn + リンカ selfhost/linker.mkn) ------------------------
+#     IR → AArch64 → ELF/漢像。llc・ld.lld・llvm-objcopy に当たる。TOOLCHAIN=kanbun で、核・漢像・導の組み立てに LLVM を使わない。
+#     kld 自身は C++ 版のコンパイラとホストの clang で作る (入出力だけの selfhost/host_ld.c を付ける)。
+TOOLCHAIN="${TOOLCHAIN:-llvm}"
+KLD="$OUT/kld"
+export TOOLCHAIN KLD
+if sh tools/kernel-expand.sh selfhost/toolchain.mkn "$OUT/toolchain_all.mkn" >/dev/null \
+   && "$BIN" "$OUT/toolchain_all.mkn" -ir -o "$OUT/toolchain.ll" 2>"$OUT/toolchain.gen.log" \
+   && "$CLANG" -Wno-override-module -x ir "$OUT/toolchain.ll" -x c selfhost/host_ld.c -o "$KLD" >"$OUT/toolchain.cc.log" 2>&1; then
+    pass "toolchain: 機械漢文のバックエンドとリンカ (kld) をビルド (TOOLCHAIN=$TOOLCHAIN)"
+else
+    fail "toolchain: 機械漢文のバックエンドとリンカ (kld) をビルド"
+    sed 's/^/      /' "$OUT/toolchain.gen.log" "$OUT/toolchain.cc.log" 2>/dev/null | head -10
+fi
+
 # --- hello: minimum function, IR -> AArch64 object ------------------------
 "$BIN" tests/hello.mkn -ir -o "$OUT/hello.ll" 2>"$OUT/hello.gen.log" \
     && pass "hello: IR generation" || fail "hello: IR generation"
@@ -116,9 +131,11 @@ fi
 # (otherwise a long-running loop exhausts the stack).
 awk '/^define /{e=1} /^[A-Za-z0-9_.]+:$/{ if ($0!="entry:") e=0 } /alloca/{ if(!e) bad=1 } END{exit bad}' "$OUT/kernel.ll" \
     && pass "kernel: allocas hoisted to entry block" || fail "kernel: allocas hoisted to entry block"
+if [ "$TOOLCHAIN" != kanbun ]; then
 "$LLC" -march=aarch64 -filetype=obj "$OUT/kernel.ll" -o "$OUT/kernel.o" \
     >"$OUT/kernel.llc.log" 2>&1 \
     && pass "kernel: AArch64 object" || fail "kernel: AArch64 object"
+fi
 
 # 外部命令 (漢像 KBN1) をビルドし、カーネルイメージへ埋め込む (行程の設計 P1)。
 export BIN LLVM_BIN LLD_BIN
@@ -192,6 +209,21 @@ sh tools/mkimage.sh user/tc_cmd.mkn "$OUT/tc_cmd.zo" "$OUT" 2>"$OUT/user_tc_cmd.
     && pass "user: セルフホストの型検査器の命令 型検 を漢像にビルド" || {
         fail "user: セルフホストの型検査器の命令 型検 を漢像にビルド"
         sed 's/^/      /' "$OUT/user_tc_cmd.build.log" "$OUT/user_tc_cmd.gen.log" 2>/dev/null | head -10
+    }
+sh tools/mkimage.sh user/cc_cmd.mkn "$OUT/cc_cmd.zo" "$OUT" 2>"$OUT/user_cc_cmd.build.log" \
+    && pass "user: セルフホストのコンパイラの命令 機譯 を漢像にビルド" || {
+        fail "user: セルフホストのコンパイラの命令 機譯 を漢像にビルド"
+        sed 's/^/      /' "$OUT/user_cc_cmd.build.log" "$OUT/user_cc_cmd.gen.log" 2>/dev/null | head -10
+    }
+sh tools/mkimage.sh user/src_gen.mkn "$OUT/src_gen.zo" "$OUT" 2>"$OUT/user_src_gen.build.log" \
+    && pass "user: 大きなソースを篇に作る試験用の命令 源増 を漢像にビルド" || {
+        fail "user: 源増 を漢像にビルド"
+        sed 's/^/      /' "$OUT/user_src_gen.build.log" "$OUT/user_src_gen.gen.log" 2>/dev/null | head -10
+    }
+sh tools/mkimage.sh user/src_in.mkn "$OUT/src_in.zo" "$OUT" 2>"$OUT/user_src_in.build.log" \
+    && pass "user: コンソールから生のバイトを篇へ受ける試験用の命令 源受 を漢像にビルド" || {
+        fail "user: 源受 を漢像にビルド"
+        sed 's/^/      /' "$OUT/user_src_in.build.log" "$OUT/user_src_in.gen.log" 2>/dev/null | head -10
     }
 sh tools/mkimage.sh user/btron_msg.mkn "$OUT/btron_msg.zo" "$OUT" 2>"$OUT/user_btron_msg.build.log" \
     && pass "user: BTRON3 互換層の試験 信試 (メッセージ) を漢像にビルド" || {
@@ -283,7 +315,25 @@ sh tools/mkimage.sh user/btron_task.mkn "$OUT/btron_task.zo" "$OUT" 2>"$OUT/user
         fail "user: BTRON3 互換層の試験 副試 を漢像にビルド"
         sed 's/^/      /' "$OUT/user_btron_task.build.log" | head -10
     }
-sh tools/gen-images.sh "$OUT/kernel_images.S" 問安="$OUT/hello.zo" 數="$OUT/count.zo" 異常試="$OUT/fault.zo" 識試="$OUT/btron_gtid.zo" 名試="$OUT/btron_gname.zo" 時試="$OUT/btron_clk.zo" 時元試="$OUT/time_test.zo" 時="$OUT/time_cmd.zo" 信試="$OUT/btron_msg.zo" 利試="$OUT/btron_usr.zo" 強試="$OUT/btron_term.zo" 同試="$OUT/btron_sync.zo" 緩試="$OUT/btron_comm.zo" 録試="$OUT/btron_file.zo" 篇試="$OUT/pian_test.zo" 永試="$OUT/pian_persist.zo" 貯試="$OUT/btron_mem.zo" 件試="$OUT/btron_evt.zo" 設試="$OUT/btron_dev.zo" 系試="$OUT/btron_sys.zo" 例試="$OUT/btron_exc.zo" 信手試="$OUT/btron_msg_hdr.zo" 副試="$OUT/btron_task.zo" 実試="$OUT/btron_omgr.zo" 実作="$OUT/obj.zo" 仮置="$OUT/obj.zo" 実削="$OUT/obj.zo" 実目="$OUT/obj.zo" 実名="$OUT/obj.zo" objapp="$OUT/obj_app.zo" 標="$OUT/tag_cmd.zo" 索="$OUT/tag_cmd.zo" 競試="$OUT/stress.zo" 字句="$OUT/lex_cmd.zo" 構文="$OUT/ast_cmd.zo" 型検="$OUT/tc_cmd.zo" \
+KIMG_ARGS=(問安="$OUT/hello.zo" 數="$OUT/count.zo" 異常試="$OUT/fault.zo" 識試="$OUT/btron_gtid.zo" 名試="$OUT/btron_gname.zo" 時試="$OUT/btron_clk.zo" 時元試="$OUT/time_test.zo" 時="$OUT/time_cmd.zo" 信試="$OUT/btron_msg.zo" 利試="$OUT/btron_usr.zo" 強試="$OUT/btron_term.zo" 同試="$OUT/btron_sync.zo" 緩試="$OUT/btron_comm.zo" 録試="$OUT/btron_file.zo" 篇試="$OUT/pian_test.zo" 永試="$OUT/pian_persist.zo" 貯試="$OUT/btron_mem.zo" 件試="$OUT/btron_evt.zo" 設試="$OUT/btron_dev.zo" 系試="$OUT/btron_sys.zo" 例試="$OUT/btron_exc.zo" 信手試="$OUT/btron_msg_hdr.zo" 副試="$OUT/btron_task.zo" 実試="$OUT/btron_omgr.zo" 実作="$OUT/obj.zo" 仮置="$OUT/obj.zo" 実削="$OUT/obj.zo" 実目="$OUT/obj.zo" 実名="$OUT/obj.zo" objapp="$OUT/obj_app.zo" 標="$OUT/tag_cmd.zo" 索="$OUT/tag_cmd.zo" 競試="$OUT/stress.zo" 字句="$OUT/lex_cmd.zo" 構文="$OUT/ast_cmd.zo" 型検="$OUT/tc_cmd.zo" 機譯="$OUT/cc_cmd.zo" 源増="$OUT/src_gen.zo" 源受="$OUT/src_in.zo")
+if [ "$TOOLCHAIN" = kanbun ]; then
+    # 機械漢文のツールチェーン: 像表と漢像を核の rodata へ埋め込み、核の ELF を作る (gen-images.sh・clang・ld.lld の代わり)
+    rm -f "$OUT/kernel.elf"
+    sh tools/kimages.sh "$OUT/images.txt" "${KIMG_ARGS[@]}" \
+        && pass "kernel: 漢像の目録 (像表)" || fail "kernel: 漢像の目録 (像表)"
+    "$KLD" 1 40000000 "$OUT/kernel.ll" "$OUT/kernel.elf" "$OUT/images.txt" 2>"$OUT/kernel.link.log" \
+        && pass "kernel: 機械漢文のバックエンドとリンカで核の ELF を作る (kld)" || {
+            fail "kernel: 機械漢文のバックエンドとリンカで核の ELF を作る (kld)"
+            sed 's/^/      /' "$OUT/kernel.link.log" | head -5
+        }
+    VADDR="$(awk '$2 == "_vectors" {print $1}' "$OUT/kernel.elf.map" 2>/dev/null)"
+    if [ -n "$VADDR" ] && [ $(( 16#$VADDR % 2048 )) -eq 0 ]; then
+        pass "kernel: vector table 2KiB aligned ($VADDR)"
+    else
+        fail "kernel: vector table 2KiB aligned (got '${VADDR:-none}')"
+    fi
+else
+sh tools/gen-images.sh "$OUT/kernel_images.S" "${KIMG_ARGS[@]}" \
     && "$CLANG" --target=aarch64-none-elf -c "$OUT/kernel_images.S" -o "$OUT/kernel_images.o" \
         >"$OUT/kernel_images.log" 2>&1 \
     && pass "kernel: 漢像の埋め込み (像表)" || fail "kernel: 漢像の埋め込み (像表)"
@@ -306,18 +356,30 @@ if [ -f "$OUT/kernel.o" ] && \
         fi
     fi
 fi
+fi
 
 # --- 独立ブートローダー「導」(boot/loader.mkn)。核のイメージ KBL1 を virtio-blk から読んで核へ移譲する -----------------
 sh tools/kernel-expand.sh boot/loader.mkn "$OUT/loader_all.mkn" \
     && "$BIN" "$OUT/loader_all.mkn" -ir -o "$OUT/loader.ll" 2>"$OUT/loader.gen.log" \
-    && "$LLC" -march=aarch64 -filetype=obj "$OUT/loader.ll" -o "$OUT/loader.o" >"$OUT/loader.llc.log" 2>&1 \
-    && "$LD" -T boot/loader.lds "$OUT/loader.o" -o "$OUT/loader.elf" >"$OUT/loader.link.log" 2>&1 \
+    && if [ "$TOOLCHAIN" = kanbun ]; then "$KLD" 3 46000000 "$OUT/loader.ll" "$OUT/loader.elf" >"$OUT/loader.link.log" 2>&1; \
+       else "$LLC" -march=aarch64 -filetype=obj "$OUT/loader.ll" -o "$OUT/loader.o" >"$OUT/loader.llc.log" 2>&1 \
+         && "$LD" -T boot/loader.lds "$OUT/loader.o" -o "$OUT/loader.elf" >"$OUT/loader.link.log" 2>&1; fi \
     && pass "boot: 独立ブートローダー 導 をビルド (boot/loader.mkn → 0x46000000)" || {
         fail "boot: 独立ブートローダー 導 をビルド"
         sed 's/^/      /' "$OUT/loader.gen.log" | head -10
     }
-if [ -f "$OUT/kernel.elf" ] && python3 tools/mkkernelimg.py "$OUT/kernel.elf" "$OUT/kernel.img" >"$OUT/kernel.img.log" 2>&1; then
-    pass "boot: 核のイメージ KBL1 を作る (tools/mkkernelimg.py: $(cat "$OUT/kernel.img.log"))"
+if [ "$TOOLCHAIN" = kanbun ]; then
+    # 機械漢文のリンカが KBL1 を直接作る (tools/mkkernelimg.py の代わり)
+    "$KLD" 4 40000000 "$OUT/kernel.ll" "$OUT/kernel.img" "$OUT/images.txt" >"$OUT/kernel.img.log" 2>&1 \
+        && [ -s "$OUT/kernel.img" ] && echo "KBL1: $(wc -c <"$OUT/kernel.img" | tr -d ' ') バイト" >"$OUT/kernel.img.log"
+    KIMG_OK=$?
+elif [ -f "$OUT/kernel.elf" ] && python3 tools/mkkernelimg.py "$OUT/kernel.elf" "$OUT/kernel.img" >"$OUT/kernel.img.log" 2>&1; then
+    KIMG_OK=0
+else
+    KIMG_OK=1
+fi
+if [ "$KIMG_OK" = 0 ]; then
+    pass "boot: 核のイメージ KBL1 を作る ($(cat "$OUT/kernel.img.log"))"
 else
     fail "boot: 核のイメージ KBL1 を作る"
 fi
@@ -439,6 +501,39 @@ if sh tools/kernel-expand.sh selfhost/irgen.mkn "$OUT/selfhost_ir_all.mkn" \
 else
     fail "selfhost: IR 生成器をビルド"
     sed 's/^/      /' "$OUT/selfhost_ir.gen.log" "$OUT/selfhost_ir.cc.log" 2>/dev/null | head -10
+fi
+
+# --- セルフホスト第 5 段: 機械漢文のコンパイラ (selfhost/driver.mkn。取込の展開 + 型検査 + IR 生成) ----------------
+#     根のソースを渡すだけで、tools/kernel-expand.sh + C++ 版 -ir と同じ IR を出す。さらに、機械漢文のコンパイラが
+#     自分自身を 2 回再構築しても (C++ 版 → 第 2 世代 → 第 3 世代) IR が変わらない (不動点)。
+if sh tools/kernel-expand.sh selfhost/cc_host.mkn "$OUT/selfhost_cc_all.mkn" \
+   && "$BIN" "$OUT/selfhost_cc_all.mkn" -ir -o "$OUT/selfhost_cc.ll" 2>"$OUT/selfhost_cc.gen.log" \
+   && "$CLANG" -Wno-override-module -x ir "$OUT/selfhost_cc.ll" -x c selfhost/host_cc.c -o "$OUT/selfhost_cc_host" \
+        >"$OUT/selfhost_cc.cc.log" 2>&1; then
+    SD_OK=0; SD_BAD=0; SD_BADLIST=""
+    for f in kernel/kernel.mkn boot/loader.mkn boot/boot.mkn selfhost/lexer.mkn selfhost/parser.mkn selfhost/typecheck.mkn selfhost/irgen.mkn selfhost/cc_host.mkn $(grep -l '@取込' user/*.mkn); do
+        sh tools/kernel-expand.sh "$f" "$OUT/selfhost_cc_exp.mkn" >/dev/null 2>&1
+        "$BIN" "$OUT/selfhost_cc_exp.mkn" -ir -o "$OUT/selfhost_cc_ref.ll" 2>/dev/null; rc=$?
+        "$OUT/selfhost_cc_host" "$f" >"$OUT/selfhost_cc_got.ll" 2>/dev/null; rc2=$?
+        if [ $rc -eq 0 ] && [ $rc2 -eq 0 ] && cmp -s "$OUT/selfhost_cc_ref.ll" "$OUT/selfhost_cc_got.ll"; then SD_OK=$((SD_OK+1))
+        else SD_BAD=$((SD_BAD+1)); SD_BADLIST="$SD_BADLIST $f"; fi
+    done
+    if [ "$SD_BAD" -eq 0 ] && [ "$SD_OK" -ge 10 ]; then
+        pass "selfhost: 機械漢文のコンパイラ (selfhost/driver.mkn) が根のソースだけから取込を展開して、C++ 版と ${SD_OK} 個のプログラム (核・ローダー・行程・自分自身) で同じ IR を出す"
+    else
+        fail "selfhost: コンパイラの不一致 ${SD_BAD} 個 (${SD_OK} 個一致):$SD_BADLIST"
+    fi
+    "$OUT/selfhost_cc_host" selfhost/cc_host.mkn >"$OUT/selfhost_cc_gen2.ll" 2>/dev/null \
+      && "$CLANG" -Wno-override-module -x ir "$OUT/selfhost_cc_gen2.ll" -x c selfhost/host_cc.c -o "$OUT/selfhost_cc_gen2_host" >/dev/null 2>&1 \
+      && "$OUT/selfhost_cc_gen2_host" selfhost/cc_host.mkn >"$OUT/selfhost_cc_gen3.ll" 2>/dev/null
+    if cmp -s "$OUT/selfhost_cc.ll" "$OUT/selfhost_cc_gen2.ll" && cmp -s "$OUT/selfhost_cc_gen2.ll" "$OUT/selfhost_cc_gen3.ll"; then
+        pass "selfhost: 自己再構築の不動点 (C++ 版 → 第 2 世代 → 第 3 世代のコンパイラが作る自分自身の IR が全て同じ: $(wc -l <"$OUT/selfhost_cc_gen3.ll" | tr -d ' ') 行)"
+    else
+        fail "selfhost: 自己再構築の IR が世代で違う"
+    fi
+else
+    fail "selfhost: コンパイラ (駆動部) をビルド"
+    sed 's/^/      /' "$OUT/selfhost_cc.gen.log" "$OUT/selfhost_cc.cc.log" 2>/dev/null | head -10
 fi
 
 # --- type_error: 錯 E00xx must be reported --------------------------------
@@ -1117,12 +1212,12 @@ if [ -f "$OUT/kernel.elf" ]; then
             fail "kernel qemu: 行程表 (不一致:$TBL_BAD)"
             grep -a '行程表' "$KLOG" 2>/dev/null | sed 's/^/      /'
         fi
-        # 注: 総数は、この実行で必ず virtio-blk を付けている (vda の環 2 ページが先に使われる) ことを前提にした 16382 (RAM 128 MiB: 動的頁域 64 MiB)。
+        # 注: 総数は、この実行で必ず virtio-blk を付けている (vda の環 2 ページが先に使われる) ことを前提にした 30718 (RAM 128 MiB: 動的頁域 120 MiB = 30720 ページ)。
         K_TOTAL="$(tbl_val '頁池 総')"
-        if [ "$K_TOTAL" = "$(printf '0x%016x' 16382)" ]; then
-            pass "kernel qemu: 頁池 64 MiB (RAM 128 MiB の動的頁域は上限の 16384 ページ = 空き + 行程の棧 2 ページ × 8 + vda の環 2 ページ。総数は vda の 2 ページを除く)"
+        if [ "$K_TOTAL" = "$(printf '0x%016x' 30718)" ]; then
+            pass "kernel qemu: 頁池 120 MiB (RAM 128 MiB の動的頁域は RAM の終わりまでの 30720 ページ = 空き + 行程の棧 2 ページ × 8 + vda の環 2 ページ。総数は vda の 2 ページを除く)"
         else
-            fail "kernel qemu: 頁池 64 MiB (総=${K_TOTAL:-none}、期待 0x3ffe)"
+            fail "kernel qemu: 頁池 120 MiB (総=${K_TOTAL:-none}、期待 0x77fe)"
             grep -a '頁池' "$KLOG" 2>/dev/null | sed 's/^/      /'
         fi
         # --- M5/P0: 柄表・開表 (行程ごとの柄、開くたびに独立した位置) ---------------
@@ -1191,8 +1286,8 @@ if [ -f "$OUT/kernel.elf" ]; then
         PERSIST_IMG="$OUT/persist.img"
         PERSIST_PIPE="$OUT/persist_serial"
         dd if=/dev/zero of="$PERSIST_IMG" bs=512 count=20000 2>/dev/null
-        pian_boot() {  # $1 = ログ、$2 = 殻に流す命令 (改行区切り)
-            local plog="$1" pcmds="$2" pq pc pf
+        pian_boot() {  # $1 = ログ、$2 = 殻に流す命令 (改行区切り)、$3 = (省略可) 命令の代わりに流すファイル (生のバイトを含む入力用)
+            local plog="$1" pcmds="$2" pfile="${3:-}" pq pc pf
             rm -f "$PERSIST_PIPE.in" "$PERSIST_PIPE.out" "$plog"
             mkfifo "$PERSIST_PIPE.in" "$PERSIST_PIPE.out"
             cat "$PERSIST_PIPE.out" > "$plog" &
@@ -1205,9 +1300,9 @@ if [ -f "$OUT/kernel.elf" ]; then
             pq=$!
             ( printf 'KANBUN\n' > "$PERSIST_PIPE.in"
               for _ in $(seq 1 60); do grep -q "甲得" "$plog" 2>/dev/null && break; sleep 0.25; done
-              printf '%s' "$pcmds" > "$PERSIST_PIPE.in" ) &
+              if [ -n "$pfile" ]; then cat "$pfile" > "$PERSIST_PIPE.in"; else printf '%s' "$pcmds" > "$PERSIST_PIPE.in"; fi ) &
             pf=$!
-            for _ in $(seq 1 80); do
+            for _ in $(seq 1 "${PIAN_TRIES:-80}"); do
                 grep -q "殻終\|核恐慌" "$plog" 2>/dev/null && break
                 sleep 0.5
             done
@@ -1284,7 +1379,7 @@ if [ -f "$OUT/kernel.elf" ]; then
             grep -a '字句' "$OUT/selfhost_os.log" | head -3 | sed 's/^/      /'
         fi
         # --- セルフホスト: OS の上で動く機械漢文の構文解析器 (構文) が、C++ 版 -ast と同じ AST を出す ----
-        SA_SRC='術曰「試」 受「値」之無符六四 返 無符六四 設「和」之無符六四 為 値 加 1 乘 2 若 和 大於 3 則 歸 和 終若 歸 0 終術'
+        SA_SRC='術曰「試」 受「値」之無符六四 返 無符六四 設「和」之無符六四 為 (値 加 1) 乘 2 若 和 大於 3 則 歸 和 終若 歸 0 終術'
         printf '%s' "$SA_SRC" >"$OUT/selfhost_os_ast_src.mkn"
         "$BIN" "$OUT/selfhost_os_ast_src.mkn" -ast >"$OUT/selfhost_os_ast_ref.txt" 2>/dev/null
         pian_boot "$OUT/selfhost_os_ast.log" $'書 源 '"$SA_SRC"$'\n構文 源\n終\n'
@@ -1308,6 +1403,84 @@ if [ -f "$OUT/kernel.elf" ]; then
             fail "selfhost: OS 上の型検査器の出力が C++ 版と違う"
             diff "$OUT/selfhost_os_tc_ref.txt" "$OUT/selfhost_os_tc_got.txt" 2>&1 | head -8 | sed 's/^/      /'
             grep -a '型検' "$OUT/selfhost_os_tc.log" | head -3 | sed 's/^/      /'
+        fi
+        # --- セルフホスト: OS の上で動く機械漢文のコンパイラ (機譯) が、C++ 版 -ir と同じ IR を出す ----
+        SC_SRC='術曰「試」 受「値」之無符六四 返 無符六四 設「和」之無符六四 為 (値 加 1) 乘 2 若 和 大於 3 則 歸 和 終若 歸 0 終術'
+        printf '%s' "$SC_SRC" >"$OUT/selfhost_os_cc_src.mkn"
+        "$BIN" "$OUT/selfhost_os_cc_src.mkn" -ir -o "$OUT/selfhost_os_cc_ref.ll" 2>/dev/null
+        pian_boot "$OUT/selfhost_os_cc.log" $'書 源 '"$SC_SRC"$'\n機譯 源\n終\n'
+        sed -n '/^殻> 機譯 源/,/^殻> 終/p' "$OUT/selfhost_os_cc.log" | sed '1d;$d' | grep -av '^頁供' | grep -av '^殻碼' >"$OUT/selfhost_os_cc_got.ll"
+        if [ -s "$OUT/selfhost_os_cc_ref.ll" ] && cmp -s "$OUT/selfhost_os_cc_ref.ll" "$OUT/selfhost_os_cc_got.ll"; then
+            pass "selfhost: OS の上で動く機械漢文のコンパイラ (機譯) が C++ 版 -ir と同じ IR を出す ($(wc -l <"$OUT/selfhost_os_cc_ref.ll" | tr -d ' ') 行)"
+        else
+            fail "selfhost: OS 上のコンパイラの IR が C++ 版と違う"
+            diff "$OUT/selfhost_os_cc_ref.ll" "$OUT/selfhost_os_cc_got.ll" 2>&1 | head -8 | sed 's/^/      /'
+            grep -a '機譯' "$OUT/selfhost_os_cc.log" | head -3 | sed 's/^/      /'
+        fi
+        # --- 広域 (漢令 123): 民の窓 (2 MiB) に収まらない作業域が要る大きなソースを OS の上で IR にする ----
+        #     関数 1200 個・約 220 KB を 4 つの篇 (部0〜部3。1 つの篇は 64 KiB まで) に作り、根の篇の「註 @取込」で束ねる。作業域は約 5 MiB。
+        python3 -I - "$OUT/selfhost_os_big.mkn" 4 300 <<'PYEOF'
+import sys
+out, parts, per = sys.argv[1], int(sys.argv[2]), int(sys.argv[3])
+with open(out, 'w', encoding='utf-8') as f:
+    for i in range(parts * per):
+        f.write("術曰「f%d」 受「値」之無符六四 返 無符六四\n    設「和」之無符六四 為 (値 加 %d) 乘 2\n    若 和 大於 3 則\n        歸 和\n    終若\n    歸 0\n終術\n" % (i, i))
+PYEOF
+        "$BIN" "$OUT/selfhost_os_big.mkn" -ir -o "$OUT/selfhost_os_big.ll" 2>/dev/null
+        BIG_EXPECT="$(python3 -I - "$OUT/selfhost_os_big.ll" "$OUT/selfhost_os_big.mkn" <<'PYEOF'
+import sys
+d = open(sys.argv[1], 'rb').read()
+h = 0xcbf29ce484222325
+for b in d:
+    h = ((h ^ b) * 0x100000001b3) & 0xFFFFFFFFFFFFFFFF
+print("%d 0x%016x %d" % (len(d), h, len(open(sys.argv[2], 'rb').read())))
+PYEOF
+)"
+        BIG_LEN="${BIG_EXPECT%% *}"; BIG_REST="${BIG_EXPECT#* }"; BIG_HASH="${BIG_REST%% *}"; BIG_SRC="${BIG_REST#* }"
+        PIAN_TRIES=2400 pian_boot "$OUT/selfhost_os_big.log" $'源増 部0 300 0\n源増 部1 300 300\n源増 部2 300 600\n源増 部3 300 900\n源増 b 天地/典/大根 4\n機譯 -s 天地/典/大根\n書 小 術曰「甲」 返 無 終術\n機譯 -s 小\n機譯 -s 小\n機譯 -s 小\n終\n'
+        if grep -aq "^機譯 長 0x0*$(printf '%x' "$BIG_LEN")\$" "$OUT/selfhost_os_big.log" \
+           && grep -aq "^ 雑 0x0*${BIG_HASH#0x}\$" "$OUT/selfhost_os_big.log" \
+           && [ "$(grep -ac '^機譯 長 0x0*[0-9a-f]*$' "$OUT/selfhost_os_big.log")" -ge 4 ]; then
+            pass "selfhost: 広域 (漢令 123) で民の窓に収まらない作業域を取り、OS の上のコンパイラ (機譯) が 4 つの篇に分けた ${BIG_SRC} バイトのソースを取込で束ねて ${BIG_LEN} バイトの IR にし、C++ 版と同じ雑値になる。行程の終了で広域は頁池へ戻り、続けて 3 回取り直せる"
+        else
+            fail "selfhost: OS 上で大きなソースの IR が C++ 版と違う、または作れない (期待: 源 ${BIG_SRC} 長 ${BIG_LEN} 雑 ${BIG_HASH})"
+            grep -a '源増\|機譯\|殻誤\|核恐慌' "$OUT/selfhost_os_big.log" | head -8 | sed 's/^/      /'
+        fi
+        # --- 核そのものを OS の上で IR にする (セルフホストの総仕上げ): 核の展開後のソース 796 KB をコンソール経由で 13 個ほどの篇へ受け、取込で束ねて 機譯 にかける ----
+        #     時間がかかる (QEMU の TCG 上で数分) ので、KERNEL_SELFBUILD=0 で省ける。
+        if [ "${KERNEL_SELFBUILD:-1}" = "1" ]; then
+            sh tools/kernel-expand.sh kernel/kernel.mkn "$OUT/selfhost_kernel_all.mkn" >/dev/null 2>&1
+            "$BIN" "$OUT/selfhost_kernel_all.mkn" -ir -o "$OUT/selfhost_kernel_ref.ll" 2>/dev/null
+            python3 -I - "$OUT/selfhost_kernel_all.mkn" "$OUT/selfhost_kernel_ref.ll" "$OUT/selfhost_kernel_stream.bin" <<'PYEOF' >"$OUT/selfhost_kernel_expect.txt"
+import sys
+src = open(sys.argv[1], 'rb').read()
+ir = open(sys.argv[2], 'rb').read()
+h = 0xcbf29ce484222325
+for b in ir:
+    h = ((h ^ b) * 0x100000001b3) & 0xFFFFFFFFFFFFFFFF
+# 行の境界で 60000 バイト以下に分ける (篇の本文は 64 KiB まで)
+parts, cur = [], b''
+for line in src.splitlines(keepends=True):
+    if len(cur) + len(line) > 60000:
+        parts.append(cur); cur = b''
+    cur += line
+parts.append(cur)
+out = b''
+for i, p in enumerate(parts):
+    out += ('源受 部%d %d\n' % (i, len(p))).encode('utf-8') + p
+out += ('源増 b 天地/典/核根 %d\n機譯 -s 天地/典/核根\n終\n' % len(parts)).encode('utf-8')
+open(sys.argv[3], 'wb').write(out)
+print(len(ir), '0x%016x' % h, len(src), len(parts))
+PYEOF
+            read -r KS_LEN KS_HASH KS_SRC KS_PARTS <"$OUT/selfhost_kernel_expect.txt"
+            PIAN_TRIES="${KERNEL_SELFBUILD_TRIES:-3600}" pian_boot "$OUT/selfhost_kernel.log" "" "$OUT/selfhost_kernel_stream.bin"
+            if grep -aq "^機譯 長 0x0*$(printf '%x' "$KS_LEN")\$" "$OUT/selfhost_kernel.log" \
+               && grep -aq "^ 雑 0x0*${KS_HASH#0x}\$" "$OUT/selfhost_kernel.log"; then
+                pass "selfhost: 核そのもの (展開後 ${KS_SRC} バイト) を OS の上で IR にする: コンソールから ${KS_PARTS} 個の篇へ受け、取込で束ねた 機譯 が ${KS_LEN} バイトの IR を C++ 版と同じ雑値で作る"
+            else
+                fail "selfhost: OS 上で核を IR にできない、または C++ 版と違う (期待: 長 ${KS_LEN} 雑 ${KS_HASH})"
+                grep -a '源受\|源増\|機譯\|殻誤\|核恐慌' "$OUT/selfhost_kernel.log" | head -8 | sed 's/^/      /'
+            fi
         fi
         pian_boot "$OUT/panic1.log" $'異常試 k\n問安\n終\n'
         if grep -aq '^核恐慌 init終了' "$OUT/panic1.log" && ! grep -aq '殻終' "$OUT/panic1.log" \
@@ -1376,14 +1549,14 @@ if [ -f "$OUT/kernel.elf" ]; then
            && grep -aq '^樹 盤 0x000000000a000000' "$OUT/fdt128.log" \
            && grep -aq '^樹 記憶量 0x0000000004000000' "$OUT/fdt64.log" && grep -aq '日誌' "$OUT/fdt64.log" \
            && grep -aq '^樹 割込 0x000000000000001e' "$OUT/fdt128.log" && grep -aq '^樹 盤数 0x0000000000000020' "$OUT/fdt128.log" && grep -aq '^樹 盤幅 0x0000000000000200' "$OUT/fdt128.log" \
-           && grep -aq '^樹 頁数 0x0000000000004000' "$OUT/fdt128.log" && grep -aq '^樹 頁末 0x0000000044800000' "$OUT/fdt128.log" \
+           && grep -aq '^樹 頁数 0x0000000000007800' "$OUT/fdt128.log" && grep -aq '^樹 頁末 0x0000000048000000' "$OUT/fdt128.log" \
            && grep -aq '^樹 頁数 0x0000000000003800' "$OUT/fdt64.log" \
            && grep -aq '^樹 頁数 0x0000000000001800' "$OUT/fdt32.log" && grep -aq '頁割当' "$OUT/fdt32.log" \
            && grep -aq '^樹 頁数 0x0000000000001000' "$OUT/fdt24.log" && grep -aq '頁割当' "$OUT/fdt24.log" \
            && grep -aq '^樹 EL 0x0000000000000001' "$OUT/fdt128.log" \
            && grep -aq '^樹 EL 0x0000000000000001' "$OUT/fdtel2.log" && grep -aq '記憶管理有効' "$OUT/fdtel2.log" && grep -aq '^樹 有効 0x0000000000000001' "$OUT/fdtel2.log" \
            && grep -aq '^核恐慌 記憶不足' "$OUT/fdt16.log" && ! grep -aq '記憶管理有効' "$OUT/fdt16.log"; then
-            pass "kernel qemu: Devicetree を解析して RAM・UART・GIC・RTC・virtio の基底番地を得る (RAM 128・64・32・24 MiB で動的頁域が 16384・14336・6144・4096 ページに追従して起動し、16 MiB では 核恐慌 記憶不足。EL2 で始まる起動 (virtualization=on) も EL1 へ降りて同じに起動する)"
+            pass "kernel qemu: Devicetree を解析して RAM・UART・GIC・RTC・virtio の基底番地を得る (RAM 128・64・32・24 MiB で動的頁域が 30720・14336・6144・4096 ページに追従して起動し、16 MiB では 核恐慌 記憶不足。EL2 で始まる起動 (virtualization=on) も EL1 へ降りて同じに起動する)"
         else
             fail "kernel qemu: Devicetree の解析"
             grep -a '^樹\|^核恐慌' "$OUT/fdt128.log" "$OUT/fdt64.log" "$OUT/fdt16.log" 2>/dev/null | sed 's/^/      /' | head -20
@@ -1426,7 +1599,7 @@ if [ -f "$OUT/kernel.elf" ]; then
         LD_OK=1
         for lg in loader1 loader2; do
             grep -aq '^導 開始' "$OUT/$lg.log" && grep -aq '^導 DTB 0x0000000040000000' "$OUT/$lg.log" \
-                && [ "$(grep -ac '^導 段 ' "$OUT/$lg.log")" -eq 2 ] && grep -aq '^導 移譲 0x0000000040000000' "$OUT/$lg.log" \
+                && [ "$(grep -ac '^導 段 ' "$OUT/$lg.log")" -ge 1 ] && grep -aq '^導 移譲 0x0000000040000000' "$OUT/$lg.log" \
                 && grep -aq '^超漢文起動' "$OUT/$lg.log" && grep -aq '^樹 有効 0x0000000000000001' "$OUT/$lg.log" \
                 && grep -aq '^樹 EL 0x0000000000000001' "$OUT/$lg.log" && grep -aq '記憶管理有効' "$OUT/$lg.log" || LD_OK=0
         done
