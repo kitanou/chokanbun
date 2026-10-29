@@ -1646,6 +1646,56 @@ PYEOF
             fail "kernel qemu: 表示装置 (virtio-gpu) (画素=${GPU_PX:-none})"
             grep -a '^描試' "$OUT/gpu_on.log" "$OUT/gpu_off.log" 2>/dev/null | sed 's/^/      /' | head -6
         fi
+        # --- F7 入力 (virtio-input): virtio-keyboard-device・virtio-tablet-device を付けた起動で、キー a の押下と離し・PD の絶対位置 (QMP)・
+        #     ボタンの押下と離しを外から注入し、件試 I が get_evt / get_pdp で型・情・位置を出す。装置が無い起動は他の試験が見ている。
+        input_boot() {  # $1 = ログ
+            local ilog="$1" itmp iq ic ifp
+            itmp="$(mktemp -d /tmp/kinp.XXXXXX)"
+            mkfifo "$itmp/pipe.in" "$itmp/pipe.out"
+            rm -f "$ilog"
+            cat "$itmp/pipe.out" > "$ilog" &
+            ic=$!
+            qemu-system-aarch64 -M virt,gic-version=2 -cpu cortex-a57 -nographic -m 128M \
+                -global virtio-mmio.force-legacy=false -device virtio-keyboard-device -device virtio-tablet-device \
+                -monitor "unix:$itmp/mon.sock,server,nowait" -qmp "unix:$itmp/qmp.sock,server,nowait" \
+                -serial "pipe:$itmp/pipe" -kernel "$OUT/kernel.elf" >"$OUT/input_qemu.console.log" 2>&1 &
+            iq=$!
+            ( printf 'KANBUN\n' > "$itmp/pipe.in"
+              for _ in $(seq 1 60); do grep -q "甲得" "$ilog" 2>/dev/null && break; sleep 0.25; done
+              printf '件試 I\n終\n' > "$itmp/pipe.in" ) &
+            ifp=$!
+            for _ in $(seq 1 80); do grep -aq "入力 待機" "$ilog" 2>/dev/null && break; sleep 0.25; done
+            sleep 0.5
+            python3 -I - "$itmp/qmp.sock" <<'PYEOF' >/dev/null 2>&1
+import socket, sys, json
+s = socket.socket(socket.AF_UNIX); s.connect(sys.argv[1]); s.settimeout(2)
+def rd():
+    try: return s.recv(4096)
+    except Exception: return b""
+rd()
+s.sendall(b'{"execute":"qmp_capabilities"}\n'); rd()
+ev = [{"type": "abs", "data": {"axis": "x", "value": 16384}}, {"type": "abs", "data": {"axis": "y", "value": 8192}}]
+s.sendall(json.dumps({"execute": "input-send-event", "arguments": {"events": ev}}).encode() + b"\n"); rd()
+PYEOF
+            sleep 0.3
+            for icmd in "sendkey a" "mouse_button 1" "mouse_button 0"; do
+                printf '%s\n' "$icmd" | nc -U "$itmp/mon.sock" -w 1 >/dev/null 2>&1
+                sleep 0.3
+            done
+            for _ in $(seq 1 40); do grep -aq "入力 座" "$ilog" 2>/dev/null && break; sleep 0.25; done
+            kill "$iq" 2>/dev/null
+            wait "$iq" 2>/dev/null
+            kill "$ifp" 2>/dev/null
+            wait "$ic" 2>/dev/null
+            rm -rf "$itmp"
+        }
+        input_boot "$OUT/input_on.log"
+        if [ "$(grep -a '^件試 入力 ' "$OUT/input_on.log" | sed 's/^件試 入力 //' | tr '\n' '|')" = "待機 0x0000000000000000|型 0x0000000000000003|情 0x000000000061001e|型 0x0000000000000004|情 0x000000000061001e|型 0x0000000000000001|情 0x0000000000000000|型 0x0000000000000002|情 0x0000000000000000|座 0x00000000003c00a0|" ]; then
+            pass "kernel qemu: 入力装置 (virtio-input): キーボードの a の押下・離しが EV_KEYDWN/EV_KEYUP (キーコード 0x1e と文字 'a')、タブレットのボタンが EV_BUTDWN/EV_BUTUP、絶対位置 (16384, 8192) が画面座標 (160, 60) で get_pdp に出る"
+        else
+            fail "kernel qemu: 入力装置 (virtio-input)"
+            grep -a '^件試 入力 ' "$OUT/input_on.log" 2>/dev/null | sed 's/^/      /' | head -12
+        fi
         # --- 独立ブートローダー: 導 が virtio-blk の核イメージ (KBL1) を読んで、DTB を避難させ、核へ移譲する ----------
         loader_boot() {  # $1 = ログ、$2 = 追加の QEMU 引数 (機械 -machine など)、$3 = ディスクイメージ ("" なら装置なし)
             rm -f "$1"
