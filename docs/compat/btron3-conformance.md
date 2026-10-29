@@ -80,7 +80,7 @@
 
 ### 第2章 ディスプレイプリミティブ
 
-API 一覧: [btron3-api-inventory.md](btron3-api-inventory.md)（2.3: 37、2.4: 42、2.5: 20、2.6: 6 関数）。要求と関数ごとの状態は [btron3-dp.md](btron3-dp.md)。汎用メモリ描画環境と点・長方形・枠・転送まで実装（`描試` 33 項目）。
+API 一覧: [btron3-api-inventory.md](btron3-api-inventory.md)（2.3: 37、2.4: 42、2.5: 20、2.6: 6 関数）。要求と関数ごとの状態は [btron3-dp.md](btron3-dp.md)。汎用メモリ描画環境と点・長方形・枠・転送まで実装（`描試` 41 項目）。2.5 は 12 関数（自作の 8×8 ASCII フォント）。
 
 | § | 項目 | 参照 | 状態 |
 |---|---|---|---|
@@ -88,7 +88,7 @@ API 一覧: [btron3-api-inventory.md](btron3-api-inventory.md)（2.3: 37、2.4: 
 | 2.2 | 基本概念（座標、ビットマップ、ブラシ、描画環境） | dp/basic_concept.html | 調査済・部分実装（汎用メモリ描画環境のみ。[btron3-dp.md](btron3-dp.md)） |
 | 2.3 | 基本関数（描画環境、カラーマップ、座標変換） | dp/basic_func.html | 部分適合（`gopn_mem`・`gopn_dev`（`SCREEN` のみ）・`gcls_env`・`gnew_env`・`gini_env`・環境のデータ・座標変換。カラーマップ・クリッピング領域は未実装） |
 | 2.4 | 図形描画関数（線、矩形、多角形、円、弧、曲線、塗り、ビットマップ、クリップ） | dp/figure_func.html | 部分適合（`gdra_pnt`・`gtst_pnt`・`gfil_pnt`・`gfil_rec`・`gfra_rec`・`gcop_bmp`。約 36 関数は未実装） |
-| 2.5 | 文字（列）描画関数 | dp/character_func.html | 未実装（API 棚卸し済） |
+| 2.5 | 文字（列）描画関数 | dp/character_func.html | 一部（12/20 関数。8×8 ASCII のみ。[btron3-dp.md](btron3-dp.md)） |
 | 2.6 | ポインタ制御関数、標準ポインタ形状 | dp/pointer_func.html | 未実装（API 棚卸し済） |
 
 ### 第3章 外殻（シェル。HMI・統合情報環境）
