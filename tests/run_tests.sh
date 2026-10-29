@@ -1600,7 +1600,9 @@ PYEOF
             gq=$!
             ( printf 'KANBUN\n' > "$gtmp/pipe.in"
               for _ in $(seq 1 60); do grep -q "甲得" "$glog" 2>/dev/null && break; sleep 0.25; done
-              printf '描試 G\n終\n' > "$gtmp/pipe.in" ) &
+              printf '描試 G\n' > "$gtmp/pipe.in"
+              [ "$gdev" = 1 ] && { for _ in $(seq 1 60); do grep -q "描試 再提示" "$glog" 2>/dev/null && break; sleep 0.25; done; printf '描試 H\n' > "$gtmp/pipe.in"; }
+              printf '終\n' > "$gtmp/pipe.in" ) &
             gf=$!
             for _ in $(seq 1 80); do
                 grep -aq "$gmark" "$glog" 2>/dev/null && break
@@ -1617,7 +1619,7 @@ PYEOF
             wait "$gc" 2>/dev/null
             rm -rf "$gtmp"
         }
-        gpu_boot "$OUT/gpu_on.log" 1 "$OUT/gpu_shot.ppm" "描試 再提示"
+        gpu_boot "$OUT/gpu_on.log" 1 "$OUT/gpu_shot.ppm" "描試 共有提示"
         gpu_boot "$OUT/gpu_off.log" 0 "" "描試 提示"
         GPU_PX="$(python3 -I - "$OUT/gpu_shot.ppm" <<'PYEOF' 2>/dev/null
 import sys
@@ -1632,16 +1634,17 @@ try:
     ok = (head[0] == b"P6" and (w, h) == (320, 240) and len(px) >= w * h * 3
           and p(50, 100) == (255, 0, 0) and p(150, 100) == (0, 255, 0) and p(250, 100) == (0, 0, 255)
           and p(5, 5) == (255, 255, 255) and p(317, 237) == (0, 0, 0)
-          and p(310, 5) == (255, 0, 255) and p(300, 20) == (0, 0, 255))
+          and p(310, 5) == (255, 0, 255) and p(300, 20) == (0, 0, 255)
+          and p(160, 80) == (255, 255, 0) and p(139, 80) == (0, 255, 0) and p(180, 80) == (0, 255, 0))
     print("ok" if ok else "bad %s %s %s %s %s %s" % (p(50, 100), p(150, 100), p(250, 100), p(5, 5), p(310, 5), p(300, 20)))
 except Exception as e:
     print("error", e)
 PYEOF
 )"
         if [ "$GPU_PX" = "ok" ] \
-           && grep -aq '^描試 提示 0x0000000000000000' "$OUT/gpu_on.log" && grep -aq '^描試 再提示 0x0000000000000000' "$OUT/gpu_on.log" \
+           && grep -aq '^描試 提示 0x0000000000000000' "$OUT/gpu_on.log" && grep -aq '^描試 再提示 0x0000000000000000' "$OUT/gpu_on.log" && grep -aq '^描試 共有提示 0x0000000000000000' "$OUT/gpu_on.log" \
            && grep -aq '^描試 提示 0xfffffffffffffffe' "$OUT/gpu_off.log"; then
-            pass "kernel qemu: 表示装置 (virtio-gpu): 漢令 233 画面出で広域の画面 320×240 が出て、screendump の赤・緑・青の帯・白と黒の隅の画素が合い、同じ大きさの 2 回目の提示で右上が赤紫に変わる。装置が無い起動では -ENOENT"
+            pass "kernel qemu: 表示装置 (virtio-gpu): 漢令 233 画面出で広域の画面 320×240 が出て、screendump の赤・緑・青の帯・白と黒の隅の画素が合い、同じ大きさの 2 回目の提示で右上が赤紫に変わる。別の行程 (描試 H) が共有画面を描き直さずに開いて黄色の四角を足すと、先の帯が残ったまま四角が出る。装置が無い起動では -ENOENT"
         else
             fail "kernel qemu: 表示装置 (virtio-gpu) (画素=${GPU_PX:-none})"
             grep -a '^描試' "$OUT/gpu_on.log" "$OUT/gpu_off.log" 2>/dev/null | sed 's/^/      /' | head -6
