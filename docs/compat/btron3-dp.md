@@ -3,7 +3,7 @@
 > 親Issue: [#42](https://github.com/kitanou/chokanbun/issues/42) / 関数の一覧: [btron3-api-inventory.md](btron3-api-inventory.md)
 > 基準: BTRON3仕様書 Ver. 3.20.00 第2編 `os_spec/dp/`（`intro`・`basic_concept`・`basic_func`・`figure_func`・`character_func`・`pointer_func`）
 > 原文は `charset=iso-2022-jp` で配信され、取得した HTML を `iconv -f ISO-2022-JP -t UTF-8` に通すと読める（共有データ編と同じ）。要約は独自の言い回し。仕様書本文は転載しない。
-> 実装: `user/btron/dp.mkn`（EL0 ライブラリ）、試験: 外部命令 `描試`（`user/btron_dp.mkn`）。更新: 2026-10-29。
+> 実装: `user/btron/dp.mkn`（EL0 ライブラリ）、試験: 外部命令 `描試`（`user/btron_dp.mkn`、33 項目。引数 `G` は表示装置の試験用）。更新: 2026-10-29。
 
 ## 2.1・2.2 の要求（要約）
 
@@ -19,7 +19,7 @@
 
 - 描画環境は EL0 ライブラリの表（民の窓 `0x407F2000`、256 B × 16 件）。GID は 1〜16。環境を作った行程だけが扱える（他の行程は `EG_GID`）。
 - 値渡しの `PNT`・`RECT` は、メモリ上の並びをそのまま 64 ビットの整数にした値（`PNT値`・`RECT値`）。
-- 第 1 段階は、プレーン数 1・境界ビット数 1/2/4/8/16/32・デバイスなし・カラー情報なしの汎用メモリ描画環境。ほかは `EG_NOSPT`。
+- 第 1 段階は、プレーン数 1・境界ビット数 1/2/4/8/16/32 の、(a) デバイスなし・カラー情報なしの汎用メモリ描画環境と、(b) デバイス描画環境 `SCREEN`（320×240、32 ビット境界・24 ビット有効の RGB。F7）。ほかは `EG_NOSPT`。
 
 ## 関数ごとの状態
 
@@ -28,17 +28,20 @@
 | 2.3.1 | `gini_dsp` `gfin_dsp` | 実装済（何もしない） |
 | | `gopn_mem` | 実装済（汎用メモリ描画環境のみ。`dev`≠NULL は `EG_NOEXS`、`par`≠NULL は `EG_NOSPT`） |
 | | `gcls_env` `gnew_env` `gini_env` | 実装済 |
-| | `gopn_dev` `gget_spc` | 未実装（表示装置は F7） |
-| | `gget_dev` `gget_dsp` `gget_csp` | 実装済（汎用メモリ描画環境の値） |
+| | `gopn_dev` `gget_spc` | 実装済（デバイス名 `SCREEN` だけ。`MSGPNL` は `EG_NOEXS`。F7 の表示装置。[../design-display.md](../design-display.md)） |
+| | `gfls_dev`（原文に無い、この実装の追加） | 実装済（画面を表示装置へ出す） |
+| | `gget_dev` `gget_dsp` `gget_csp` | 実装済（汎用メモリ描画環境は空の名前・`EG_DEV`、`SCREEN` は DEV_SPEC と RGB の CSPEC） |
 | | `gloc_env` | 未実装 |
-| 2.3.2 | `gcnv_col` | `EG_ENV` を返すのみ。`gset_col` `gget_col` `gset_bcs` `gget_bcs` は未実装 |
+| 2.3.2 | `gcnv_col` | `SCREEN` は RGB 固定カラー方式（近似度 0）、汎用メモリ描画環境は `EG_ENV`。`gset_col` `gget_col` `gset_bcs` `gget_bcs` は未実装 |
 | 2.3.3 | `gset_msk` `gget_msk` `gget_fra` `gset_fra` `gget_vis` `gset_vis` `gget_bmp` `gget_bnd` `gmov_bnd` `gmov_cor` | 実装済 |
 | | `gget_clp` `gset_clp` | 部分（クリッピング領域は常に未定義。非 NULL の設定は `EG_NOSPT`） |
 | | `gget_for` `gset_for` `gsiz_pat` `gcre_pat` `gset_lmk` `gget_lmk` | 未実装 |
 | 2.3.4 | `gcnv_abs` `gcnv_rel` | 実装済 |
 | 2.4 | `gdra_pnt` `gtst_pnt` | 実装済（全描画モード、マスクピクセル指定） |
-| | `gfil_rec` | 部分（回転なし。パターンは `WHITE0`・`BLACK100` と、`FILL0`・`FILL100` を使う spat だけ） |
-| | 上記以外の 2.4 の関数（約 39） | 未実装 |
+| | `gfil_rec` `gfil_pnt` | 部分（回転なし。パターンは `WHITE0`・`BLACK100` と、`FILL0`・`FILL100` を使う spat だけ） |
+| | `gfra_rec` | 部分（回転なし。線属性は実線のみ＝線種 T が 0 以外は `EG_NOSPT`。太さは内側へ、はみ出す太さは全面、0 は描かない） |
+| | `gcop_bmp` | 部分（拡大縮小と mask は `EG_NOSPT`。形式違いは `EG_FORM`、`G_CVFORM` があれば小さいほうの深さの下位ビットを写す。重なる転送は向きを選ぶ。カラー変換は未対応＝カラー情報なし） |
+| | 上記以外の 2.4 の関数（約 36） | 未実装 |
 | 2.5 | 文字（列）描画 20 関数 | 未実装（フォントと TRON コードが前提） |
 | 2.6 | ポインタ制御 6 関数 | 未実装 |
 
