@@ -49,4 +49,4 @@ QEMU のモニタ（`-monitor unix:<ソケット>`）の `screendump` で PPM �
 - 1.7 との接続: `evt.mkn` の `put_evt` の本体を `事発` に切り出して共有した。系掩（システムイベントマスク）の対象外は捨てる。キー状態・自動リピートの前提・PD ボタン状態は `事発` が更新する。
 - 変換: キーボード `EV_KEY` の値 1 → `EV_KEYDWN`、0 → `EV_KEYUP`（値 2 のリピートは捨て、自動キーは 1.7 の仕組みが作る）。情 = キーコード | 文字 << 16（US 配列の ASCII。左右のシフトは Linux 42・54 で、メタキーなのでイベントを出さず `stat` の `ES_LSHFT`・`ES_RSHFT` に反映して、シフト時の文字に変える）。タブレットの `ABS_X/ABS_Y`（最大値は設定空間の `ABS_INFO` から読む。読めなければ 32767）は画面 320 × 240 に縮めて PD 位置にする。`BTN_LEFT` は `EV_BUTDWN`/`EV_BUTUP`。
 - 試験: `件試 I` を virtio-keyboard-device・virtio-tablet-device つきで起動し、QMP `input-send-event`（絶対位置。HMP の `mouse_move` は相対）・HMP `sendkey`・`mouse_button` で注入する。
-- 未解決: キートップの対応表（原文は図 `gif/keymap.gif` だけ）、かな、割り込み。
+- 未解決: キートップの対応表（共有データ編・OS 仕様編には割り当てが無い。`gif/keymap.gif` は get_kmp のビット配置の図だった。キーボード固有の仕様が要る）、かな、割り込み。
