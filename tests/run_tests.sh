@@ -1404,10 +1404,6 @@ if [ -f "$OUT/kernel.elf" ]; then
             diff "$OUT/selfhost_os_tc_ref.txt" "$OUT/selfhost_os_tc_got.txt" 2>&1 | head -8 | sed 's/^/      /'
             grep -a '型検' "$OUT/selfhost_os_tc.log" | head -3 | sed 's/^/      /'
         fi
-        # [既知の不具合] TOOLCHAIN=kanbun で、自作バックエンドの核の上に自作の 機譯 を載せると、コンパイル中に壊れることがある
-        #   (どちらか片方が LLVM 製なら通る。原因は未特定。docs/selfhost-plan.md §3e)。その組み合わせでは OS 上のコンパイル試験 3 件を省く。
-        KB_BOTH=0; [ "$TOOLCHAIN" = kanbun ] && KB_BOTH=1
-        if [ "$KB_BOTH" = 0 ]; then
         # --- セルフホスト: OS の上で動く機械漢文のコンパイラ (機譯) が、C++ 版 -ir と同じ IR を出す ----
         SC_SRC='術曰「試」 受「値」之無符六四 返 無符六四 設「和」之無符六四 為 (値 加 1) 乘 2 若 和 大於 3 則 歸 和 終若 歸 0 終術'
         printf '%s' "$SC_SRC" >"$OUT/selfhost_os_cc_src.mkn"
@@ -1450,10 +1446,9 @@ PYEOF
             fail "selfhost: OS 上で大きなソースの IR が C++ 版と違う、または作れない (期待: 源 ${BIG_SRC} 長 ${BIG_LEN} 雑 ${BIG_HASH})"
             grep -a '源増\|機譯\|殻誤\|核恐慌' "$OUT/selfhost_os_big.log" | head -8 | sed 's/^/      /'
         fi
-        fi
         # --- 核そのものを OS の上で IR にする (セルフホストの総仕上げ): 核の展開後のソース 796 KB をコンソール経由で 13 個ほどの篇へ受け、取込で束ねて 機譯 にかける ----
         #     時間がかかる (QEMU の TCG 上で数分) ので、KERNEL_SELFBUILD=0 で省ける。
-        if [ "${KERNEL_SELFBUILD:-1}" = "1" ] && [ "$KB_BOTH" = 0 ]; then
+        if [ "${KERNEL_SELFBUILD:-1}" = "1" ]; then
             sh tools/kernel-expand.sh kernel/kernel.mkn "$OUT/selfhost_kernel_all.mkn" >/dev/null 2>&1
             "$BIN" "$OUT/selfhost_kernel_all.mkn" -ir -o "$OUT/selfhost_kernel_ref.ll" 2>/dev/null
             python3 -I - "$OUT/selfhost_kernel_all.mkn" "$OUT/selfhost_kernel_ref.ll" "$OUT/selfhost_kernel_stream.bin" <<'PYEOF' >"$OUT/selfhost_kernel_expect.txt"
