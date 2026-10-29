@@ -79,7 +79,7 @@
   - 共有データ編 §1 の基本データタイプ: `H`・`Bool`/`BOOL`・`SIZE`/`PNT`/`RECT` の配置と `ErrCode`（LE の定義、`ER_*` 全 42 名の eclass・detail）を追加・試験済み。浮動小数点は言語に無いため意図的な未対応として記録。§2 TRON コードは符号領域の分類（`user/btron/tcode.mkn`）まで実装、A ゾーンの JIS X 0208 ↔ Unicode 変換（`tconv.mkn`、6,877 字）まで実装、B〜D ゾーンの割当は未了。§3 TAD はセグメントの枠と管理情報・文章／図形の開始終了・仮身・画像・機能／指定付箋・文章付箋の枠と用紙・余白（`tad.mkn`。ラージ形式も原文の図で確認済み）まで
   - 1.6 ファイル管理: 設計・原文確認（B0）・録層の骨格と接続・パス解決（B1）・作成・削除・開閉・状態（B2。`gen_fil` を除く）・レコード操作とロック（B3。`fnd_lnk` を除く）・属性・アクセス制御・パスワード（B4）・SYS FS の像ファイルと `cre_prc` の LINK 版（B5）。B6（写像・永続化）以降は未着手（[compat/btron3-file-design.md](compat/btron3-file-design.md)）
 - [x] 適合試験計画を作成し、互換層の QEMU 試験 17 種・693 項目（1.1 副タスクの `副試` 21 項目・1.5 メモリの `貯試` 45 項目・1.7 イベントの `件試` 73 項目・1.8 デバイスの `設試` 97 項目・1.10 システムの `系試` 38 項目と `例試` 16 項目・1.2 メッセージハンドラの `信手試` 25 項目・1.3 同期の `ER_MINTR` 回帰の `同試` 29 項目と `緩試` 35 項目を含む）を規範項目に紐付け（[compat/btron3-test-plan.md](compat/btron3-test-plan.md)）。「適合確認済」への合否基準も定義。`ER_*` 42 名の API 別対応と、試験が参照していない 5 名も [compat/btron3-error-coverage.md](compat/btron3-error-coverage.md) に整理
-- [x] OS仕様編 第2章（ディスプレイプリミティブ）の要求を抽出し、第 1 段階を実装（汎用メモリ描画環境・描画環境のデータ・座標変換・点と長方形の描画。試験 `描試` 28 項目。`gfra_rec`・`gfil_pnt`・`gcop_bmp` も実装。[compat/btron3-dp.md](compat/btron3-dp.md)）。残りの描画関数・カラー・クリッピング領域・文字描画・ポインタと、第 3 章（外殻）は未着手
+- [x] OS仕様編 第2章（ディスプレイプリミティブ）の要求を抽出し、第 1 段階を実装（汎用メモリ描画環境・描画環境のデータ・座標変換・点と長方形の描画。試験 `描試` 33 項目。`gfra_rec`・`gfil_pnt`・`gcop_bmp` も実装。[compat/btron3-dp.md](compat/btron3-dp.md)）。残りの描画関数・カラー・クリッピング領域・文字描画・ポインタと、第 3 章（外殻）は未着手
 - [ ] 共有データ編とOS仕様編の全章・節・API・データ形式を棚卸し（OS仕様編 第1章は照合済み。第2章・第3章は API 名のみ棚卸し済みで約 352 関数、全て未実装。共有データ編は要求を要約したが、原文の文字化けで符号表・TAD の ID/配置が要確認。[compat/btron3-api-inventory.md](compat/btron3-api-inventory.md)・[compat/btron3-shared-data.md](compat/btron3-shared-data.md)）
 - [ ] 各要求に実装箇所・差分・テスト・適合状態を対応づける（2026-10-29: 共有データ編の全節と OS 仕様編 第2章の行を [compat/btron3-conformance.md](compat/btron3-conformance.md) に反映。第3章の各節と、第1章の API 単位の差分が残る）
 - [ ] 行程・メッセージ・同期・時刻・メモリ・装置・ファイル関連APIを規範条件と照合
@@ -117,11 +117,12 @@ BTRON3の外部仕様を満たすことを優先し、その上で超漢文固�
 
 ### F7 — GUIと統合情報環境
 
-- [ ] ディスプレイ、入力、描画、ウィンドウ管理の適合要件を整理
+- [x] ディスプレイ、入力、描画、ウィンドウ管理の適合要件を整理（[design-display.md](design-display.md): 層と QEMU 装置の対応、表示装置の設計、試験の方法、次の段階）
 - [ ] BTRON3のHMI、TAD、データ交換、実身・仮身表示・操作を実装
 - [ ] GUIから漢殻を起動し、対象・操作結果を共有
 - [ ] GUI停止時も漢殻で診断・復旧できることを確認
-- [ ] QEMUで再現可能なGUI統合テストを整備
+- [ ] QEMUで再現可能なGUI統合テストを整備（第 1 段階済: `-device virtio-gpu-device` で起動し、QEMU のモニタの `screendump` で画素を調べる。2 回の提示と、装置なしの `-ENOENT` を含む。入力・ウィンドウの試験は未着手）
+- [x] 表示装置（virtio-gpu）の第 1 段階: 漢令 233 `画面出` と、ディスプレイプリミティブのデバイス描画環境 `SCREEN`（`gopn_dev`・`gget_spc`・`gfls_dev`）
 
 ### F8 — 永続化・装置・実機対応
 

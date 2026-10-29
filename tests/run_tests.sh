@@ -1047,10 +1047,10 @@ if [ -f "$OUT/kernel.elf" ]; then
         fi
         DP_N="$(grep -ac '^描試 ' "$KLOG" 2>/dev/null)"
         DP_BAD="$(grep -a '^描試 ' "$KLOG" 2>/dev/null | grep -vc '0x0000000000000001$')"
-        if [ "${DP_N:-0}" -eq 28 ] && [ "${DP_BAD:-1}" -eq 0 ]; then
+        if [ "${DP_N:-0}" -eq 33 ] && [ "${DP_BAD:-1}" -eq 0 ]; then
             pass "kernel qemu: BTRON3 互換層 ディスプレイプリミティブ (汎用メモリ描画環境・描画環境のデータ・座標変換・点と長方形の描画・描画モードの ${DP_N} 項目)"
         else
-            fail "kernel qemu: BTRON3 互換層 ディスプレイプリミティブ (項目=${DP_N:-0}/28、失敗=${DP_BAD:-?})"
+            fail "kernel qemu: BTRON3 互換層 ディスプレイプリミティブ (項目=${DP_N:-0}/33、失敗=${DP_BAD:-?})"
             grep -a '^描試 ' "$KLOG" 2>/dev/null | sed 's/^/      /' | head -60
         fi
         MH_N="$(grep -ac '^信手試 ' "$KLOG" 2>/dev/null)"
@@ -1582,6 +1582,69 @@ PYEOF
         else
             fail "kernel qemu: 差分書き込み"
             grep -a '永試\|篇戻' "$OUT/diff1.log" "$OUT/diff2.log" 2>/dev/null | cut -c1-120 | sed 's/^/      /' | head -10
+        fi
+        # --- F7 表示装置: virtio-gpu。QEMU を -device virtio-gpu-device で起動し、描試 G が広域に描いた画面を 画面出 (漢令 233) で出し、
+        #     QEMU のモニタの screendump で画素を調べる。装置を付けない起動では 画面出 が -ENOENT を返す。
+        #     主な起動には装置を付けない (頁の総数の試験に影響しない)。モニタのソケットの経路は 104 バイトまでなので /tmp に作る。
+        gpu_boot() {  # $1 = ログ、$2 = 1 なら virtio-gpu を付けて screendump、$3 = PPM の出力先、$4 = 待つ印
+            local glog="$1" gdev="$2" gppm="$3" gmark="$4" gtmp gq gc gf gargs=""
+            gtmp="$(mktemp -d /tmp/kgpu.XXXXXX)"
+            mkfifo "$gtmp/pipe.in" "$gtmp/pipe.out"
+            rm -f "$glog" "$gppm"
+            cat "$gtmp/pipe.out" > "$glog" &
+            gc=$!
+            [ "$gdev" = 1 ] && gargs="-device virtio-gpu-device -monitor unix:$gtmp/mon.sock,server,nowait"
+            qemu-system-aarch64 -M virt,gic-version=2 -cpu cortex-a57 -nographic -m 128M \
+                -global virtio-mmio.force-legacy=false $gargs \
+                -serial "pipe:$gtmp/pipe" -kernel "$OUT/kernel.elf" >"$OUT/gpu_qemu.console.log" 2>&1 &
+            gq=$!
+            ( printf 'KANBUN\n' > "$gtmp/pipe.in"
+              for _ in $(seq 1 60); do grep -q "甲得" "$glog" 2>/dev/null && break; sleep 0.25; done
+              printf '描試 G\n終\n' > "$gtmp/pipe.in" ) &
+            gf=$!
+            for _ in $(seq 1 80); do
+                grep -aq "$gmark" "$glog" 2>/dev/null && break
+                sleep 0.25
+            done
+            sleep 0.5
+            if [ "$gdev" = 1 ]; then
+                printf 'screendump "%s"\n' "$gppm" | nc -U "$gtmp/mon.sock" -w 2 >/dev/null 2>&1
+                sleep 1
+            fi
+            kill "$gq" 2>/dev/null
+            wait "$gq" 2>/dev/null
+            kill "$gf" 2>/dev/null
+            wait "$gc" 2>/dev/null
+            rm -rf "$gtmp"
+        }
+        gpu_boot "$OUT/gpu_on.log" 1 "$OUT/gpu_shot.ppm" "描試 再提示"
+        gpu_boot "$OUT/gpu_off.log" 0 "" "描試 提示"
+        GPU_PX="$(python3 -I - "$OUT/gpu_shot.ppm" <<'PYEOF' 2>/dev/null
+import sys
+try:
+    d = open(sys.argv[1], "rb").read()
+    head = d.split(b"\n", 3)
+    w, h = map(int, head[1].split())
+    px = head[3]
+    def p(x, y):
+        o = (y * w + x) * 3
+        return tuple(px[o:o + 3])
+    ok = (head[0] == b"P6" and (w, h) == (320, 240) and len(px) >= w * h * 3
+          and p(50, 100) == (255, 0, 0) and p(150, 100) == (0, 255, 0) and p(250, 100) == (0, 0, 255)
+          and p(5, 5) == (255, 255, 255) and p(317, 237) == (0, 0, 0)
+          and p(310, 5) == (255, 0, 255) and p(300, 20) == (0, 0, 255))
+    print("ok" if ok else "bad %s %s %s %s %s %s" % (p(50, 100), p(150, 100), p(250, 100), p(5, 5), p(310, 5), p(300, 20)))
+except Exception as e:
+    print("error", e)
+PYEOF
+)"
+        if [ "$GPU_PX" = "ok" ] \
+           && grep -aq '^描試 提示 0x0000000000000000' "$OUT/gpu_on.log" && grep -aq '^描試 再提示 0x0000000000000000' "$OUT/gpu_on.log" \
+           && grep -aq '^描試 提示 0xfffffffffffffffe' "$OUT/gpu_off.log"; then
+            pass "kernel qemu: 表示装置 (virtio-gpu): 漢令 233 画面出で広域の画面 320×240 が出て、screendump の赤・緑・青の帯・白と黒の隅の画素が合い、同じ大きさの 2 回目の提示で右上が赤紫に変わる。装置が無い起動では -ENOENT"
+        else
+            fail "kernel qemu: 表示装置 (virtio-gpu) (画素=${GPU_PX:-none})"
+            grep -a '^描試' "$OUT/gpu_on.log" "$OUT/gpu_off.log" 2>/dev/null | sed 's/^/      /' | head -6
         fi
         # --- 独立ブートローダー: 導 が virtio-blk の核イメージ (KBL1) を読んで、DTB を避難させ、核へ移譲する ----------
         loader_boot() {  # $1 = ログ、$2 = 追加の QEMU 引数 (機械 -machine など)、$3 = ディスクイメージ ("" なら装置なし)
