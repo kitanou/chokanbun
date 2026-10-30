@@ -1766,6 +1766,7 @@ PYEOF
             sleep 0.5
             printf 'screendump "%s"\n' "$3" | nc -U "$ztmp/mon.sock" -w 2 >/dev/null 2>&1
             sleep 1
+            for _ in $(seq 1 40); do grep -aq "描試 重窓露他" "$zlog" 2>/dev/null && break; sleep 0.25; done
             kill "$zq" 2>/dev/null
             wait "$zq" 2>/dev/null
             kill "$zf" 2>/dev/null
@@ -1798,8 +1799,10 @@ except Exception as e:
     print("error", e)
 PYEOF
 )"
-        if [ "$ZWIN_PX" = "ok" ] && grep -aq '^描試 重窓他 0xffffffffffffffea' "$OUT/zwin.log" && grep -aq '^描試 重窓前 0x0000000000000000' "$OUT/zwin.log"; then
-            pass "kernel qemu: 窓の重なり順 (漢令 238): 下の窓 A が上の窓 B に覆われた部分は写されず緑のまま。窓前で A を前へ出して写し直すと重なり部分も青になる。他人の窓は -EINVAL"
+        if [ "$ZWIN_PX" = "ok" ] && grep -aq '^描試 重窓他 0xffffffffffffffea' "$OUT/zwin.log" && grep -aq '^描試 重窓前 0x0000000000000000' "$OUT/zwin.log" \
+           && grep -aq '^描試 重窓露一 0x0000000000000001' "$OUT/zwin.log" && grep -aq '^描試 重窓露二 0x0000000000000000' "$OUT/zwin.log" \
+           && grep -aq '^描試 重窓露三 0x0000000000000001' "$OUT/zwin.log" && grep -aq '^描試 重窓露他 0xffffffffffffffea' "$OUT/zwin.log"; then
+            pass "kernel qemu: 窓の重なり順 (漢令 238): 下の窓 A が上の窓 B に覆われた部分は写されず緑のまま。窓前で A を前へ出して写し直すと重なり部分も青になる。他人の窓は -EINVAL。漢令 239 窓露で、前へ出した窓と上の窓が消えて現れた窓に再描画要の旗が立ち、読むと下りる"
         else
             fail "kernel qemu: 窓の重なり順 (${ZWIN_PX:-none})"
             grep -a '^描試' "$OUT/zwin.log" 2>/dev/null | sed 's/^/      /' | head -12
