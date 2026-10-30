@@ -1741,6 +1741,69 @@ PYEOF
             fail "kernel qemu: 窓 (${WIN_PX:-none})"
             grep -a '^描試' "$OUT/win.log" 2>/dev/null | sed 's/^/      /' | head -12
         fi
+        # --- F7 窓の重なり順: 描試 Z が窓 A (0,0)-(200,150) を下、窓 B (100,75)-(300,225) を上に作る。A 赤・B 緑・A 青の順に全面を写すと、
+        #     B に覆われた重なり部分は緑のまま (1 回目の screendump)。漢令 238 窓前で A を前へ出して青を写し直すと、重なり部分も青 (2 回目)。
+        zwin_boot() {  # $1 = ログ、$2 = 前へ出す前の PPM、$3 = 前へ出したあとの PPM
+            local zlog="$1" ztmp zq zc zf
+            ztmp="$(mktemp -d /tmp/kzwin.XXXXXX)"
+            mkfifo "$ztmp/pipe.in" "$ztmp/pipe.out"
+            rm -f "$zlog" "$2" "$3"
+            cat "$ztmp/pipe.out" > "$zlog" &
+            zc=$!
+            qemu-system-aarch64 -M virt,gic-version=2 -cpu cortex-a57 -nographic -m 128M \
+                -global virtio-mmio.force-legacy=false -device virtio-gpu-device -monitor unix:$ztmp/mon.sock,server,nowait \
+                -serial "pipe:$ztmp/pipe" -kernel "$OUT/kernel.elf" >"$OUT/zwin_qemu.console.log" 2>&1 &
+            zq=$!
+            ( printf 'KANBUN\n' > "$ztmp/pipe.in"
+              for _ in $(seq 1 60); do grep -q "甲得" "$zlog" 2>/dev/null && break; sleep 0.25; done
+              printf '描試 Z\n終\n' > "$ztmp/pipe.in" ) &
+            zf=$!
+            for _ in $(seq 1 80); do grep -aq "描試 重窓上" "$zlog" 2>/dev/null && break; sleep 0.25; done
+            sleep 0.5
+            printf 'screendump "%s"\n' "$2" | nc -U "$ztmp/mon.sock" -w 2 >/dev/null 2>&1
+            sleep 1
+            for _ in $(seq 1 80); do grep -aq "描試 重窓下" "$zlog" 2>/dev/null && break; sleep 0.25; done
+            sleep 0.5
+            printf 'screendump "%s"\n' "$3" | nc -U "$ztmp/mon.sock" -w 2 >/dev/null 2>&1
+            sleep 1
+            kill "$zq" 2>/dev/null
+            wait "$zq" 2>/dev/null
+            kill "$zf" 2>/dev/null
+            wait "$zc" 2>/dev/null
+            rm -rf "$ztmp"
+        }
+        zwin_boot "$OUT/zwin.log" "$OUT/zwin_1.ppm" "$OUT/zwin_2.ppm"
+        ZWIN_PX="$(python3 -I - "$OUT/zwin_1.ppm" "$OUT/zwin_2.ppm" <<'PYEOF' 2>/dev/null
+import sys
+try:
+    def load(f):
+        d = open(f, "rb").read()
+        head = d.split(b"\n", 3)
+        w, h = map(int, head[1].split())
+        return head[0], w, h, head[3]
+    def at(img, x, y):
+        _, w, _, px = img
+        o = (y * w + x) * 3
+        return tuple(px[o:o + 3])
+    a, b = load(sys.argv[1]), load(sys.argv[2])
+    blue, green, black = (0, 0, 255), (0, 255, 0), (0, 0, 0)
+    ok = (a[0] == b"P6" and a[1:3] == (320, 240) and b[1:3] == (320, 240)
+          and at(a, 50, 50) == blue and at(a, 199, 74) == blue and at(a, 99, 140) == blue
+          and at(a, 150, 100) == green and at(a, 199, 149) == green and at(a, 250, 200) == green and at(a, 100, 75) == green
+          and at(a, 10, 200) == black and at(a, 310, 10) == black
+          and at(b, 150, 100) == blue and at(b, 199, 149) == blue and at(b, 50, 50) == blue
+          and at(b, 250, 200) == green and at(b, 200, 100) == green and at(b, 100, 150) == green)
+    print("ok" if ok else "bad top=%s over=%s after=%s" % (at(a, 50, 50), at(a, 150, 100), at(b, 150, 100)))
+except Exception as e:
+    print("error", e)
+PYEOF
+)"
+        if [ "$ZWIN_PX" = "ok" ] && grep -aq '^描試 重窓他 0xffffffffffffffea' "$OUT/zwin.log" && grep -aq '^描試 重窓前 0x0000000000000000' "$OUT/zwin.log"; then
+            pass "kernel qemu: 窓の重なり順 (漢令 238): 下の窓 A が上の窓 B に覆われた部分は写されず緑のまま。窓前で A を前へ出して写し直すと重なり部分も青になる。他人の窓は -EINVAL"
+        else
+            fail "kernel qemu: 窓の重なり順 (${ZWIN_PX:-none})"
+            grep -a '^描試' "$OUT/zwin.log" 2>/dev/null | sed 's/^/      /' | head -12
+        fi
         # --- F7 入力装置: virtio-input キーボード。QEMU を -device virtio-keyboard-device で起動し、描試 K が 入力汲 (漢令 234) と 事取 で
         #     読んだキーイベントを、モニタの sendkey (a・b) で押して調べる。キートップは evdev のキー符 (a=30, b=48)。装置が無い起動では -ENOENT。
         inp_boot() {  # $1 = ログ、$2 = 1 なら virtio-keyboard を付けて sendkey、2 なら virtio-tablet を付けて QMP の input-send-event
