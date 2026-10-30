@@ -1646,6 +1646,53 @@ PYEOF
             fail "kernel qemu: 表示装置 (virtio-gpu) (画素=${GPU_PX:-none})"
             grep -a '^描試' "$OUT/gpu_on.log" "$OUT/gpu_off.log" 2>/dev/null | sed 's/^/      /' | head -6
         fi
+        # --- F7 入力装置: virtio-input キーボード。QEMU を -device virtio-keyboard-device で起動し、描試 K が 入力汲 (漢令 234) と 事取 で
+        #     読んだキーイベントを、モニタの sendkey (a・b) で押して調べる。キートップは evdev のキー符 (a=30, b=48)。装置が無い起動では -ENOENT。
+        inp_boot() {  # $1 = ログ、$2 = 1 なら virtio-keyboard を付けて sendkey
+            local ilog="$1" idev="$2" itmp iq ic ifd iargs="" k
+            itmp="$(mktemp -d /tmp/kinp.XXXXXX)"
+            mkfifo "$itmp/pipe.in" "$itmp/pipe.out"
+            rm -f "$ilog"
+            cat "$itmp/pipe.out" > "$ilog" &
+            ic=$!
+            [ "$idev" = 1 ] && iargs="-device virtio-keyboard-device -monitor unix:$itmp/mon.sock,server,nowait"
+            qemu-system-aarch64 -M virt,gic-version=2 -cpu cortex-a57 -nographic -m 128M \
+                -global virtio-mmio.force-legacy=false $iargs \
+                -serial "pipe:$itmp/pipe" -kernel "$OUT/kernel.elf" >"$OUT/inp_qemu.console.log" 2>&1 &
+            iq=$!
+            ( printf 'KANBUN\n' > "$itmp/pipe.in"
+              for _ in $(seq 1 60); do grep -q "甲得" "$ilog" 2>/dev/null && break; sleep 0.25; done
+              printf '描試 K\n終\n' > "$itmp/pipe.in" ) &
+            ifd=$!
+            for _ in $(seq 1 80); do
+                grep -aq "描試 入力待ち\|描試 入力 0xfffffffffffffffe" "$ilog" 2>/dev/null && break
+                sleep 0.25
+            done
+            sleep 0.5
+            if [ "$idev" = 1 ]; then
+                for k in a b; do
+                    printf 'sendkey %s\n' "$k" | nc -U "$itmp/mon.sock" -w 1 >/dev/null 2>&1
+                    sleep 0.3
+                done
+                for _ in $(seq 1 80); do grep -aq "描試 入力終" "$ilog" 2>/dev/null && break; sleep 0.25; done
+            fi
+            kill "$iq" 2>/dev/null
+            wait "$iq" 2>/dev/null
+            kill "$ifd" 2>/dev/null
+            wait "$ic" 2>/dev/null
+            rm -rf "$itmp"
+        }
+        inp_boot "$OUT/inp_on.log" 1
+        inp_boot "$OUT/inp_off.log" 0
+        INP_KEYS="$(grep -a '^描試 鍵' "$OUT/inp_on.log" 2>/dev/null | awk '{print $2 ":" $3}' | tr '\n' ' ')"
+        if [ "$INP_KEYS" = "鍵:0x0000000000000003 鍵頭:0x000000000000001e 鍵:0x0000000000000004 鍵頭:0x000000000000001e 鍵:0x0000000000000003 鍵頭:0x0000000000000030 鍵:0x0000000000000004 鍵頭:0x0000000000000030 " ] \
+           && grep -aq '^描試 入力 0x0000000000000000' "$OUT/inp_on.log" && grep -aq '^描試 入力終 0x0000000000000004' "$OUT/inp_on.log" \
+           && grep -aq '^描試 入力 0xfffffffffffffffe' "$OUT/inp_off.log"; then
+            pass "kernel qemu: 入力装置 (virtio-input キーボード): sendkey の a・b が 事取 (get_evt) で EV_KEYDWN・EV_KEYUP の順に読め、キートップが evdev のキー符 (30・48) と合う。装置が無い起動では 入力汲 (漢令 234) が -ENOENT"
+        else
+            fail "kernel qemu: 入力装置 (virtio-input キーボード) (鍵=${INP_KEYS:-none})"
+            grep -a '^描試' "$OUT/inp_on.log" "$OUT/inp_off.log" 2>/dev/null | sed 's/^/      /' | head -12
+        fi
         # --- 独立ブートローダー: 導 が virtio-blk の核イメージ (KBL1) を読んで、DTB を避難させ、核へ移譲する ----------
         loader_boot() {  # $1 = ログ、$2 = 追加の QEMU 引数 (機械 -machine など)、$3 = ディスクイメージ ("" なら装置なし)
             rm -f "$1"
