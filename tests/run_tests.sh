@@ -1586,8 +1586,8 @@ PYEOF
         # --- F7 表示装置: virtio-gpu。QEMU を -device virtio-gpu-device で起動し、描試 G が広域に描いた画面を 画面出 (漢令 233) で出し、
         #     QEMU のモニタの screendump で画素を調べる。装置を付けない起動では 画面出 が -ENOENT を返す。
         #     主な起動には装置を付けない (頁の総数の試験に影響しない)。モニタのソケットの経路は 104 バイトまでなので /tmp に作る。
-        gpu_boot() {  # $1 = ログ、$2 = 1 なら virtio-gpu を付けて screendump、$3 = PPM の出力先、$4 = 待つ印
-            local glog="$1" gdev="$2" gppm="$3" gmark="$4" gtmp gq gc gf gargs=""
+        gpu_boot() {  # $1 = ログ、$2 = 1 なら virtio-gpu を付けて screendump、$3 = PPM の出力先、$4 = 待つ印、$5 = 殻へ送る命令 (既定 "描試 G")、$6 = 印の個数 (既定 1)
+            local glog="$1" gdev="$2" gppm="$3" gmark="$4" gcmd="${5:-描試 G}" gcount="${6:-1}" gtmp gq gc gf gargs=""
             gtmp="$(mktemp -d /tmp/kgpu.XXXXXX)"
             mkfifo "$gtmp/pipe.in" "$gtmp/pipe.out"
             rm -f "$glog" "$gppm"
@@ -1600,10 +1600,10 @@ PYEOF
             gq=$!
             ( printf 'KANBUN\n' > "$gtmp/pipe.in"
               for _ in $(seq 1 60); do grep -q "甲得" "$glog" 2>/dev/null && break; sleep 0.25; done
-              printf '描試 G\n終\n' > "$gtmp/pipe.in" ) &
+              printf '%b\n終\n' "$gcmd" > "$gtmp/pipe.in" ) &
             gf=$!
             for _ in $(seq 1 80); do
-                grep -aq "$gmark" "$glog" 2>/dev/null && break
+                [ "$(grep -ac "$gmark" "$glog" 2>/dev/null)" -ge "$gcount" ] && break
                 sleep 0.25
             done
             sleep 0.5
@@ -1645,6 +1645,35 @@ PYEOF
         else
             fail "kernel qemu: 表示装置 (virtio-gpu) (画素=${GPU_PX:-none})"
             grep -a '^描試' "$OUT/gpu_on.log" "$OUT/gpu_off.log" 2>/dev/null | sed 's/^/      /' | head -6
+        fi
+        # --- F7 共有画面: 描試 H (左半分を赤) と 描試 I (右半分を緑) の 2 つの行程が、核の共有画面 (漢令 235 画面写) へそれぞれの矩形を写す。
+        gpu_boot "$OUT/shr_on.log" 1 "$OUT/shr_shot.ppm" "描試 共有外" "描試 H\n描試 I" 2
+        gpu_boot "$OUT/shr_off.log" 0 "" "描試 共有外" "描試 H" 1
+        SHR_PX="$(python3 -I - "$OUT/shr_shot.ppm" <<'PYEOF' 2>/dev/null
+import sys
+try:
+    d = open(sys.argv[1], "rb").read()
+    head = d.split(b"\n", 3)
+    w, h = map(int, head[1].split())
+    px = head[3]
+    def p(x, y):
+        o = (y * w + x) * 3
+        return tuple(px[o:o + 3])
+    ok = (head[0] == b"P6" and (w, h) == (320, 240) and len(px) >= w * h * 3
+          and p(0, 0) == (255, 0, 0) and p(159, 239) == (255, 0, 0) and p(80, 120) == (255, 0, 0)
+          and p(160, 0) == (0, 255, 0) and p(319, 239) == (0, 255, 0) and p(240, 120) == (0, 255, 0))
+    print("ok" if ok else "bad %s %s %s %s" % (p(0, 0), p(159, 239), p(160, 0), p(319, 239)))
+except Exception as e:
+    print("error", e)
+PYEOF
+)"
+        if [ "$SHR_PX" = "ok" ] \
+           && [ "$(grep -ac '^描試 共有 0x0000000000000000' "$OUT/shr_on.log")" = 2 ] && [ "$(grep -ac '^描試 共有外 0xffffffffffffffea' "$OUT/shr_on.log")" = 2 ] \
+           && grep -aq '^描試 共有 0xfffffffffffffffe' "$OUT/shr_off.log"; then
+            pass "kernel qemu: 共有画面: 2 つの行程が漢令 235 画面写で左半分 (赤)・右半分 (緑) を写し、screendump で両方が 1 つの画面に出る。画面の外の矩形は -EINVAL、装置が無い起動では -ENOENT"
+        else
+            fail "kernel qemu: 共有画面 (画素=${SHR_PX:-none})"
+            grep -a '^描試' "$OUT/shr_on.log" "$OUT/shr_off.log" 2>/dev/null | sed 's/^/      /' | head -10
         fi
         # --- F7 入力装置: virtio-input キーボード。QEMU を -device virtio-keyboard-device で起動し、描試 K が 入力汲 (漢令 234) と 事取 で
         #     読んだキーイベントを、モニタの sendkey (a・b) で押して調べる。キートップは evdev のキー符 (a=30, b=48)。装置が無い起動では -ENOENT。
