@@ -1675,6 +1675,72 @@ PYEOF
             fail "kernel qemu: 共有画面 (画素=${SHR_PX:-none})"
             grep -a '^描試' "$OUT/shr_on.log" "$OUT/shr_off.log" 2>/dev/null | sed 's/^/      /' | head -10
         fi
+        # --- F7 窓: 描試 W が窓 A (100,60)-(220,180) に画面全体の赤を窓つきで写す (窓の外は切り詰められる)。窓 B は緑を写して消す。
+        #     窓 A は 3 秒待つ間に screendump (窓の中だけ赤)、行程が終わったあとの screendump (窓 A が自動で消えて全面黒)。
+        win_boot() {  # $1 = ログ、$2 = 窓の間の PPM、$3 = 終了後の PPM
+            local wlog="$1" wtmp wq wc wf
+            wtmp="$(mktemp -d /tmp/kwin.XXXXXX)"
+            mkfifo "$wtmp/pipe.in" "$wtmp/pipe.out"
+            rm -f "$wlog" "$2" "$3"
+            cat "$wtmp/pipe.out" > "$wlog" &
+            wc=$!
+            qemu-system-aarch64 -M virt,gic-version=2 -cpu cortex-a57 -nographic -m 128M \
+                -global virtio-mmio.force-legacy=false -device virtio-gpu-device -monitor unix:$wtmp/mon.sock,server,nowait \
+                -serial "pipe:$wtmp/pipe" -kernel "$OUT/kernel.elf" >"$OUT/win_qemu.console.log" 2>&1 &
+            wq=$!
+            ( printf 'KANBUN\n' > "$wtmp/pipe.in"
+              for _ in $(seq 1 60); do grep -q "甲得" "$wlog" 2>/dev/null && break; sleep 0.25; done
+              printf '描試 W\n終\n' > "$wtmp/pipe.in" ) &
+            wf=$!
+            for _ in $(seq 1 80); do grep -aq "描試 窓内" "$wlog" 2>/dev/null && break; sleep 0.25; done
+            sleep 0.5
+            printf 'screendump "%s"\n' "$2" | nc -U "$wtmp/mon.sock" -w 2 >/dev/null 2>&1
+            sleep 1
+            for _ in $(seq 1 80); do grep -aq "描試 窓終" "$wlog" 2>/dev/null && break; sleep 0.25; done
+            sleep 0.5
+            printf 'screendump "%s"\n' "$3" | nc -U "$wtmp/mon.sock" -w 2 >/dev/null 2>&1
+            sleep 1
+            kill "$wq" 2>/dev/null
+            wait "$wq" 2>/dev/null
+            kill "$wf" 2>/dev/null
+            wait "$wc" 2>/dev/null
+            rm -rf "$wtmp"
+        }
+        win_boot "$OUT/win.log" "$OUT/win_1.ppm" "$OUT/win_2.ppm"
+        WIN_PX="$(python3 -I - "$OUT/win_1.ppm" "$OUT/win_2.ppm" <<'PYEOF' 2>/dev/null
+import sys
+try:
+    def load(f):
+        d = open(f, "rb").read()
+        head = d.split(b"\n", 3)
+        w, h = map(int, head[1].split())
+        px = head[3]
+        return head[0], w, h, px
+    def at(img, x, y):
+        _, w, _, px = img
+        o = (y * w + x) * 3
+        return tuple(px[o:o + 3])
+    a, b = load(sys.argv[1]), load(sys.argv[2])
+    red, black = (255, 0, 0), (0, 0, 0)
+    ok = (a[0] == b"P6" and a[1:3] == (320, 240) and b[1:3] == (320, 240)
+          and at(a, 100, 60) == red and at(a, 219, 179) == red and at(a, 160, 120) == red
+          and at(a, 99, 60) == black and at(a, 100, 59) == black and at(a, 220, 120) == black and at(a, 160, 180) == black
+          and at(a, 10, 10) == black and at(a, 300, 220) == black
+          and at(b, 160, 120) == black and at(b, 100, 60) == black and at(b, 219, 179) == black)
+    print("ok" if ok else "bad in=%s out=%s edge=%s after=%s" % (at(a, 160, 120), at(a, 10, 10), at(a, 99, 60), at(b, 160, 120)))
+except Exception as e:
+    print("error", e)
+PYEOF
+)"
+        if [ "$WIN_PX" = "ok" ] \
+           && grep -aq '^描試 窓写 0x0000000000000000' "$OUT/win.log" && grep -aq '^描試 窓Bの写 0x0000000000000000' "$OUT/win.log" \
+           && grep -aq '^描試 窓B消 0x0000000000000000' "$OUT/win.log" && grep -aq '^描試 窓他 0xffffffffffffffea' "$OUT/win.log" \
+           && grep -aq '^描試 窓空 0xffffffffffffffea' "$OUT/win.log" && grep -aq '^描試 窓内 0x0000000000000001' "$OUT/win.log"; then
+            pass "kernel qemu: 窓 (漢令 236・237): 画面全体を窓つきで写しても窓の矩形の内側だけ赤になる。窓 B は消え、他の窓番号・空の矩形は -EINVAL。行程が終わると窓 A が自動で消え、全面が黒に戻る"
+        else
+            fail "kernel qemu: 窓 (${WIN_PX:-none})"
+            grep -a '^描試' "$OUT/win.log" 2>/dev/null | sed 's/^/      /' | head -12
+        fi
         # --- F7 入力装置: virtio-input キーボード。QEMU を -device virtio-keyboard-device で起動し、描試 K が 入力汲 (漢令 234) と 事取 で
         #     読んだキーイベントを、モニタの sendkey (a・b) で押して調べる。キートップは evdev のキー符 (a=30, b=48)。装置が無い起動では -ENOENT。
         inp_boot() {  # $1 = ログ、$2 = 1 なら virtio-keyboard を付けて sendkey、2 なら virtio-tablet を付けて QMP の input-send-event
