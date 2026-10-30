@@ -121,8 +121,8 @@ BTRON3の外部仕様を満たすことを優先し、その上で超漢文固�
 - [ ] BTRON3のHMI、TAD、データ交換、実身・仮身表示・操作を実装
 - [ ] GUIから漢殻を起動し、対象・操作結果を共有
 - [ ] GUI停止時も漢殻で診断・復旧できることを確認
-- [ ] QEMUで再現可能なGUI統合テストを整備（第 1 段階済: `-device virtio-gpu-device` で起動し、QEMU のモニタの `screendump` で画素を調べる。2 回の提示と、装置なしの `-ENOENT` を含む。入力は第 1 段階済: `-device virtio-keyboard-device` で起動し、`sendkey` で押したキーを `get_evt` で読む。タブレット・ウィンドウの試験は未着手）
-- [x] 入力装置（virtio-input キーボード）の第 1 段階: 漢令 234 `入力汲` と `事取` の先頭での汲み取り。`EV_KEY` を `EV_KEYDWN`/`EV_KEYUP` として隊へ積む（[design-display.md](design-display.md) §2b）。タブレットとキートップ対応表は未着手
+- [ ] QEMUで再現可能なGUI統合テストを整備（第 1 段階済: `-device virtio-gpu-device` で起動し、QEMU のモニタの `screendump` で画素を調べる。2 回の提示と、装置なしの `-ENOENT` を含む。入力は第 1 段階済: `-device virtio-keyboard-device`/`virtio-tablet-device` で起動し、`sendkey` と QMP の `input-send-event` で入れた入力を `get_evt` で読む。ウィンドウの試験は未着手）
+- [x] 入力装置（virtio-input キーボード・タブレット）の第 1 段階: 漢令 234 `入力汲` と `事取` の先頭での汲み取り。`EV_KEY` を `EV_KEYDWN`/`EV_KEYUP`、タブレットの `EV_ABS`/`BTN_LEFT` を PD 位置と `EV_BUTDWN`/`EV_BUTUP` として隊へ積む（[design-display.md](design-display.md) §2b）。キートップ対応表は未着手
 - [x] 表示装置（virtio-gpu）の第 1 段階: 漢令 233 `画面出` と、ディスプレイプリミティブのデバイス描画環境 `SCREEN`（`gopn_dev`・`gget_spc`・`gfls_dev`）
 
 ### F8 — 永続化・装置・実機対応

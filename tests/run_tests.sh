@@ -1648,7 +1648,7 @@ PYEOF
         fi
         # --- F7 入力装置: virtio-input キーボード。QEMU を -device virtio-keyboard-device で起動し、描試 K が 入力汲 (漢令 234) と 事取 で
         #     読んだキーイベントを、モニタの sendkey (a・b) で押して調べる。キートップは evdev のキー符 (a=30, b=48)。装置が無い起動では -ENOENT。
-        inp_boot() {  # $1 = ログ、$2 = 1 なら virtio-keyboard を付けて sendkey
+        inp_boot() {  # $1 = ログ、$2 = 1 なら virtio-keyboard を付けて sendkey、2 なら virtio-tablet を付けて QMP の input-send-event
             local ilog="$1" idev="$2" itmp iq ic ifd iargs="" k
             itmp="$(mktemp -d /tmp/kinp.XXXXXX)"
             mkfifo "$itmp/pipe.in" "$itmp/pipe.out"
@@ -1656,19 +1656,31 @@ PYEOF
             cat "$itmp/pipe.out" > "$ilog" &
             ic=$!
             [ "$idev" = 1 ] && iargs="-device virtio-keyboard-device -monitor unix:$itmp/mon.sock,server,nowait"
+            [ "$idev" = 2 ] && iargs="-device virtio-tablet-device -qmp unix:$itmp/mon.sock,server,nowait"
+            local icmd='描試 K'
+            [ "$idev" = 2 ] && icmd='描試 T'
             qemu-system-aarch64 -M virt,gic-version=2 -cpu cortex-a57 -nographic -m 128M \
                 -global virtio-mmio.force-legacy=false $iargs \
                 -serial "pipe:$itmp/pipe" -kernel "$OUT/kernel.elf" >"$OUT/inp_qemu.console.log" 2>&1 &
             iq=$!
             ( printf 'KANBUN\n' > "$itmp/pipe.in"
               for _ in $(seq 1 60); do grep -q "甲得" "$ilog" 2>/dev/null && break; sleep 0.25; done
-              printf '描試 K\n終\n' > "$itmp/pipe.in" ) &
+              printf '%s\n終\n' "$icmd" > "$itmp/pipe.in" ) &
             ifd=$!
             for _ in $(seq 1 80); do
                 grep -aq "描試 入力待ち\|描試 入力 0xfffffffffffffffe" "$ilog" 2>/dev/null && break
                 sleep 0.25
             done
             sleep 0.5
+            if [ "$idev" = 2 ]; then
+                # タブレットは絶対座標: 中央 (16384, 16384) → PD (160, 120) に動かし、左ボタンを押して離す。
+                { printf '{"execute":"qmp_capabilities"}\n'; sleep 0.3
+                  printf '{"execute":"input-send-event","arguments":{"events":[{"type":"abs","data":{"axis":"x","value":16384}},{"type":"abs","data":{"axis":"y","value":16384}}]}}\n'; sleep 0.3
+                  printf '{"execute":"input-send-event","arguments":{"events":[{"type":"btn","data":{"down":true,"button":"left"}}]}}\n'; sleep 0.3
+                  printf '{"execute":"input-send-event","arguments":{"events":[{"type":"btn","data":{"down":false,"button":"left"}}]}}\n'; sleep 0.5; } \
+                    | nc -U "$itmp/mon.sock" -w 3 >/dev/null 2>&1
+                for _ in $(seq 1 80); do grep -aq "描試 入力終" "$ilog" 2>/dev/null && break; sleep 0.25; done
+            fi
             if [ "$idev" = 1 ]; then
                 for k in a b; do
                     printf 'sendkey %s\n' "$k" | nc -U "$itmp/mon.sock" -w 1 >/dev/null 2>&1
@@ -1684,6 +1696,8 @@ PYEOF
         }
         inp_boot "$OUT/inp_on.log" 1
         inp_boot "$OUT/inp_off.log" 0
+        inp_boot "$OUT/inp_tab.log" 2
+        INP_TAB="$(grep -a '^描試 鍵' "$OUT/inp_tab.log" 2>/dev/null | awk '{print $2 ":" $3}' | tr '\n' ' ')"
         INP_KEYS="$(grep -a '^描試 鍵' "$OUT/inp_on.log" 2>/dev/null | awk '{print $2 ":" $3}' | tr '\n' ' ')"
         if [ "$INP_KEYS" = "鍵:0x0000000000000003 鍵頭:0x000000000000001e 鍵:0x0000000000000004 鍵頭:0x000000000000001e 鍵:0x0000000000000003 鍵頭:0x0000000000000030 鍵:0x0000000000000004 鍵頭:0x0000000000000030 " ] \
            && grep -aq '^描試 入力 0x0000000000000000' "$OUT/inp_on.log" && grep -aq '^描試 入力終 0x0000000000000004' "$OUT/inp_on.log" \
@@ -1692,6 +1706,13 @@ PYEOF
         else
             fail "kernel qemu: 入力装置 (virtio-input キーボード) (鍵=${INP_KEYS:-none})"
             grep -a '^描試' "$OUT/inp_on.log" "$OUT/inp_off.log" 2>/dev/null | sed 's/^/      /' | head -12
+        fi
+        if [ "$INP_TAB" = "鍵:0x0000000000000001 鍵頭:0x0000000000000000 鍵座:0x00000000007800a0 鍵:0x0000000000000002 鍵頭:0x0000000000000000 鍵座:0x00000000007800a0 " ] \
+           && grep -aq '^描試 入力終 0x0000000000000002' "$OUT/inp_tab.log"; then
+            pass "kernel qemu: 入力装置 (virtio-input タブレット): 絶対座標 (16384, 16384) が PD 位置 (160, 120) になり、左ボタンの押下・解放が EV_BUTDWN・EV_BUTUP として座に載って読める"
+        else
+            fail "kernel qemu: 入力装置 (virtio-input タブレット) (${INP_TAB:-none})"
+            grep -a '^描試' "$OUT/inp_tab.log" 2>/dev/null | sed 's/^/      /' | head -12
         fi
         # --- 独立ブートローダー: 導 が virtio-blk の核イメージ (KBL1) を読んで、DTB を避難させ、核へ移譲する ----------
         loader_boot() {  # $1 = ログ、$2 = 追加の QEMU 引数 (機械 -machine など)、$3 = ディスクイメージ ("" なら装置なし)
