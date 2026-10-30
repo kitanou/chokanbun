@@ -53,6 +53,8 @@ LLVM ツールは既定で `/opt/homebrew/opt/llvm/bin` と `/opt/homebrew/opt/l
 ```sh
 make          # コンパイラ (chokanbun) をビルド
 make test     # テストを実行し、カーネル tests/output/kernel.elf も生成
+make run      # テスト後に QEMU で対話起動（永続化ディスク付き）
+make run-loader  # 導（ブートローダー）経由で起動
 make clean
 ```
 
@@ -60,10 +62,35 @@ GitHub Actions（macOS arm64）でも同じ `make test` を実行します。失
 
 ### QEMU で起動
 
+起動方法は 3 通りあります。いずれも先に `make test` で `tests/output/kernel.elf` などを生成します（`make run` / `make run-loader` は内部で `make test` を実行します）。
+
+**1. `make run`（推奨）** — 永続化用のディスクイメージ `tests/output/run-disk.img`（初回に自動作成、`make clean` で削除）を virtio-blk で接続して起動します。漢殻の `同` で篇藏と録層を保存でき、再起動で復元されます。
+
+```sh
+make run
+```
+
+**2. `make run-loader`** — 独立ブートローダー「導」から核を起動します。導が virtio-blk 上の核イメージ（`tests/output/kernel.img`）を読み込みます。永続化用のディスクは付きません。
+
+```sh
+make run-loader
+```
+
+**3. QEMU を直接起動** — 核 ELF を `-kernel` で渡す最小構成です。ディスクを接続しないため `同` による保存はできません。
+
 ```sh
 make test
 qemu-system-aarch64 -M virt,gic-version=2 -cpu cortex-a57 -nographic \
   -serial mon:stdio -kernel tests/output/kernel.elf
+```
+
+ディスク付きで直接起動する場合は、`make run` と同じく次を追加します。
+
+```sh
+qemu-system-aarch64 -M virt,gic-version=2 -cpu cortex-a57 -nographic -serial mon:stdio \
+  -global virtio-mmio.force-legacy=false \
+  -drive file=tests/output/run-disk.img,if=none,format=raw,id=hd0 -device virtio-blk-device,drive=hd0 \
+  -kernel tests/output/kernel.elf
 ```
 
 - 起動ログのあと、まず 1 行（例：`KANBUN`）を入力して Enter を押してください。起動時の読込テストで使われます。
@@ -85,7 +112,7 @@ qemu-system-aarch64 -M virt,gic-version=2 -cpu cortex-a57 -nographic \
 殻> 助
 ```
 
-現在の漢殻コマンドには `響`・`讀`・`目`・`書`・`削`・`助`・`終` と、外部命令（`問安`・`數` など）があります。詳細は [漢殻コマンド一覧](docs/shell-commands.md) を参照してください。現在のファイル領域は RAM 上のため、再起動すると内容は消えます。
+現在の漢殻コマンドには `響`・`讀`・`目`・`書`・`削`・`助`・`終` と、外部命令（`問安`・`數` など）があります。詳細は [漢殻コマンド一覧](docs/shell-commands.md) を参照してください。ディスクを接続して起動した場合、`同` で保存した篇藏は再起動後に復元されます。`同` を実行しない限り、またディスクなしの起動では、再起動すると内容は消えます。
 
 ## ソース構成
 

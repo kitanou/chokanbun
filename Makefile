@@ -4,6 +4,7 @@
 #   make          - build the compiler (chokanbun)
 #   make test     - run all tests (see tests/run_tests.sh)
 #   make run      - run tests, then boot the kernel interactively under QEMU
+#   make run-loader - run tests, then boot the kernel via the 導 bootloader under QEMU
 #   make clean    - remove build artifacts
 #
 # LLVM tools are expected in /opt/homebrew/opt/llvm/bin (Homebrew)
