@@ -99,7 +99,7 @@ API 一覧: [btron3-api-inventory.md](btron3-api-inventory.md)（約 247 関数�
 |---|---|---|---|
 | 3.1 | ウィンドウマネージャ | shell/window.html | 一部（31/51 関数。枠の描画・前後・入力受付・移動・位置検索・属性・再表示・イベント・変形とドラッグ・ハンドル・描画の切り抜き。`描試` 83 項目。再表示要求イベント・パネル・内部ウィンドウ・スクロールバー・全面モードは未対応。[btron3-window.md](btron3-window.md)） |
 | 3.2 | メニューマネージャ（標準／汎用メニュー） | shell/menu.html | 要求抽出済・未実装（0/15 関数。[btron3-menu.md](btron3-menu.md)） |
-| 3.3 | パーツマネージャ（11 種のパーツ） | shell/parts.html | 未実装（API 棚卸し済） |
+| 3.3 | パーツマネージャ（11 種のパーツ） | shell/parts.html | 要求抽出済・未実装（0/33 関数。[btron3-parts.md](btron3-parts.md)） |
 | 3.4 | パネルマネージャ | shell/panel.html | 要求抽出済・未実装（0/12 関数。[btron3-panel.md](btron3-panel.md)） |
 | 3.5 | トレーマネージャ | shell/tray.html | 未実装（API 棚卸し済） |
 | 3.6 | データマネージャ（データボックス、標準データ形式） | shell/data.html | 未実装（API 棚卸し済） |
