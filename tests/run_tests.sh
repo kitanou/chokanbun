@@ -1047,10 +1047,10 @@ if [ -f "$OUT/kernel.elf" ]; then
         fi
         DP_N="$(grep -ac '^描試 ' "$KLOG" 2>/dev/null)"
         DP_BAD="$(grep -a '^描試 ' "$KLOG" 2>/dev/null | grep -vc '0x0000000000000001$')"
-        if [ "${DP_N:-0}" -eq 83 ] && [ "${DP_BAD:-1}" -eq 0 ]; then
+        if [ "${DP_N:-0}" -eq 87 ] && [ "${DP_BAD:-1}" -eq 0 ]; then
             pass "kernel qemu: BTRON3 互換層 ディスプレイプリミティブ (汎用メモリ描画環境・描画環境のデータ・座標変換・点と長方形の描画・描画モードの ${DP_N} 項目)"
         else
-            fail "kernel qemu: BTRON3 互換層 ディスプレイプリミティブ (項目=${DP_N:-0}/83、失敗=${DP_BAD:-?})"
+            fail "kernel qemu: BTRON3 互換層 ディスプレイプリミティブ (項目=${DP_N:-0}/87、失敗=${DP_BAD:-?})"
             grep -a '^描試 ' "$KLOG" 2>/dev/null | sed 's/^/      /' | head -60
         fi
         MH_N="$(grep -ac '^信手試 ' "$KLOG" 2>/dev/null)"
