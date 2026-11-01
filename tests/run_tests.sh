@@ -1047,10 +1047,10 @@ if [ -f "$OUT/kernel.elf" ]; then
         fi
         DP_N="$(grep -ac '^描試 ' "$KLOG" 2>/dev/null)"
         DP_BAD="$(grep -a '^描試 ' "$KLOG" 2>/dev/null | grep -vc '0x0000000000000001$')"
-        if [ "${DP_N:-0}" -eq 83 ] && [ "${DP_BAD:-1}" -eq 0 ]; then
+        if [ "${DP_N:-0}" -eq 87 ] && [ "${DP_BAD:-1}" -eq 0 ]; then
             pass "kernel qemu: BTRON3 互換層 ディスプレイプリミティブ (汎用メモリ描画環境・描画環境のデータ・座標変換・点と長方形の描画・描画モードの ${DP_N} 項目)"
         else
-            fail "kernel qemu: BTRON3 互換層 ディスプレイプリミティブ (項目=${DP_N:-0}/83、失敗=${DP_BAD:-?})"
+            fail "kernel qemu: BTRON3 互換層 ディスプレイプリミティブ (項目=${DP_N:-0}/87、失敗=${DP_BAD:-?})"
             grep -a '^描試 ' "$KLOG" 2>/dev/null | sed 's/^/      /' | head -60
         fi
         MH_N="$(grep -ac '^信手試 ' "$KLOG" 2>/dev/null)"
@@ -1586,8 +1586,8 @@ PYEOF
         # --- F7 表示装置: virtio-gpu。QEMU を -device virtio-gpu-device で起動し、描試 G が広域に描いた画面を 画面出 (漢令 233) で出し、
         #     QEMU のモニタの screendump で画素を調べる。装置を付けない起動では 画面出 が -ENOENT を返す。
         #     主な起動には装置を付けない (頁の総数の試験に影響しない)。モニタのソケットの経路は 104 バイトまでなので /tmp に作る。
-        gpu_boot() {  # $1 = ログ、$2 = 1 なら virtio-gpu を付けて screendump、$3 = PPM の出力先、$4 = 待つ印
-            local glog="$1" gdev="$2" gppm="$3" gmark="$4" gtmp gq gc gf gargs=""
+        gpu_boot() {  # $1 = ログ、$2 = 1 なら virtio-gpu を付けて screendump、$3 = PPM の出力先、$4 = 待つ印、$5 = 指定すると 描試 G・H の代わりに 描試 $5 だけを走らせる
+            local glog="$1" gdev="$2" gppm="$3" gmark="$4" gone="${5:-}" gtmp gq gc gf gargs=""
             gtmp="$(mktemp -d /tmp/kgpu.XXXXXX)"
             mkfifo "$gtmp/pipe.in" "$gtmp/pipe.out"
             rm -f "$glog" "$gppm"
@@ -1600,8 +1600,10 @@ PYEOF
             gq=$!
             ( printf 'KANBUN\n' > "$gtmp/pipe.in"
               for _ in $(seq 1 60); do grep -q "甲得" "$glog" 2>/dev/null && break; sleep 0.25; done
+              if [ -n "$gone" ]; then printf '描試 %s\n' "$gone" > "$gtmp/pipe.in"; else
               printf '描試 G\n' > "$gtmp/pipe.in"
               [ "$gdev" = 1 ] && { for _ in $(seq 1 60); do grep -q "描試 再提示" "$glog" 2>/dev/null && break; sleep 0.25; done; printf '描試 H\n' > "$gtmp/pipe.in"; }
+              fi
               printf '終\n' > "$gtmp/pipe.in" ) &
             gf=$!
             for _ in $(seq 1 80); do
@@ -1648,6 +1650,34 @@ PYEOF
         else
             fail "kernel qemu: 表示装置 (virtio-gpu) (画素=${GPU_PX:-none})"
             grep -a '^描試' "$OUT/gpu_on.log" "$OUT/gpu_off.log" 2>/dev/null | sed 's/^/      /' | head -6
+        fi
+        # --- F7 窓の重なりの再表示: 描試 I が、窓 甲 に重ねた窓 乙 を閉じ、甲が EV_REQUEST を受けて wsta_dsp の矩形を描き直し、画面を出す。
+        #     screendump で、乙のあった所の画素が甲の色 (緑) に戻り、乙の青が残っていないことを調べる。
+        gpu_boot "$OUT/gpu_ovl.log" 1 "$OUT/gpu_ovl.ppm" "描試 重提示" I
+        OVL_PX="$(python3 -I - "$OUT/gpu_ovl.ppm" <<'PYEOF' 2>/dev/null
+import sys
+try:
+    d = open(sys.argv[1], "rb").read()
+    head = d.split(b"\n", 3)
+    w, h = map(int, head[1].split())
+    px = head[3]
+    def p(x, y):
+        o = (y * w + x) * 3
+        return tuple(px[o:o + 3])
+    green, blue = (0, 170, 0), (0, 0, 170)
+    ok = (head[0] == b"P6" and (w, h) == (320, 240) and len(px) >= w * h * 3
+          and p(40, 50) == green and p(100, 70) == green and p(110, 90) == green
+          and p(150, 110) != blue and p(100, 70) != blue and p(5, 5) == (204, 204, 204))
+    print("ok" if ok else "bad %s %s %s %s %s" % (p(40, 50), p(100, 70), p(110, 90), p(150, 110), p(5, 5)))
+except Exception as e:
+    print("error", e)
+PYEOF
+)"
+        if [ "$OVL_PX" = "ok" ] && grep -aq '^描試 重確認 0x0000000000000000' "$OUT/gpu_ovl.log" && grep -aq '^描試 重提示 0x0000000000000000' "$OUT/gpu_ovl.log"; then
+            pass "kernel qemu: 窓の重なりの再表示 (重ねた窓を閉じると下の窓へ EV_REQUEST が届き、wsta_dsp の矩形を描き直すと screendump の画素が下の窓の色に戻る)"
+        else
+            fail "kernel qemu: 窓の重なりの再表示 (画素=${OVL_PX:-none})"
+            grep -a '^描試' "$OUT/gpu_ovl.log" 2>/dev/null | sed 's/^/      /' | head -6
         fi
         # --- F7 入力 (virtio-input): virtio-keyboard-device・virtio-tablet-device を付けた起動で、キー a の押下と離し・PD の絶対位置 (QMP)・
         #     ボタンの押下と離しを外から注入し、件試 I が get_evt / get_pdp で型・情・位置を出す。装置が無い起動は他の試験が見ている。
