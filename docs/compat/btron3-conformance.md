@@ -99,7 +99,7 @@ API 一覧: [btron3-api-inventory.md](btron3-api-inventory.md)（約 247 関数�
 |---|---|---|---|
 | 3.1 | ウィンドウマネージャ | shell/window.html | 一部（31/51 関数。枠の描画・前後・入力受付・移動・位置検索・属性・再表示・イベント・変形とドラッグ・ハンドル・描画の切り抜き。`描試` 87 項目。再表示要求イベント（`EV_REQUEST`）を含む。パネル・内部ウィンドウ・スクロールバー・全面モードは未対応。[btron3-window.md](btron3-window.md)） |
 | 3.2 | メニューマネージャ（標準／汎用メニュー） | shell/menu.html | 一部（5/15 関数 — mcre_men・mdel_men・msel_men・mchg_atr・mchg_dtm、描試 8 項目。[btron3-menu.md](btron3-menu.md)） |
-| 3.3 | パーツマネージャ（11 種のパーツ） | shell/parts.html | 一部（18/33 関数: AS・MS スイッチの登録・削除・表示・検索・操作・値・位置・状態・定義。`user/btron/parts.mkn`、`描試` 13 項目。[btron3-parts.md](btron3-parts.md)） |
+| 3.3 | パーツマネージャ（11 種のパーツ） | shell/parts.html | 一部（26/33 関数: AS・MS スイッチとテキスト・シークレットテキスト・数値ボックスの登録・削除・表示・検索・操作・値・位置・状態・定義・編集。`user/btron/parts.mkn`、`描試` 21 項目。[btron3-parts.md](btron3-parts.md)） |
 | 3.4 | パネルマネージャ | shell/panel.html | 一部（6/12 関数 — pcre_pnl・pdel_pnl・pget_gid・pact_pnl・pget_itm・pset_itm、描試 6 項目。[btron3-panel.md](btron3-panel.md)） |
 | 3.5 | トレーマネージャ | shell/tray.html | 未実装（API 棚卸し済） |
 | 3.6 | データマネージャ（データボックス、標準データ形式） | shell/data.html | 未実装（API 棚卸し済） |

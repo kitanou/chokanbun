@@ -1,7 +1,7 @@
 # BTRON3 OS 仕様編 第3章 3.3 パーツマネージャ — 要求の整理（F4・F7）
 
 > 出典: BTRON3 仕様書 Ver. 3.20.00 第2編 第3章 3.3（`os_spec/shell/parts.html`、33 関数・11 種のパーツ）。更新: 2026-11-01。
-> 状況: **要求抽出と最小実装**（`user/btron/parts.mkn`、AS・MS の 18 関数、`描試` 13 項目。下の §8）。原文は漢字切替列の ESC が欠けた形で取得され、手作業で復号した。**(推定)** は読みが確定していない箇所。図 79〜95 は画像で未確認。本文は転載せず独自の言い回しで要約する。
+> 状況: **要求抽出と最小実装**（`user/btron/parts.mkn`、AS・MS・TB・XB・NB の 26 関数、`描試` 21 項目。下の §8）。原文は漢字切替列の ESC が欠けた形で取得され、手作業で復号した。**(推定)** は読みが確定していない箇所。図 79〜95 は画像で未確認。本文は転載せず独自の言い回しで要約する。
 
 ## 1. 位置づけ
 
@@ -94,7 +94,7 @@
 
 - 描画は 2.4・2.5、入力は 1.7 と 3.1 の `wget_evt`。`cact_par`・`cexe_par` は `wget_evt` の結果を受けるので、3.1 のイベントは実装済みで足りる。
 - 最小の実装は、`ccre_msw`・`ccre_asw`（文字のスイッチ）、`cdel_par`、`cdsp_par`、`cchk_par`・`cfnd_par`、`cact_par`（押下の検出）。次いでテキストボックスと数値ボックス。3.4 パネルの `PARTS_ITEM` はこれに依存する。
-- 現状: 18/33 関数を実装（§8）。
+- 現状: 26/33 関数を実装（§8）。
 
 ## 8. 実装の状況（最小実装）
 
@@ -106,3 +106,14 @@
 - **【未対応】** 残りの 9 種、`ccre_par`・`copn_par`、`ccut_txt`・`cins_txt`・`cexe_par`・`cidl_par` ほか、点滅、パネルの所属、行程終了での自動削除。
 - **【選択の記録】（第 2 弾）** `cchg_par` の `cmd` は、対の前者（`P_NORMAL` 2・`P_FRAME` 4・`P_ENABLE` 8・`P_ACT` 0x10）で状態を既定に戻し、後者（`P_EMPHAS` 0x200・`P_NOFRAME` 0x400・`P_DISABLE` 0x800・`P_INACT` 0x1000）で立てる。0・不明なビット・同じ組の同時指定は `EX_PAR`。
   `cset_pos` は古い領域を白で消してから新しい領域に描く。`cget_dat`・`cset_dat` は AS・MS では名（TC、NUL 終わり。取得は 32 B 要る、設定は 15 字まで）を扱い、`par` の型は (推定)。
+
+## 9. 実装の状況（第 3 弾: テキスト・数値ボックス）
+
+`ccre_tbx`・`ccre_xbx`・`ccre_nbx`・`ccre_par`・`cexe_par`・`cidl_par`・`ccut_txt`・`cins_txt` の 8 関数を足し（計 26/33）、型は `TB_PARTS`・`XB_PARTS`・`NB_PARTS` を扱う（`描試` 8 項目を足して 21 項目）。`cget_val`・`cset_val`・`cget_dat`・`cset_dat`・`cact_par`・表示は型で分けた。原文が取得できていない部分は次のとおり選んだ（`parts.mkn` の第 3 弾の先頭にも記す）。
+
+- **記録**: TB・XB の文字（TC、NUL 終わり）は共有画面の塊の `部表` + 0x4000 から 256 B ずつ（`txsize` は 120 まで）。記録の +80 が文字数、+88 が変更の印、+96・+104 が選択の始めと終わり、+112 が `txsize`。NB は +64 が値（符号付き）、+96 が `fmt`（下位 8 ビットが桁数 1〜15、0x200 で先頭の 0 を表示）。
+- **引数**: `ccre_tbx`・`ccre_xbx` は `(wid, r, txsize, text, atr)`（`text` = NULL は空、`txsize - 1` 字を超えると `EX_PAR`）、`ccre_nbx` は `(wid, r, fmt, val, atr)`（`val` は W の番地）。数値は整数だけで、`P_DNUM` と桁を超える値は `EX_PAR`。`ccre_par` の `PARTS` は +0 type・+4 r・+12 第 1 欄・+16 第 2 欄・+24 atr（32 B）で、TB・XB・NB・AS・MS 以外は `EX_PAR`。
+- **表示と編集**: 白地・黒枠。TB は文字、XB は `*`、NB は右寄せ。選択部は白黒反転で、`P_APPEND` は選択を末尾の挿入位置だけにする。`KEYDWN`・`AUTKEY` の文字（情報の下位 16 ビット）が 0x20 以上なら選択を置き換えて挿入（NB は数字と `-`）、BS・DEL は削除、Enter は `P_NL`・Tab は `P_TAB` で終わる。領域内の `BUTDWN` は挿入位置を置き、領域外の `BUTDWN` は `P_BUT` で終わる。終わりの値は 0x4000 + 理由（操作中に変わったなら `P_CHANGE`）。
+- **値・定義**: `cget_val`・`cset_val` は文字列（NUL を含む TC を W の語に詰める）か NB の W 1 語。`cget_dat`・`cset_dat` は `txsize`・`fmt`。`ccut_txt` の `size` は NUL を含む TC の数、`cins_txt` は `txsize` を超える分を切り捨てて入れた字数を返す。`cidl_par` は引数の検査だけ（推定）。
+
+【未対応】`ccre_sbx`・`ccre_pas`・`ccre_pms`・`ccre_sel`・`ccre_scr`・`ccre_vol`・`copn_par`（残り 7 関数、型は SB・PA・PM・WS・SS・VL）、矢印キー・ドラッグでの選択・カーソルの点滅、点滅、パネルの所属、行程終了での自動削除。
