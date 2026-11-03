@@ -119,7 +119,7 @@ BTRON3の外部仕様を満たすことを優先し、その上で超漢文固�
 
 - [x] ディスプレイ、入力、描画、ウィンドウ管理の適合要件を整理（[design-display.md](design-display.md): 層と QEMU 装置の対応、表示装置の設計、試験の方法、次の段階）
 - [x] ウィンドウマネージャ 3.1 の第 1〜8 弾（`user/btron/wnd.mkn`、31 関数: 開閉・前後・入力受付・属性・再表示・イベント・変形とドラッグ・ハンドル・描画の切り抜き。共有画面の管理表で行程をまたぐ。再表示要求イベント `EV_REQUEST` を含む。`描試` 87 項目。パネル・内部ウィンドウ・スクロールバー・全面モードは未対応。[compat/btron3-window.md](compat/btron3-window.md)）
-- [ ] BTRON3のHMI（3.2 メニュー・3.4 パネルは要求抽出済・未実装、3.3 パーツは 18/33 関数を実装済（AS・MS スイッチ）。[panel](compat/btron3-panel.md)・[menu](compat/btron3-menu.md)・[parts](compat/btron3-parts.md)。パネルはパーツに依存、メニューは独立）、TAD、データ交換、実身・仮身表示・操作を実装
+- [ ] BTRON3のHMI（3.2 メニューは 5/15 関数を実装済（標準メニューの登録・選択）、3.4 パネルは要求抽出済・未実装、3.3 パーツは 18/33 関数を実装済（AS・MS スイッチ）。[panel](compat/btron3-panel.md)・[menu](compat/btron3-menu.md)・[parts](compat/btron3-parts.md)。パネルはパーツに依存、メニューは独立）、TAD、データ交換、実身・仮身表示・操作を実装
 - [ ] GUIから漢殻を起動し、対象・操作結果を共有
 - [ ] GUI停止時も漢殻で診断・復旧できることを確認
 - [ ] QEMUで再現可能なGUI統合テストを整備（第 1 段階済: `-device virtio-gpu-device` で起動し、QEMU のモニタの `screendump` で画素を調べる。2 回の提示と、装置なしの `-ENOENT` を含む。入力・ウィンドウの試験は未着手）
