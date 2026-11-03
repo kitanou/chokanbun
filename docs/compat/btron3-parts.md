@@ -1,7 +1,7 @@
 # BTRON3 OS 仕様編 第3章 3.3 パーツマネージャ — 要求の整理（F4・F7）
 
 > 出典: BTRON3 仕様書 Ver. 3.20.00 第2編 第3章 3.3（`os_spec/shell/parts.html`、33 関数・11 種のパーツ）。更新: 2026-11-01。
-> 状況: **要求抽出と最小実装**（`user/btron/parts.mkn`、AS・MS・TB・XB・NB の 26 関数、`描試` 21 項目。下の §8）。原文は漢字切替列の ESC が欠けた形で取得され、手作業で復号した。**(推定)** は読みが確定していない箇所。図 79〜95 は画像で未確認。本文は転載せず独自の言い回しで要約する。
+> 状況: **要求抽出と実装**（`user/btron/parts.mkn`、11 種・33/33 関数、`描試` 31 項目。下の §8〜§10）。原文は漢字切替列の ESC が欠けた形で取得され、手作業で復号した。**(推定)** は読みが確定していない箇所。図 79〜95 は画像で未確認。本文は転載せず独自の言い回しで要約する。
 
 ## 1. 位置づけ
 
@@ -94,7 +94,7 @@
 
 - 描画は 2.4・2.5、入力は 1.7 と 3.1 の `wget_evt`。`cact_par`・`cexe_par` は `wget_evt` の結果を受けるので、3.1 のイベントは実装済みで足りる。
 - 最小の実装は、`ccre_msw`・`ccre_asw`（文字のスイッチ）、`cdel_par`、`cdsp_par`、`cchk_par`・`cfnd_par`、`cact_par`（押下の検出）。次いでテキストボックスと数値ボックス。3.4 パネルの `PARTS_ITEM` はこれに依存する。
-- 現状: 26/33 関数を実装（§8）。
+- 現状: 33/33 関数を実装（§8〜§10）。ただし `copn_par` は常に `EX_DNUM`。
 
 ## 8. 実装の状況（最小実装）
 
@@ -116,4 +116,16 @@
 - **表示と編集**: 白地・黒枠。TB は文字、XB は `*`、NB は右寄せ。選択部は白黒反転で、`P_APPEND` は選択を末尾の挿入位置だけにする。`KEYDWN`・`AUTKEY` の文字（情報の下位 16 ビット）が 0x20 以上なら選択を置き換えて挿入（NB は数字と `-`）、BS・DEL は削除、Enter は `P_NL`・Tab は `P_TAB` で終わる。領域内の `BUTDWN` は挿入位置を置き、領域外の `BUTDWN` は `P_BUT` で終わる。終わりの値は 0x4000 + 理由（操作中に変わったなら `P_CHANGE`）。
 - **値・定義**: `cget_val`・`cset_val` は文字列（NUL を含む TC を W の語に詰める）か NB の W 1 語。`cget_dat`・`cset_dat` は `txsize`・`fmt`。`ccut_txt` の `size` は NUL を含む TC の数、`cins_txt` は `txsize` を超える分を切り捨てて入れた字数を返す。`cidl_par` は引数の検査だけ（推定）。
 
-【未対応】`ccre_sbx`・`ccre_pas`・`ccre_pms`・`ccre_sel`・`ccre_scr`・`ccre_vol`・`copn_par`（残り 7 関数、型は SB・PA・PM・WS・SS・VL）、矢印キー・ドラッグでの選択・カーソルの点滅、点滅、パネルの所属、行程終了での自動削除。
+【未対応】矢印キー・ドラッグでの選択・カーソルの点滅（TB・XB・NB）、点滅、パネルの所属、行程終了での自動削除（残りは §10）。
+
+## 10. 実装の状況（第 4 弾: 残りの 6 種と `copn_par`）
+
+`ccre_sbx`・`ccre_pas`・`ccre_pms`・`ccre_sel`・`ccre_scr`・`ccre_vol`・`copn_par` の 7 関数を足し（計 33/33）、型は `SB_PARTS`・`PA_PARTS`・`PM_PARTS`・`WS_PARTS`・`SS_PARTS`・`VL_PARTS` を扱う（`描試` 10 項目を足して 31 項目）。`cget_val`・`cset_val`・`cget_dat`・`cset_dat`・`cact_par`・`cexe_par`・`ccre_par`・表示は型で分けた。`EX_DNUM`（0xFFFE0012）を `er.mkn` に足した。選び方は `parts.mkn` の第 4 弾の先頭にも記す。
+
+- **引数**: `ccre_sbx(wid, r, fmt, nfld, cv, atr)`・`ccre_pas(wid, r, cv, onpat, offpat, atr)`・`ccre_pms(wid, r, onpat, atr)`・`ccre_sel`・`ccre_scr(wid, r, cv, items, atr)`・`ccre_vol(wid, r, clo, chi, lo, hi, atr)`。`items` は TC の列で、項目ごとに NUL、最後に空の項目（127 字・32 項目まで）。`cv` は 0 起点で、`P_NOSEL` なら -1 も可。`ccre_par` の `PARTS` は +12・+16・+20・+24（atr）・+28 を型ごとに使い、SB は +32 に `cv` の番地を持つ 40 B。
+- **SB の `fmt`**: 数値欄は 0x0C00 + 桁数（1〜9）の後に最小・最大（0〜65535）、項目欄は 0x0800 + 選択肢の数（1〜16）の後に選択肢（NUL 終わり）、終わりは 0。欄は 8 まで。
+- **表示と操作**: WS・SS は 12 ピクセルごとの行で、選んだ行が白黒反転。VL は `P_HALIGN` で横、無ければ縦で、clo〜chi を帯にする。SB は欄を空白 1 字で区切る。PA・PM は `BMAP_DATA` が無いので、onpat か offpat が 0 でなければ中に小さな四角を描く。離したのが矩形の中なら、WS・SS は行の選択（`P_NOSEL` で再クリックすると解除）、VL は近い方の端を動かす（clo = chi なら両方）、SB は押した欄を 1 つ進める（最大の次は最小、選択肢は一巡）、PA は反転。値が変わると `P_CHANGE`。
+- **値・定義**: `cget_val` は SB が欄の値、WS が番号、SS が [番号, 見える行数, 先頭番号]、VL が clo・chi・lo・hi。`cset_val` は範囲を検査し、SS は見える所へスクロール。`cget_dat` は PA・PM が onpat・offpat、他は項目数・欄数・`patnum`。`cset_dat` は PA・PM が 2 語の番地、VL が `patnum`、SB・WS・SS は `EX_PAR`。
+- **`copn_par`**: `PARTS_DATA` を持つデータマネージャ（3.6）が無いので、検査（`EX_ADR`・`EX_WID`）のあと常に `EX_DNUM`。**実際には何も登録できない。**
+
+【未対応】`P_NUMBER`（SS の番号付け）、SB のキー操作・数値欄の直接入力、VL のドラッグ・縦横の向きの検証、ピクトグラムの絵、`copn_par` の実体、矢印キー・ドラッグ選択・カーソルの点滅、点滅、パネルの所属、行程終了での自動削除。
