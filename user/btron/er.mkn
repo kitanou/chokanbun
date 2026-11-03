@@ -74,6 +74,11 @@
 常「EX_PNID」之無符六四 為 0xFFFFFFFFFFFE0010
 常「EX_SAVE」之無符六四 為 0xFFFFFFFFFFFE0011
 常「EX_DNUM」之無符六四 為 0xFFFFFFFFFFFE0012
+常「EX_DATA」之無符六四 為 0xFFFFFFFFFFFE0013
+常「EX_DFMT」之無符六四 為 0xFFFFFFFFFFFE0014
+常「EX_SDATA」之無符六四 為 0xFFFFFFFFFFFE0015
+常「EX_FD」之無符六四 為 0xFFFFFFFFFFFE0016
+常「EX_AKEY」之無符六四 為 0xFFFFFFFFFFFE0017
 
 註 漢令の誤り番号 (x0 の負の errno、abi-aarch64.md) を ER_* に変える。0 以上はそのまま返す。
 註 対応が定まらないものは ER_PAR にする (ER_PAR = 引数が不正)。対応表は次の表のとおり。
