@@ -102,7 +102,7 @@ API 一覧: [btron3-api-inventory.md](btron3-api-inventory.md)（約 247 関数�
 | 3.3 | パーツマネージャ（11 種のパーツ） | shell/parts.html | 33/33 関数（11 種すべて。`copn_par` はデータマネージャが無いので常に `EX_DNUM`、ピクトグラムの絵は未描画。`user/btron/parts.mkn`、`描試` 31 項目。[btron3-parts.md](btron3-parts.md)） |
 | 3.4 | パネルマネージャ | shell/panel.html | 12/12 関数（`popn_pnl`・`pact_err` はデータマネージャが無く常に `EX_DNUM`。`PARTS_ITEM` は未対応。`描試` 12 項目。[btron3-panel.md](btron3-panel.md)） |
 | 3.5 | トレーマネージャ | shell/tray.html | 未実装（API 棚卸し済） |
-| 3.6 | データマネージャ（データボックス、標準データ形式） | shell/data.html | 未実装（API 棚卸し済） |
+| 3.6 | データマネージャ（データボックス、標準データ形式） | shell/data.html | 部分適合: `data.mkn` で 7/7 関数（メモリ上の登録表のみ。ファイルのデータボックスと標準項目は未実装。試験 `描試二十二`。[詳細](btron3-data.md)） |
 | 3.7 | テキスト入力プリミティブ | shell/tip.html | 未実装（API 棚卸し済） |
 | 3.8 | 実身／仮身マネージャ（実身／仮身の移動・複写、起動、メニュー管理） | shell/omgr.html | 部分適合（登録簿 V1a・実身の操作 V1b・続柄 V2・接続と虚身 V3・アプリ管理 V4a・起動と実行プロトコル V4b-1・実行機能付箋 V4b-2・漢殻の命令 V5。表示・操作 UI は未実装） |
 | 3.9 | フォントマネージャ（標準フォントデータ形式） | shell/font_mgr.html | 未実装（API 棚卸し済） |
