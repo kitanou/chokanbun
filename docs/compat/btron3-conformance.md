@@ -100,7 +100,7 @@ API 一覧: [btron3-api-inventory.md](btron3-api-inventory.md)（約 247 関数�
 | 3.1 | ウィンドウマネージャ | shell/window.html | 一部（31/51 関数。枠の描画・前後・入力受付・移動・位置検索・属性・再表示・イベント・変形とドラッグ・ハンドル・描画の切り抜き。`描試` 87 項目。再表示要求イベント（`EV_REQUEST`）を含む。パネル・内部ウィンドウ・スクロールバー・全面モードは未対応。[btron3-window.md](btron3-window.md)） |
 | 3.2 | メニューマネージャ（標準／汎用メニュー） | shell/menu.html | 15/15 関数（標準メニュー 10・汎用メニュー 5。`mopn_men`・`mopn_gmn` はデータマネージャが無く常に `EX_DNUM`。`描試` 16 項目。[btron3-menu.md](btron3-menu.md)） |
 | 3.3 | パーツマネージャ（11 種のパーツ） | shell/parts.html | 33/33 関数（11 種すべて。`copn_par` はデータマネージャが無いので常に `EX_DNUM`、ピクトグラムの絵は未描画。`user/btron/parts.mkn`、`描試` 31 項目。[btron3-parts.md](btron3-parts.md)） |
-| 3.4 | パネルマネージャ | shell/panel.html | 一部（6/12 関数 — pcre_pnl・pdel_pnl・pget_gid・pact_pnl・pget_itm・pset_itm、描試 6 項目。[btron3-panel.md](btron3-panel.md)） |
+| 3.4 | パネルマネージャ | shell/panel.html | 12/12 関数（`popn_pnl`・`pact_err` はデータマネージャが無く常に `EX_DNUM`。`PARTS_ITEM` は未対応。`描試` 12 項目。[btron3-panel.md](btron3-panel.md)） |
 | 3.5 | トレーマネージャ | shell/tray.html | 未実装（API 棚卸し済） |
 | 3.6 | データマネージャ（データボックス、標準データ形式） | shell/data.html | 未実装（API 棚卸し済） |
 | 3.7 | テキスト入力プリミティブ | shell/tip.html | 未実装（API 棚卸し済） |
