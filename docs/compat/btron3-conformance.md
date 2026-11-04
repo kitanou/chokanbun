@@ -89,7 +89,7 @@ API 一覧: [btron3-api-inventory.md](btron3-api-inventory.md)（2.3: 37、2.4: 
 | 2.3 | 基本関数（描画環境、カラーマップ、座標変換） | dp/basic_func.html | 部分適合（`gopn_mem`・`gopn_dev`（`SCREEN` のみ）・`gcls_env`・`gnew_env`・`gini_env`・環境のデータ・座標変換。カラーマップ・クリッピング領域は未実装） |
 | 2.4 | 図形描画関数（線、矩形、多角形、円、弧、曲線、塗り、ビットマップ、クリップ） | dp/figure_func.html | 部分適合（`gdra_pnt`・`gtst_pnt`・`gfil_pnt`・`gfil_rec`・`gfra_rec`・`gcop_bmp`。約 36 関数は未実装） |
 | 2.5 | 文字（列）描画関数 | dp/character_func.html | 一部（18/20 関数。8×8 ASCII のみ。[btron3-dp.md](btron3-dp.md)） |
-| 2.6 | ポインタ制御関数、標準ポインタ形状 | dp/pointer_func.html | 未実装（API 棚卸し済） |
+| 2.6 | ポインタ制御関数、標準ポインタ形状 | dp/pointer_func.html | 部分適合: `ptr.mkn` で 6/6 関数（状態の保持だけ。画面には描かない。試験 `描試二十六`。[詳細](btron3-ptr.md)） |
 
 ### 第3章 外殻（シェル。HMI・統合情報環境）
 
@@ -107,7 +107,7 @@ API 一覧: [btron3-api-inventory.md](btron3-api-inventory.md)（約 247 関数�
 | 3.8 | 実身／仮身マネージャ（実身／仮身の移動・複写、起動、メニュー管理） | shell/omgr.html | 部分適合（登録簿 V1a・実身の操作 V1b・続柄 V2・接続と虚身 V3・アプリ管理 V4a・起動と実行プロトコル V4b-1・実行機能付箋 V4b-2・漢殻の命令 V5。表示・操作 UI は未実装） |
 | 3.9 | フォントマネージャ（標準フォントデータ形式） | shell/font_mgr.html | 部分適合: `font.mkn` で 14/14 関数（メモリ上のドット字像だけ。ファイル・アウトライン・拡縮は未対応。試験 `描試二十五`。[詳細](btron3-font.md)） |
 | 3.10 | TCP/IP マネージャ | shell/tcpip.html | 未実装（API 棚卸し済） |
-| 3.11 | 印刷マネージャ（スプール、プリンタ管理） | shell/printmgr.html | 未実装（API 棚卸し済） |
+| 3.11 | 印刷マネージャ（スプール、プリンタ管理） | shell/printmgr.html | 部分適合: `prn.mkn` で 9/9 関数（登録表とスプールの管理だけ。印刷・プレビュー・割付けは未対応。試験 `描試二十七`。[詳細](btron3-prn.md)） |
 
 **注**: 第3.8 節の「アプリケーション」は原文の日本語タイトルが取得時に判読できなかった。実身／仮身／虚身・付箋の規定位置は原文確認のうえ確定する（取得した英語訳は機械的な当て字である）。
 
