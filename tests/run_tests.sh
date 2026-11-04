@@ -221,6 +221,11 @@ else
     fail "漢令番号の照合 (処理・許可リスト・文書の食い違い)"
     sed 's/^/      /' "$OUT/check-syscalls.log"
 fi
+sh tools/mkimage.sh user/fork_test.mkn "$OUT/fork_test.zo" "$OUT" 2>"$OUT/user_fork_test.build.log" \
+    && pass "user: 分行程 (fork) の試験 分試 を漢像にビルド" || {
+        fail "user: 分行程 (fork) の試験 分試 を漢像にビルド"
+        sed 's/^/      /' "$OUT/user_fork_test.build.log" "$OUT/user_fork_test.gen.log" 2>/dev/null | head -10
+    }
 sh tools/mkimage.sh user/lex_cmd.mkn "$OUT/lex_cmd.zo" "$OUT" 2>"$OUT/user_lex_cmd.build.log" \
     && pass "user: セルフホストの字句解析器の命令 字句 を漢像にビルド" || {
         fail "user: セルフホストの字句解析器の命令 字句 を漢像にビルド"
@@ -346,7 +351,7 @@ sh tools/mkimage.sh user/btron_task.mkn "$OUT/btron_task.zo" "$OUT" 2>"$OUT/user
         fail "user: BTRON3 互換層の試験 副試 を漢像にビルド"
         sed 's/^/      /' "$OUT/user_btron_task.build.log" | head -10
     }
-KIMG_ARGS=(問安="$OUT/hello.zo" 數="$OUT/count.zo" 異常試="$OUT/fault.zo" 識試="$OUT/btron_gtid.zo" 名試="$OUT/btron_gname.zo" 時試="$OUT/btron_clk.zo" 時元試="$OUT/time_test.zo" 時="$OUT/time_cmd.zo" 信試="$OUT/btron_msg.zo" 利試="$OUT/btron_usr.zo" 強試="$OUT/btron_term.zo" 同試="$OUT/btron_sync.zo" 緩試="$OUT/btron_comm.zo" 録試="$OUT/btron_file.zo" 篇試="$OUT/pian_test.zo" 永試="$OUT/pian_persist.zo" 貯試="$OUT/btron_mem.zo" 件試="$OUT/btron_evt.zo" 設試="$OUT/btron_dev.zo" 系試="$OUT/btron_sys.zo" 例試="$OUT/btron_exc.zo" 描試="$OUT/btron_dp.zo" 信手試="$OUT/btron_msg_hdr.zo" 副試="$OUT/btron_task.zo" 実試="$OUT/btron_omgr.zo" 実作="$OUT/obj.zo" 仮置="$OUT/obj.zo" 実削="$OUT/obj.zo" 実目="$OUT/obj.zo" 実名="$OUT/obj.zo" objapp="$OUT/obj_app.zo" 標="$OUT/tag_cmd.zo" 索="$OUT/tag_cmd.zo" 競試="$OUT/stress.zo" 管試="$OUT/pipe_test.zo" 換試="$OUT/exec_test.zo" 讀="$OUT/cat_cmd.zo" 計="$OUT/wc_cmd.zo" 字句="$OUT/lex_cmd.zo" 構文="$OUT/ast_cmd.zo" 型検="$OUT/tc_cmd.zo" 機譯="$OUT/cc_cmd.zo" 源増="$OUT/src_gen.zo" 源受="$OUT/src_in.zo")
+KIMG_ARGS=(問安="$OUT/hello.zo" 數="$OUT/count.zo" 異常試="$OUT/fault.zo" 識試="$OUT/btron_gtid.zo" 名試="$OUT/btron_gname.zo" 時試="$OUT/btron_clk.zo" 時元試="$OUT/time_test.zo" 時="$OUT/time_cmd.zo" 信試="$OUT/btron_msg.zo" 利試="$OUT/btron_usr.zo" 強試="$OUT/btron_term.zo" 同試="$OUT/btron_sync.zo" 緩試="$OUT/btron_comm.zo" 録試="$OUT/btron_file.zo" 篇試="$OUT/pian_test.zo" 永試="$OUT/pian_persist.zo" 貯試="$OUT/btron_mem.zo" 件試="$OUT/btron_evt.zo" 設試="$OUT/btron_dev.zo" 系試="$OUT/btron_sys.zo" 例試="$OUT/btron_exc.zo" 描試="$OUT/btron_dp.zo" 信手試="$OUT/btron_msg_hdr.zo" 副試="$OUT/btron_task.zo" 実試="$OUT/btron_omgr.zo" 実作="$OUT/obj.zo" 仮置="$OUT/obj.zo" 実削="$OUT/obj.zo" 実目="$OUT/obj.zo" 実名="$OUT/obj.zo" objapp="$OUT/obj_app.zo" 標="$OUT/tag_cmd.zo" 索="$OUT/tag_cmd.zo" 競試="$OUT/stress.zo" 管試="$OUT/pipe_test.zo" 換試="$OUT/exec_test.zo" 分試="$OUT/fork_test.zo" 讀="$OUT/cat_cmd.zo" 計="$OUT/wc_cmd.zo" 字句="$OUT/lex_cmd.zo" 構文="$OUT/ast_cmd.zo" 型検="$OUT/tc_cmd.zo" 機譯="$OUT/cc_cmd.zo" 源増="$OUT/src_gen.zo" 源受="$OUT/src_in.zo")
 if [ "$TOOLCHAIN" = kanbun ]; then
     # 機械漢文のツールチェーン: 像表と漢像を核の rodata へ埋め込み、核の ELF を作る (gen-images.sh・clang・ld.lld の代わり)
     rm -f "$OUT/kernel.elf"
@@ -1423,6 +1428,16 @@ if [ -f "$OUT/kernel.elf" ]; then
         else
             fail "kernel qemu: 換行程 (項目=${EXEC_N:-0}/5、失敗=${EXEC_BAD:-?})"
             grep -a '^換試 \|^殻' "$OUT/exec.log" 2>/dev/null | cut -c1-120 | sed 's/^/      /' | tail -12
+        fi
+        # --- 分行程 (fork 相当): 子は 0・親は子の識、窓が複製されて別、柄を継ぐ、fork + exec、頁が漏れない ----
+        pian_boot "$OUT/fork.log" $'分試\n終\n'
+        FORK_N=$(grep -ac '^分試 ' "$OUT/fork.log")
+        FORK_BAD=$(grep -a '^分試 ' "$OUT/fork.log" | grep -avc ' 0x0000000000000001$')
+        if [ "${FORK_N:-0}" -eq 5 ] && [ "${FORK_BAD:-1}" -eq 0 ]; then
+            pass "kernel qemu: 分行程 (項目=${FORK_N}/5。子は0・親は子の識、入れ子から子が戻れ、データが別で、柄を継ぎ、fork + exec が通り、2 巡目の前後で頁が漏れない)"
+        else
+            fail "kernel qemu: 分行程 (項目=${FORK_N:-0}/5、失敗=${FORK_BAD:-?})"
+            grep -a '^分試 \|^殻' "$OUT/fork.log" 2>/dev/null | cut -c1-120 | sed 's/^/      /' | tail -12
         fi
         # --- 殻の傳 (管でつなぐ) と奏入 (典籍へ向ける): 外部命令 讀 (標準入力または典籍 → 標準出力)・計 (標準入力の字と行を数える) の段 ----
         pian_boot "$OUT/shpipe.log" $'書 管甲 abcdefghij\n讀 管甲 傳 計\n讀 管甲 傳 讀 傳 計\n讀 管甲 傳 計\n讀 管甲 傳 計\n讀 管甲 傳 計\n讀 管甲 傳 計\n讀 管甲 傳 計\n讀 管甲 傳 計\n讀 管甲 奏入 管乙\n讀 管乙\n讀 管甲 傳 無し 傳 計\n讀 管甲 傳\n讀 管甲 奏入\n終\n'

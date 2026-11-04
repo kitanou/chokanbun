@@ -12,5 +12,7 @@
 ## 注意
 POSIX準拠とPOSIX風APIは異なる。初期段階でPOSIX準拠を宣言しない。
 
+`fork` 相当（`分行程`、漢令 23）は実装済み（全複製、copy-on-write なし）。シグナルと端末制御は未着手。
+
 ## 設計判断
 [design-process-exec.md](design-process-exec.md) §13（Issue #104）に、BTRON3 との対応範囲・`pipe`/`exec`/`wait`/`fork` の方針と段階別の試験を記録した。
