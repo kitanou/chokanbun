@@ -215,6 +215,12 @@ sh tools/mkimage.sh user/exec_test.mkn "$OUT/exec_test.zo" "$OUT" 2>"$OUT/user_e
         fail "user: 換行程 (exec) の試験 換試 を漢像にビルド"
         sed 's/^/      /' "$OUT/user_exec_test.build.log" "$OUT/user_exec_test.gen.log" 2>/dev/null | head -10
     }
+if python3 tools/check-syscalls.py >"$OUT/check-syscalls.log" 2>&1; then
+    pass "漢令番号の照合 (処理・許可リスト・docs/abi-aarch64.md の三者が一致: $(tail -1 "$OUT/check-syscalls.log"))"
+else
+    fail "漢令番号の照合 (処理・許可リスト・文書の食い違い)"
+    sed 's/^/      /' "$OUT/check-syscalls.log"
+fi
 sh tools/mkimage.sh user/lex_cmd.mkn "$OUT/lex_cmd.zo" "$OUT" 2>"$OUT/user_lex_cmd.build.log" \
     && pass "user: セルフホストの字句解析器の命令 字句 を漢像にビルド" || {
         fail "user: セルフホストの字句解析器の命令 字句 を漢像にビルド"
