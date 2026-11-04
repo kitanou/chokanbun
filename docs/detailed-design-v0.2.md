@@ -28,6 +28,8 @@
 - 「漢令」: 両者をつなぐ型付きシステムAPI。ユーザーランドでのコマンド名とカーネル内syscall番号を分離する。
 
 ## シェルの文法 v0.1
+
+> 実装した文法は [shell-commands.md](shell-commands.md)「漢殻の文法（v0.1 確定）」。ここは当初の案で、引用符（「」）や動詞の列挙が実装と違う。
 ```ebnf
 pipeline    = command, { "傳", command }, [ redirect ] ;
 redirect    = "奏入", string ;
