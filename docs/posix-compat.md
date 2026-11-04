@@ -11,3 +11,6 @@
 
 ## 注意
 POSIX準拠とPOSIX風APIは異なる。初期段階でPOSIX準拠を宣言しない。
+
+## 設計判断
+[design-process-exec.md](design-process-exec.md) §13（Issue #104）に、BTRON3 との対応範囲・`pipe`/`exec`/`wait`/`fork` の方針と段階別の試験を記録した。
