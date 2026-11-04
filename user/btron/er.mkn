@@ -84,6 +84,11 @@
 常「EX_KEY」之無符六四 為 0xFFFFFFFFFFFE001A
 常「EX_CKEY」之無符六四 為 0xFFFFFFFFFFFE001B
 常「EX_TID」之無符六四 為 0xFFFFFFFFFFFE001C
+常「EX_FONT」之無符六四 為 0xFFFFFFFFFFFE001D
+常「EX_FTFMT」之無符六四 為 0xFFFFFFFFFFFE001E
+常「EX_FTID」之無符六四 為 0xFFFFFFFFFFFE001F
+常「EX_FTD」之無符六四 為 0xFFFFFFFFFFFE0020
+常「EX_NOMEM」之無符六四 為 0xFFFFFFFFFFFE0021
 
 註 漢令の誤り番号 (x0 の負の errno、abi-aarch64.md) を ER_* に変える。0 以上はそのまま返す。
 註 対応が定まらないものは ER_PAR にする (ER_PAR = 引数が不正)。対応表は次の表のとおり。
