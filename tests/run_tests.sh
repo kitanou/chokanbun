@@ -195,6 +195,11 @@ sh tools/mkimage.sh user/stress.mkn "$OUT/stress.zo" "$OUT" 2>"$OUT/user_stress.
         fail "user: 競合のストレス試験 競試 を漢像にビルド"
         sed 's/^/      /' "$OUT/user_stress.build.log" "$OUT/user_stress.gen.log" 2>/dev/null | head -10
     }
+sh tools/mkimage.sh user/pipe_test.mkn "$OUT/pipe_test.zo" "$OUT" 2>"$OUT/user_pipe_test.build.log" \
+    && pass "user: 管 (造管・複寫柄) の試験 管試 を漢像にビルド" || {
+        fail "user: 管 (造管・複寫柄) の試験 管試 を漢像にビルド"
+        sed 's/^/      /' "$OUT/user_pipe_test.build.log" "$OUT/user_pipe_test.gen.log" 2>/dev/null | head -10
+    }
 sh tools/mkimage.sh user/lex_cmd.mkn "$OUT/lex_cmd.zo" "$OUT" 2>"$OUT/user_lex_cmd.build.log" \
     && pass "user: セルフホストの字句解析器の命令 字句 を漢像にビルド" || {
         fail "user: セルフホストの字句解析器の命令 字句 を漢像にビルド"
@@ -320,7 +325,7 @@ sh tools/mkimage.sh user/btron_task.mkn "$OUT/btron_task.zo" "$OUT" 2>"$OUT/user
         fail "user: BTRON3 互換層の試験 副試 を漢像にビルド"
         sed 's/^/      /' "$OUT/user_btron_task.build.log" | head -10
     }
-KIMG_ARGS=(問安="$OUT/hello.zo" 數="$OUT/count.zo" 異常試="$OUT/fault.zo" 識試="$OUT/btron_gtid.zo" 名試="$OUT/btron_gname.zo" 時試="$OUT/btron_clk.zo" 時元試="$OUT/time_test.zo" 時="$OUT/time_cmd.zo" 信試="$OUT/btron_msg.zo" 利試="$OUT/btron_usr.zo" 強試="$OUT/btron_term.zo" 同試="$OUT/btron_sync.zo" 緩試="$OUT/btron_comm.zo" 録試="$OUT/btron_file.zo" 篇試="$OUT/pian_test.zo" 永試="$OUT/pian_persist.zo" 貯試="$OUT/btron_mem.zo" 件試="$OUT/btron_evt.zo" 設試="$OUT/btron_dev.zo" 系試="$OUT/btron_sys.zo" 例試="$OUT/btron_exc.zo" 描試="$OUT/btron_dp.zo" 信手試="$OUT/btron_msg_hdr.zo" 副試="$OUT/btron_task.zo" 実試="$OUT/btron_omgr.zo" 実作="$OUT/obj.zo" 仮置="$OUT/obj.zo" 実削="$OUT/obj.zo" 実目="$OUT/obj.zo" 実名="$OUT/obj.zo" objapp="$OUT/obj_app.zo" 標="$OUT/tag_cmd.zo" 索="$OUT/tag_cmd.zo" 競試="$OUT/stress.zo" 字句="$OUT/lex_cmd.zo" 構文="$OUT/ast_cmd.zo" 型検="$OUT/tc_cmd.zo" 機譯="$OUT/cc_cmd.zo" 源増="$OUT/src_gen.zo" 源受="$OUT/src_in.zo")
+KIMG_ARGS=(問安="$OUT/hello.zo" 數="$OUT/count.zo" 異常試="$OUT/fault.zo" 識試="$OUT/btron_gtid.zo" 名試="$OUT/btron_gname.zo" 時試="$OUT/btron_clk.zo" 時元試="$OUT/time_test.zo" 時="$OUT/time_cmd.zo" 信試="$OUT/btron_msg.zo" 利試="$OUT/btron_usr.zo" 強試="$OUT/btron_term.zo" 同試="$OUT/btron_sync.zo" 緩試="$OUT/btron_comm.zo" 録試="$OUT/btron_file.zo" 篇試="$OUT/pian_test.zo" 永試="$OUT/pian_persist.zo" 貯試="$OUT/btron_mem.zo" 件試="$OUT/btron_evt.zo" 設試="$OUT/btron_dev.zo" 系試="$OUT/btron_sys.zo" 例試="$OUT/btron_exc.zo" 描試="$OUT/btron_dp.zo" 信手試="$OUT/btron_msg_hdr.zo" 副試="$OUT/btron_task.zo" 実試="$OUT/btron_omgr.zo" 実作="$OUT/obj.zo" 仮置="$OUT/obj.zo" 実削="$OUT/obj.zo" 実目="$OUT/obj.zo" 実名="$OUT/obj.zo" objapp="$OUT/obj_app.zo" 標="$OUT/tag_cmd.zo" 索="$OUT/tag_cmd.zo" 競試="$OUT/stress.zo" 管試="$OUT/pipe_test.zo" 字句="$OUT/lex_cmd.zo" 構文="$OUT/ast_cmd.zo" 型検="$OUT/tc_cmd.zo" 機譯="$OUT/cc_cmd.zo" 源増="$OUT/src_gen.zo" 源受="$OUT/src_in.zo")
 if [ "$TOOLCHAIN" = kanbun ]; then
     # 機械漢文のツールチェーン: 像表と漢像を核の rodata へ埋め込み、核の ELF を作る (gen-images.sh・clang・ld.lld の代わり)
     rm -f "$OUT/kernel.elf"
@@ -1377,6 +1382,16 @@ if [ -f "$OUT/kernel.elf" ]; then
         else
             fail "kernel qemu: 競合のストレス"
             grep -a '^競試\|^殻' "$OUT/stress.log" 2>/dev/null | cut -c1-80 | sed 's/^/      /' | tail -12
+        fi
+        # --- 管 (パイプ) と複寫柄: 基本の読み書き・EOF・-EPIPE・付け替え・柄表の枯渇・子が管を読み書きする (満杯・空で眠って起きる)・頁の漏れ ----
+        pian_boot "$OUT/pipe.log" $'管試\n終\n'
+        PIPE_N=$(grep -ac '^管試 ' "$OUT/pipe.log")
+        PIPE_BAD=$(grep -a '^管試 ' "$OUT/pipe.log" | grep -avc ' 0x0000000000000001$')
+        if [ "${PIPE_N:-0}" -eq 17 ] && [ "${PIPE_BAD:-1}" -eq 0 ]; then
+            pass "kernel qemu: 管 (造管・複寫柄) (項目=${PIPE_N}/17。最小の空き柄・EOF・-EPIPE・-EBADF・付け替えと復元・-EMFILE・子が6000Bを管へ書く/管から読む・頁が漏れない)"
+        else
+            fail "kernel qemu: 管 (項目=${PIPE_N:-0}/17、失敗=${PIPE_BAD:-?})"
+            grep -a '^管試 \|^殻' "$OUT/pipe.log" 2>/dev/null | cut -c1-120 | sed 's/^/      /' | tail -16
         fi
         # --- セルフホスト: OS の上で動く機械漢文の字句解析器 (字句) が、C++ 版 -tokens と同じトークン列を出す ----
         SH_SRC='常「引五」之有符六四 為 負 5 註 x'
