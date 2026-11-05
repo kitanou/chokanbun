@@ -38,11 +38,11 @@
 | 3.5 トレーマネージャ | 10 | 10 | 10 |
 | 3.6 データマネージャ | 7 | 7 | 7 |
 | 3.7 テキスト入力プリミティブ | 8 | 8 | 8 |
-| 3.8 実身／仮身マネージャ | 60 | 31 | 27 |
+| 3.8 実身／仮身マネージャ | 60 | 38 | 34 |
 | 3.9 フォントマネージャ | 14 | 14 | 14 |
 | 3.10 TCP/IP マネージャ | 28 | 28 | 28 |
 | 3.11 印刷マネージャ | 9 | 9 | 9 |
-| **合計** | **495** | **460** | **447** |
+| **合計** | **495** | **467** | **454** |
 
 ## 1.1 プロセス／タスク管理（16 関数）
 
@@ -541,15 +541,15 @@
 | `b_odup_vob` | `VID b_odup_vob(W org)` | `omgr.mkn` | — | なし | `EX_LIMIT` `EX_NOSPC` `EX_VID` | —（日本語名の関数。要確認） |
 | `odel_vob` | `W odel_vob(W vid, W clr)` | `omgr.mkn` | — | なし | `EX_VID` | —（日本語名の関数。要確認） |
 | `ocls_wnd` | `ERR ocls_wnd(W wid)` | 未実装 | — | — | — | — |
-| `odsp_vob` | `W odsp_vob(W vid, RECT *r, UW disp)` | 未実装 | — | — | `EX_ADR` `EX_PAR` `EX_VID` `EX_WID` | — |
+| `odsp_vob` | `W odsp_vob(W vid, RECT *r, UW disp)` | `omgrx.mkn` | — | あり | `EX_ADR` `EX_PAR` `EX_VID` `EX_WID` | —（日本語名の関数。要確認） |
 | `odsp_vor` | `W odsp_vor(W vid, RECT *r, UW disp, PNT scal)` | 未実装 | — | — | `EX_ADR` `EX_PAR` `EX_VID` `EX_WID` | — |
-| `odra_vob` | `ERR odra_vob(VLINK *vlnk, VP vseg, W wid, UW disp)` | 未実装 | — | — | `EX_ADR` `EX_NOSPC` `EX_PAR` `EX_WID` | — |
+| `odra_vob` | `ERR odra_vob(VLINK *vlnk, VP vseg, W wid, UW disp)` | `omgrx.mkn` | — | あり | `EX_ADR` `EX_NOSPC` `EX_PAR` `EX_WID` | —（日本語名の関数。要確認） |
 | `odra_vor` | `ERR odra_vor(VLINK *vlnk, VP vseg, W wid, UW disp, PNT scal)` | 未実装 | — | — | `EX_ADR` `EX_NOSPC` `EX_PAR` `EX_WID` | — |
-| `ofnd_vob` | `W ofnd_vob(W wid, PNT pos, W *vid)` | 未実装 | — | — | `EX_ADR` `EX_VID` | — |
-| `omov_vob` | `ERR omov_vob(W vid, W wid, RECT *newr, UW disp)` | 未実装 | — | — | `EX_ADR` `EX_PAR` `EX_VID` `EX_WID` | — |
-| `orsz_vob` | `ERR orsz_vob(W vid, RECT *newr, UW mode)` | 未実装 | — | — | `EX_ADR` `EX_PAR` `EX_VID` `EX_VOBJ` | — |
-| `ochg_chs` | `W ochg_chs(W vid, W chsz, RECT *newr, UW mode)` | 未実装 | — | — | `EX_ADR` `EX_PAR` `EX_VID` | — |
-| `ochg_col` | `ERR ochg_col(W vid, COLOR frcol, COLOR chcol, COLOR tbcol, COLOR bgcol, UW disp)` | 未実装 | — | — | `EX_PAR` `EX_VID` | — |
+| `ofnd_vob` | `W ofnd_vob(W wid, PNT pos, W *vid)` | `omgrx.mkn` | — | あり | `EX_ADR` `EX_VID` | —（日本語名の関数。要確認） |
+| `omov_vob` | `ERR omov_vob(W vid, W wid, RECT *newr, UW disp)` | `omgrx.mkn` | — | あり | `EX_ADR` `EX_PAR` `EX_VID` `EX_WID` | —（日本語名の関数。要確認） |
+| `orsz_vob` | `ERR orsz_vob(W vid, RECT *newr, UW mode)` | `omgrx.mkn` | — | あり | `EX_ADR` `EX_PAR` `EX_VID` `EX_VOBJ` | —（日本語名の関数。要確認） |
+| `ochg_chs` | `W ochg_chs(W vid, W chsz, RECT *newr, UW mode)` | `omgrx.mkn` | — | あり | `EX_ADR` `EX_PAR` `EX_VID` | —（日本語名の関数。要確認） |
+| `ochg_col` | `ERR ochg_col(W vid, COLOR frcol, COLOR chcol, COLOR tbcol, COLOR bgcol, UW disp)` | `omgrx.mkn` | — | あり | `EX_PAR` `EX_VID` | —（日本語名の関数。要確認） |
 | `ochg_nam` | `W ochg_nam(W vid, TC *name)` | `omgr.mkn` | — | あり | `EX_ADR` `EX_VID` `EX_VOBJ` | —（日本語名の関数。要確認） |
 | `ochg_rel` | `W ochg_rel(W vid, W index)` | `omgr.mkn` | — | あり | `EX_PAR` `EX_VID` `EX_VOBJ` | —（日本語名の関数。要確認） |
 | `onew_obj` | `VID onew_obj(W vid, VLINK *vlnk)` | 未実装 | — | — | `EX_ADR` `EX_LIMIT` `EX_VID` `EX_VOBJ` | — |
