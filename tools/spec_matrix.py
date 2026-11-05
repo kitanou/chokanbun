@@ -233,9 +233,21 @@ SHARED_STATUS = [
     ("2.2", "tconv.mkn・jis0208.mkn", "実装済・未検証", "JIS X 0201/0208 との変換"),
     ("2.3", "tcode.mkn・tconv.mkn", "部分適合", "TRON 仕様日本文字コード (B〜D ゾーンの字形は出典なし)"),
     ("3.1", "tad.mkn", "部分適合", "TAD の概要 (セグメントの枠)"),
-    ("3.2", "なし", "未実装", "TAD 実身構成 (レコード種別)"),
+    ("3.2", "tad.mkn", "部分適合", "実身レコード種別 (TAD記録分類・TAD実行CPU系)"),
     ("3.3.1", "tad.mkn", "部分適合", "固定長・可変長・ラージセグメントの読み書き"),
+    ("3.3.2", "tad.mkn", "部分適合", "文章データと図形データの開始・終了"),
+    ("3.3.3", "tad.mkn", "部分適合", "画像データ"),
     ("3.4.1", "tad.mkn", "部分適合", "セグメントの ID 定数 (TS_*)"),
+    ("3.4.2", "tad.mkn", "部分適合", "管理情報 (TAD情報書・TAD情報版)"),
+    ("3.4.3", "tad.mkn", "部分適合", "文章開始／終了 (TAD文章始書・TAD始読)"),
+    ("3.4.4", "tad.mkn", "部分適合", "図形開始／終了 (TAD図形始書・TAD始読)"),
+    ("3.4.5", "tad.mkn", "部分適合", "画像 (TAD画像書・TAD画像読)"),
+    ("3.4.6", "tad.mkn", "部分適合", "仮身 (TAD仮身書・TAD仮身読)"),
+    ("3.4.7", "tad.mkn", "部分適合", "機能付箋 (TAD機能付箋書・読)"),
+    ("3.4.8", "tad.mkn", "部分適合", "指定付箋 (TAD指定付箋書・読)"),
+    ("3.5", "tad.mkn・tadvec.mkn", "部分適合", "文章付箋の LEN の規定 (39 件を原文から生成した試験)。用紙・余白は読み書き済み、他の付箋の欄は未解釈"),
+    ("3.6", "tad.mkn・tadvec.mkn", "部分適合", "図形セグメントの LEN の規定 (25 件を原文から生成した試験)。長方形・線属性は読み書き済み、他の欄は未解釈"),
+    ("付録A", "tad.mkn", "実装済・未検証", "TAD セグメント ID の一覧"),
 ]
 
 
@@ -303,12 +315,112 @@ def shared_md(work):
     return "\n".join(L)
 
 
+# --- TAD の付箋 (SUBID ごとの LEN) の試験ベクトル (#42 Phase 1) -----------------------------
+TEXT_IDS = {"3.5.2": "TS_TPAGE", "3.5.3": "TS_TRULER", "3.5.4": "TS_TFONT", "3.5.5": "TS_TUB", "3.5.6": "TS_TATTR",
+            "3.5.7": "TS_TSTYLE", "3.5.8": "TS_TVAR", "3.5.9": "TS_TMEMO", "3.5.10": "TS_TAPPL"}
+FIG_IDS = {"3.6.2": "TS_FPRIM", "3.6.3": "TS_FDEF", "3.6.4": "TS_FGRP", "3.6.5": "TS_FMAC", "3.6.6": "TS_FATTR",
+           "3.6.8": "TS_FMEMO"}
+
+
+def tad_catalog(work):
+    """文章付箋 (tad2) と図形セグメント (tad3) の (節, ID, SUBID, LEN の書き方, 表題)。付録は除く。"""
+    out = []
+    for fn, ids in (("tad2", TEXT_IDS), ("tad3", FIG_IDS)):
+        t = open(os.path.join(work, "shared_data", fn + ".txt")).read().replace("&lt;", "<").replace("&gt;", ">")
+        lines = t.split("\n")
+        end = len(lines)
+        for i, ln in enumerate(lines):
+            if re.match(r"^付録", ln) or re.match(r"^3\.6\.9\b", ln) and fn == "tad3" and i > 0 and False:
+                end = i
+                break
+        sec = None
+        title = ""
+        for i, ln in enumerate(lines[:end]):
+            m = re.match(r"^(\d+\.\d+(?:\.\d+)*)[ \u3000]+(\S.*)$", ln)
+            if m and not re.match(r"^\d+\.\d+\.\d+\.\d+", ln):
+                sec = m.group(1)
+            if (re.match(r"^[^\s□].*[:：](基本|拡張)レベル\s*$", ln)) or (re.match(r"^\S.*(セグメント|付箋)\s*$", ln) and not ln.startswith("□")):
+                title = ln.strip()
+            if re.match(r"^\s*LEN\s*:", ln) and sec in ids and i + 1 < len(lines):
+                sm = re.match(r"^\s*SUBID\s*:\s*(\d+)\b", lines[i + 1])
+                if not sm:
+                    continue
+                lenspec = re.sub(r"\s+", " ", ln.split(":", 1)[1].strip())
+                out.append((fn, sec, ids[sec], int(sm.group(1)), lenspec, title))
+    return out
+
+
+def tad_lens(spec):
+    """LEN の書き方 → (固定の長さの列, 以上なら下限)。分からなければ (None, None)。"""
+    spec = spec.replace("＋", "+").replace("，", ",").replace("、", ",")
+    if re.fullmatch(r"\d+(\s*,\s*\d+)*", spec):
+        return [int(x) for x in re.split(r"\s*,\s*", spec)], None
+    m = re.fullmatch(r"(\d+)\s*〜", spec)
+    if m:
+        return None, int(m.group(1))
+    if spec == "〜":
+        return None, 0
+    return None, None
+
+
+def tad_mkn(work):
+    """既存の TAD文章付箋検・TAD図形付箋検が規定どおりかを調べる試験ベクトル (機械漢文)。"""
+    cat = tad_catalog(work)
+    L = ["註 生成物 (python3 tools/spec_matrix.py tadvec <作業ディレクトリ>)。共有データ編 3.5・3.6 の LEN の規定 (SUBID ごと) を TAD文章付箋検・TAD図形付箋検に当てる。",
+         "註 戻り値は食い違いの数。規定の長さで 1、固定長なら規定の長さ + 2 で 0 になるはず。LEN が「〜」の規定は下限 + 200 で 1。要: btron/tad.mkn。", ""]
+    for kind, fn_name, call in (("text", "TAD仕様文章", "TAD文章付箋検"), ("fig", "TAD仕様図形", "TAD図形付箋検")):
+        want = "tad2" if kind == "text" else "tad3"
+        L.append("術曰「%s」 返 無符六四" % fn_name)
+        L.append("    設「違」之無符六四 為 0")
+        n = 0
+        for fn, sec, tsid, sub, spec, title in cat:
+            if fn != want:
+                continue
+            fixed, lower = tad_lens(spec)
+            checks = []
+            if fixed:
+                for v in fixed:
+                    checks.append((v, 1))
+                if len(fixed) == 1:
+                    checks.append((fixed[0] + 2, 0))
+            elif lower is not None:
+                checks.append((lower + 200, 1))
+            for ln_, exp in checks:
+                L.append("    若 呼「%s」以(「%s」, %d, %d) 不等 %d 則" % (call, tsid, sub, ln_, exp))
+                L.append("        置「違」為 違 加 1")
+                L.append("    終若")
+                n += 1
+        L.append("    歸 違")
+        L.append("終術")
+        L.append("")
+    return "\n".join(L)
+
+
+def tad_md(work):
+    cat = tad_catalog(work)
+    L = ["# BTRON3 TAD 付箋・図形セグメントの LEN 規定（生成物）", "",
+         "> 親Issue: [#42](https://github.com/kitanou/chokanbun/issues/42) Phase 1。`python3 tools/spec_matrix.py tadcat <作業ディレクトリ>` で生成（原文の取得は `fetch`）。",
+         "> 共有データ編 3.5（文章付箋）と 3.6（図形）の SUBID ごとの LEN の規定。付録の再掲は除く。原文の説明文は転載しない。",
+         "> 試験: 同じ規定から生成した `user/btron/tadvec.mkn` を `識試` が実行する（`TAD仕様ベクタ文章`・`TAD仕様ベクタ図形`）。", "",
+         "| 節 | 親 ID | SUBID | LEN の規定 | 表題 |", "|---|---|---|---|---|"]
+    for fn, sec, tsid, sub, spec, title in cat:
+        L.append("| %s | `%s` | %d | %s | %s |" % (sec, tsid, sub, spec.replace("|", "／"), title.replace("|", "／")[:40]))
+    L.append("")
+    L.append("合計 %d 件（文章 %d、図形 %d）。" % (len(cat), sum(1 for c in cat if c[0] == "tad2"), sum(1 for c in cat if c[0] == "tad3")))
+    L.append("")
+    return "\n".join(L)
+
+
 if __name__ == "__main__":
     cmd, work = sys.argv[1], sys.argv[2]
     if cmd == "fetch":
         fetch(work)
     elif cmd == "matrix":
         print(matrix(work))
+    elif cmd == "tadvec":
+        print(tad_mkn(work))
+    elif cmd == "tadcat":
+        print(tad_md(work))
     elif cmd == "shared":
         print(shared_md(work))
     else:
