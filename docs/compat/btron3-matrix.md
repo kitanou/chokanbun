@@ -28,7 +28,7 @@
 | 1.9 時計管理 | 4 | 4 | 4 |
 | 1.10 システム管理 | 4 | 4 | 4 |
 | 2.3 基本関数 | 37 | 33 | 31 |
-| 2.4 図形描画関数 | 42 | 28 | 28 |
+| 2.4 図形描画関数 | 42 | 37 | 37 |
 | 2.5 文字(列)描画関数 | 20 | 20 | 20 |
 | 2.6 ポインタ制御関数 | 6 | 6 | 6 |
 | 3.1 ウィンドウマネージャ | 51 | 41 | 41 |
@@ -42,7 +42,7 @@
 | 3.9 フォントマネージャ | 14 | 14 | 14 |
 | 3.10 TCP/IP マネージャ | 28 | 28 | 28 |
 | 3.11 印刷マネージャ | 9 | 9 | 9 |
-| **合計** | **495** | **438** | **425** |
+| **合計** | **495** | **447** | **434** |
 
 ## 1.1 プロセス／タスク管理（16 関数）
 
@@ -302,18 +302,18 @@
 | `gfra_pol` | `ERR gfra_pol ( GID gid, POLY *p, LATTR attr, PAT *pat, DCM mode )` | `dpfig.mkn` | ○ | あり | `EG_ADR` `EG_GID` `EG_LIMIT` `EG_NOSPC` `EG_PAR` | `EG_ADR` `EG_GID` `EG_LIMIT` `EG_NOSPC` `EG_PAR` |
 | `gfil_pol` | `ERR gfil_pol ( GID gid, POLY *p, PAT *pat, DCM mode )` | `dpfig.mkn` | ○ | あり | `EG_ADR` `EG_GID` `EG_LIMIT` `EG_NOSPC` `EG_PAR` | `EG_ADR` `EG_GID` `EG_LIMIT` `EG_NOSPC` `EG_PAR` |
 | `gfil_gen` | `ERR gfil_gen ( GID gid, GRGN *rgn, PAT *pat, DCM mode )` | 未実装 | — | — | `EG_ADR` `EG_GID` `EG_LIMIT` `EG_NOSPC` `EG_PAR` | — |
-| `gfil_rgn` | `Bool gfil_rgn ( GID gid, PIXVAL val, PNT p, PAT *pat, DCM mode )` | 未実装 | — | — | `EG_ADR` `EG_GID` `EG_NOSPC` `EG_PAR` | — |
+| `gfil_rgn` | `Bool gfil_rgn ( GID gid, PIXVAL val, PNT p, PAT *pat, DCM mode )` | `dpbmp.mkn` | ○ | あり | `EG_ADR` `EG_GID` `EG_NOSPC` `EG_PAR` | `EG_ADR` |
 | `gdra_spl` | `ERR gdra_spl ( GID gid, UW np, PNT *pt, LATTR attr, PAT *pat, DCM mode )` | 未実装 | — | — | `EG_ADR` `EG_GID` `EG_LIMIT` `EG_NOSPC` `EG_PAR` | — |
 | `gfil_spl` | `ERR gfil_spl ( GID gid, UW np, PNT *pt, PAT *pat, DCM mode )` | 未実装 | — | — | `EG_ADR` `EG_GID` `EG_LIMIT` `EG_NOSPC` `EG_PAR` `EG_FORM` | — |
 | `gcop_bmp` | `ERR gcop_bmp ( GID srcid, RECT *sr, GID dstid, RECT *dr, GRGN *mask, DCM mode )` | `dp.mkn` | ○ | あり | `EG_ADR` `EG_FORM` `EG_GID` `EG_LIMIT` `EG_NOSPC` `EG_NOSPT` `EG_PAR` | `EG_LIMIT` `EG_NOSPC` |
-| `gsav_bmp` | `ERR gsav_bmp ( GID gid, RECT *gr, BMP *bmap, RECT *br, GRGN *mask, DCM mode )` | 未実装 | — | — | `EG_ADR` `EG_ENV` `EG_FORM` `EG_GID` `EG_LIMIT` `EG_NOSPC` `EG_NOSPT` `EG_PAR` | — |
-| `grst_bmp` | `ERR grst_bmp ( GID gid, RECT *gr, BMP *bmap, RECT *br, GRGN *mask, DCM mode )` | 未実装 | — | — | `EG_ADR` `EG_ENV` `EG_FORM` `EG_GID` `EG_LIMIT` `EG_NOSPC` `EG_NOSPT` `EG_PAR` | — |
-| `grst_mbm` | `ERR grst_mbm ( GID gid, RECT *gr, BMP *bmap, RECT *br, UB *mask, DCM mode )` | 未実装 | — | — | `EG_ADR` `EG_ENV` `EG_FORM` `EG_GID` `EG_LIMIT` `EG_NOSPC` `EG_NOSPT` `EG_PAR` | — |
-| `grot_bmp` | `ERR grot_bmp ( GID srcid, GID dstid, RECT *rp, PNT *dp, DEG angle, GRGN *mask, DCM mode )` | 未実装 | — | — | `EG_ADR` `EG_FORM` `EG_GID` `EG_NOSPC` `EG_NOSPT` `EG_PAR` | — |
-| `gscr_rec` | `W gscr_rec ( GID gid, RECT r, W dh, W dv RLIST *rlp, PAT *pat )` | 未実装 | — | — | `EG_ADR` `EG_GID` `EG_NOSPC` `EG_PAR` | — |
-| `gsiz_cbm` | `ERR gsiz_cbm ( GID gid, RECT *rp, W compac, W *size )` | 未実装 | — | — | `EG_ADR` `EG_GID` `EG_NOSPT` `EG_PAR` | — |
-| `gcom_bmp` | `Bool gcom_bmp ( GID gid, RECT *rp, CBMP *cbmp, W *stat )` | 未実装 | — | — | `EG_ADR` `EG_GID` `EG_NOSPT` `EG_PAR` | — |
-| `gunc_bmp` | `ERR gunc_bmp ( GID gid, RECT *dr, CBMP *cbmp, RECT *sr, DCM mode )` | 未実装 | — | — | `EG_ADR` `EG_FORM` `EG_GID` `EG_NOSPT` `EG_PAR` | — |
+| `gsav_bmp` | `ERR gsav_bmp ( GID gid, RECT *gr, BMP *bmap, RECT *br, GRGN *mask, DCM mode )` | `dpbmp.mkn` | ○ | あり | `EG_ADR` `EG_ENV` `EG_FORM` `EG_GID` `EG_LIMIT` `EG_NOSPC` `EG_NOSPT` `EG_PAR` | `EG_ADR` `EG_ENV` `EG_FORM` `EG_GID` `EG_LIMIT` `EG_NOSPC` `EG_NOSPT` `EG_PAR` |
+| `grst_bmp` | `ERR grst_bmp ( GID gid, RECT *gr, BMP *bmap, RECT *br, GRGN *mask, DCM mode )` | `dpbmp.mkn` | ○ | あり | `EG_ADR` `EG_ENV` `EG_FORM` `EG_GID` `EG_LIMIT` `EG_NOSPC` `EG_NOSPT` `EG_PAR` | `EG_ADR` `EG_ENV` `EG_FORM` `EG_GID` `EG_LIMIT` `EG_NOSPC` `EG_NOSPT` `EG_PAR` |
+| `grst_mbm` | `ERR grst_mbm ( GID gid, RECT *gr, BMP *bmap, RECT *br, UB *mask, DCM mode )` | `dpbmp.mkn` | ○ | あり | `EG_ADR` `EG_ENV` `EG_FORM` `EG_GID` `EG_LIMIT` `EG_NOSPC` `EG_NOSPT` `EG_PAR` | `EG_ADR` `EG_ENV` `EG_FORM` `EG_GID` `EG_LIMIT` `EG_NOSPC` `EG_NOSPT` `EG_PAR` |
+| `grot_bmp` | `ERR grot_bmp ( GID srcid, GID dstid, RECT *rp, PNT *dp, DEG angle, GRGN *mask, DCM mode )` | `dpbmp.mkn` | ○ | あり | `EG_ADR` `EG_FORM` `EG_GID` `EG_NOSPC` `EG_NOSPT` `EG_PAR` |  |
+| `gscr_rec` | `W gscr_rec ( GID gid, RECT r, W dh, W dv RLIST *rlp, PAT *pat )` | `dpbmp.mkn` | × | あり | `EG_ADR` `EG_GID` `EG_NOSPC` `EG_PAR` | `EG_ADR` `EG_NOSPC` |
+| `gsiz_cbm` | `ERR gsiz_cbm ( GID gid, RECT *rp, W compac, W *size )` | `dpbmp.mkn` | ○ | あり | `EG_ADR` `EG_GID` `EG_NOSPT` `EG_PAR` | `EG_NOSPT` |
+| `gcom_bmp` | `Bool gcom_bmp ( GID gid, RECT *rp, CBMP *cbmp, W *stat )` | `dpbmp.mkn` | ○ | あり | `EG_ADR` `EG_GID` `EG_NOSPT` `EG_PAR` |  |
+| `gunc_bmp` | `ERR gunc_bmp ( GID gid, RECT *dr, CBMP *cbmp, RECT *sr, DCM mode )` | `dpbmp.mkn` | ○ | あり | `EG_ADR` `EG_FORM` `EG_GID` `EG_NOSPT` `EG_PAR` | `EG_FORM` |
 | `gpic_lin` | `Bool gpic_lin ( PNT pt, PNT p0, PNT p1, UW width )` | `dpfig.mkn` | ○ | あり | — |  |
 | `gpic_rec` | `Bool gpic_rec ( PNT pt, RECT r, DEG angle, UW width )` | `dpfig.mkn` | ○ | あり | — |  |
 | `gpic_rrc` | `Bool gpic_rrc ( PNT pt, RECT r, UW rh, UW rv, DEG angle, UW width )` | `dpfig.mkn` | ○ | あり | — |  |
