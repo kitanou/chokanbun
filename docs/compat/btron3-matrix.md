@@ -31,18 +31,18 @@
 | 2.4 図形描画関数 | 42 | 42 | 42 |
 | 2.5 文字(列)描画関数 | 20 | 20 | 20 |
 | 2.6 ポインタ制御関数 | 6 | 6 | 6 |
-| 3.1 ウィンドウマネージャ | 51 | 49 | 49 |
+| 3.1 ウィンドウマネージャ | 51 | 51 | 51 |
 | 3.2 メニューマネージャ | 15 | 15 | 15 |
 | 3.3 パーツマネージャ | 33 | 33 | 32 |
 | 3.4 パネルマネージャ | 12 | 12 | 12 |
 | 3.5 トレーマネージャ | 10 | 10 | 10 |
 | 3.6 データマネージャ | 7 | 7 | 7 |
 | 3.7 テキスト入力プリミティブ | 8 | 8 | 8 |
-| 3.8 実身／仮身マネージャ | 60 | 57 | 53 |
+| 3.8 実身／仮身マネージャ | 60 | 60 | 56 |
 | 3.9 フォントマネージャ | 14 | 14 | 14 |
 | 3.10 TCP/IP マネージャ | 28 | 28 | 28 |
 | 3.11 印刷マネージャ | 9 | 9 | 9 |
-| **合計** | **495** | **490** | **477** |
+| **合計** | **495** | **495** | **482** |
 
 ## 1.1 プロセス／タスク管理（16 関数）
 
@@ -366,11 +366,11 @@
 
 | 関数 | 原型 | 実装 | 引数 | 試験 | 原文のエラー | 本体に現れないエラー |
 |---|---|---|---|---|---|---|
-| `wopn_wnd` | `WID wopn_wnd(UW attr, UW par, RECT *r, RECT *org, W pict, TC *tit, PAT *bgpat, WDDISP * atr)` | `wnd.mkn` | ○ | あり | `EX_ADR` `EX_NOSPC` `EX_WID` `EX_WPRC` `EX_WND` | `EX_WPRC` `EX_WND` |
+| `wopn_wnd` | `WID wopn_wnd(UW attr, UW par, RECT *r, RECT *org, W pict, TC *tit, PAT *bgpat, WDDISP * atr)` | `wnd.mkn` | ○ | あり | `EX_ADR` `EX_NOSPC` `EX_WID` `EX_WPRC` `EX_WND` | `EX_WPRC` |
 | `wopn_iwd` | `WID wopn_iwd(W gid)` | `wnd.mkn` | ○ | あり | `EX_NOSPC` `EG_GID` `EX_WPRC` | `EX_NOSPC` `EX_WPRC` |
 | `wopn_pwd` | `WID wopn_pwd(RECT *r)` | `wnd.mkn` | ○ | あり | `EX_ADR` `EX_NOSPC` | `EX_NOSPC` |
 | `wcls_wnd` | `ERR wcls_wnd(W wid, W opt)` | `wnd.mkn` | ○ | あり | `EX_WID` `EX_ADR` |  |
-| `wchg_wnd` | `W wchg_wnd(W wid, RECT *r, W mode)` | 未実装 | — | — | `EX_ADR` `EX_PAR` `EX_WID` `EX_WND` | — |
+| `wchg_wnd` | `W wchg_wnd(W wid, RECT *r, W mode)` | `wnd.mkn` | ○ | あり | `EX_ADR` `EX_PAR` `EX_WID` `EX_WND` |  |
 | `wmov_wnd` | `W wmov_wnd(W wid, RECT *newr)` | `wnd.mkn` | ○ | あり | `EX_ADR` `EX_WID` `EX_WND` |  |
 | `wmov_drg` | `W wmov_drg(WEVENT *evt, RECT *newr)` | `wnd.mkn` | ○ | あり | `EX_WID` `EX_PAR` `EX_ADR` `EX_WND` | `EX_PAR` |
 | `wrsz_wnd` | `W wrsz_wnd(W wid, RECT *newr)` | `wnd.mkn` | ○ | あり | `EX_ADR` `EX_PAR` `EX_WID` `EX_WND` |  |
@@ -413,7 +413,7 @@
 | `wdef_fep` | `ERR wdef_fep(W onoff)` | `wnd.mkn` | ○ | あり | `EX_LIMIT` `EX_WPRC` |  |
 | `wchk_dck` | `W wchk_dck(UW first)` | `wnd.mkn` | ○ | あり | `EX_WPRC` |  |
 | `wchg_dck` | `W wchg_dck(W time)` | `wnd.mkn` | ○ | あり | — |  |
-| `wchg_ful` | `ERR wchg_ful(void)` | 未実装 | — | — | `EX_LIMIT` | — |
+| `wchg_ful` | `ERR wchg_ful(void)` | `wnd.mkn` | ○ | あり | `EX_LIMIT` | `EX_LIMIT` |
 | `wcnv_rec` | `ERR wcnv_rec(UW attr, RECT *r, UW opt)` | `wnd.mkn` | ○ | あり | `EX_ADR` `EX_PAR` |  |
 | `wget_inf` | `ERR wget_inf(W item, VP buf, W size)` | `wnd.mkn` | ○ | あり | `EX_ADR` `EX_PAR` `EX_NOSPT` `EX_NOSPC` | `EX_NOSPC` |
 | `wset_inf` | `ERR wset_inf(W item, VP buf, W size)` | `wnd.mkn` | ○ | あり | `EX_ADR` `EX_PAR` `EX_NOSPT` `EX_NOSPC` |  |
@@ -563,7 +563,7 @@
 | `oend_req` | `ERR oend_req(W vid, W stat)` | `omgr.mkn` | — | あり | `EX_VID` `EX_VOBJ` | —（日本語名の関数。要確認） |
 | `oreq_prc` | `W oreq_prc(W wid, W req, B *resp)` | `wndx.mkn` | — | あり | `EX_ADR` `EX_PAR` `EX_WID` | —（日本語名の関数。要確認） |
 | `orsp_prc` | `ERR orsp_prc(EVENT *evt, B *resp, UW size, W status)` | `wndx.mkn` | — | あり | `EX_ADR` `EX_PAR` | —（日本語名の関数。要確認） |
-| `oput_dat` | `ERR oput_dat(W vid)` | 未実装 | — | — | `EX_VID` `EX_VOBJ` | — |
+| `oput_dat` | `ERR oput_dat(W vid)` | `omgrd.mkn` | — | あり | `EX_VID` `EX_VOBJ` | —（日本語名の関数。要確認） |
 | `oupd_fil` | `ERR oupd_fil(W vid, LINK *lnk, W update)` | `omgr.mkn` | — | あり | `EX_ADR` `EX_VID` `EX_VOBJ` | —（日本語名の関数。要確認） |
 | `oset_tmf` | `ERR oset_tmf(LINK *lnk)` | `omgr.mkn` | — | あり | `EX_ADR` | —（日本語名の関数。要確認） |
 | `oget_men` | `ERR oget_men(W vid, TC **emenu, TC **tmenu, TC **vmenu, TC **fmenu)` | `omgrm.mkn` | — | あり | `EX_ADR` `EX_NOSPC` `EX_VID` | —（日本語名の関数。要確認） |
@@ -591,11 +591,11 @@
 | `oget_fsn` | `ERR oget_fsn(W vid, W fd, VP dat, UW size)` | `omgr.mkn` | — | あり | `EX_ADR` `EX_VID` `EX_VOBJ` `EX_PAR` | —（日本語名の関数。要確認） |
 | `oput_fsn` | `ERR oput_fsn(W vid, W fd, VP dat)` | `omgr.mkn` | — | あり | `EX_ADR` `EX_VID` `EX_VOBJ` | —（日本語名の関数。要確認） |
 | `ocre_chd` | `W ocre_chd(W vid, TC *name, W *nvid)` | `omgrd.mkn` | — | あり | `EX_ADR` `EX_VID` `EX_VOBJ` `EX_PAR` | —（日本語名の関数。要確認） |
-| `otad_vob` | `W otad_vob(W vid, RECT *r, UW disp, LINK *lnk)` | 未実装 | — | — | `EX_ADR` `EX_PAR` `EX_VID` `EX_WID` | — |
+| `otad_vob` | `W otad_vob(W vid, RECT *r, UW disp, LINK *lnk)` | `omgrd.mkn` | — | あり | `EX_ADR` `EX_PAR` `EX_VID` `EX_WID` | —（日本語名の関数。要確認） |
 | `aset_sel` | `W aset_sel(W period)` | `omgrs.mkn` | — | あり | — | —（日本語名の関数。要確認） |
 | `adsp_sel` | `ERR adsp_sel(GID gid, SEL_RGN *selp, W mode)` | `omgrs.mkn` | — | あり | `EX_ADR` | —（日本語名の関数。要確認） |
 | `adsp_slt` | `ERR adsp_slt(GID gid, SEL_LIST *selp, W mode, W dh, W dv)` | `omgrs.mkn` | — | あり | `EX_ADR` | —（日本語名の関数。要確認） |
-| `apnl_men` | `W apnl_men(W pnid, W pid, EVENT *epv)` | 未実装 | — | — | `EX_ADR` | — |
+| `apnl_men` | `W apnl_men(W pnid, W pid, EVENT *epv)` | `omgrd.mkn` | — | あり | `EX_ADR` | —（日本語名の関数。要確認） |
 | `achg_bgc` | `W achg_bgc(W *mask, COLOR *color, COLOR bgc)` | `omgrs.mkn` | — | あり | `EX_ADR` | —（日本語名の関数。要確認） |
 
 ## 3.9 フォントマネージャ（14 関数）
