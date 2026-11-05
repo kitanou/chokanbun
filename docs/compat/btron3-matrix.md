@@ -38,11 +38,11 @@
 | 3.5 トレーマネージャ | 10 | 10 | 10 |
 | 3.6 データマネージャ | 7 | 7 | 7 |
 | 3.7 テキスト入力プリミティブ | 8 | 8 | 8 |
-| 3.8 実身／仮身マネージャ | 60 | 38 | 34 |
+| 3.8 実身／仮身マネージャ | 60 | 41 | 37 |
 | 3.9 フォントマネージャ | 14 | 14 | 14 |
 | 3.10 TCP/IP マネージャ | 28 | 28 | 28 |
 | 3.11 印刷マネージャ | 9 | 9 | 9 |
-| **合計** | **495** | **467** | **454** |
+| **合計** | **495** | **470** | **457** |
 
 ## 1.1 プロセス／タスク管理（16 関数）
 
@@ -566,9 +566,9 @@
 | `oput_dat` | `ERR oput_dat(W vid)` | 未実装 | — | — | `EX_VID` `EX_VOBJ` | — |
 | `oupd_fil` | `ERR oupd_fil(W vid, LINK *lnk, W update)` | `omgr.mkn` | — | あり | `EX_ADR` `EX_VID` `EX_VOBJ` | —（日本語名の関数。要確認） |
 | `oset_tmf` | `ERR oset_tmf(LINK *lnk)` | `omgr.mkn` | — | あり | `EX_ADR` | —（日本語名の関数。要確認） |
-| `oget_men` | `ERR oget_men(W vid, TC **emenu, TC **tmenu, TC **vmenu, TC **fmenu)` | 未実装 | — | — | `EX_ADR` `EX_NOSPC` `EX_VID` | — |
-| `oget_vmn` | `ERR oget_vmn(W vid, TC **emenu, TC **tmenu, TC **vmenu, TC **omenu, TC **dmenu, TC **fmenu)` | 未実装 | — | — | `EX_ADR` `EX_NOSPC` `EX_VID` | — |
-| `oexe_vmn` | `W oexe_vmn(W vid, W item, VP buf)` | 未実装 | — | — | `EX_ADR` `EX_PAR` `EX_VID` `EX_VOBJ` | — |
+| `oget_men` | `ERR oget_men(W vid, TC **emenu, TC **tmenu, TC **vmenu, TC **fmenu)` | `omgrm.mkn` | — | あり | `EX_ADR` `EX_NOSPC` `EX_VID` | —（日本語名の関数。要確認） |
+| `oget_vmn` | `ERR oget_vmn(W vid, TC **emenu, TC **tmenu, TC **vmenu, TC **omenu, TC **dmenu, TC **fmenu)` | `omgrm.mkn` | — | あり | `EX_ADR` `EX_NOSPC` `EX_VID` | —（日本語名の関数。要確認） |
+| `oexe_vmn` | `W oexe_vmn(W vid, W item, VP buf)` | `omgrm.mkn` | — | あり | `EX_ADR` `EX_PAR` `EX_VID` `EX_VOBJ` | —（日本語名の関数。要確認） |
 | `ochg_env` | `W ochg_env(LINK *lnk, W wid)` | `omgr.mkn` | — | あり | `EX_ADR` `EX_LIMIT` | —（日本語名の関数。要確認） |
 | `oget_env` | `WID oget_env(LINK *lnk)` | `omgr.mkn` | — | あり | `EX_ADR` `EX_NOEXS` | —（日本語名の関数。要確認） |
 | `oreg_apg` | `ERR oreg_apg(LINK *lnk)` | `omgr.mkn` | — | あり | `EX_ADR` `EX_EXS` `EX_PAR` | —（日本語名の関数。要確認） |
