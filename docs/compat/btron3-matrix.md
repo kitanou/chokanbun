@@ -31,7 +31,7 @@
 | 2.4 図形描画関数 | 42 | 42 | 42 |
 | 2.5 文字(列)描画関数 | 20 | 20 | 20 |
 | 2.6 ポインタ制御関数 | 6 | 6 | 6 |
-| 3.1 ウィンドウマネージャ | 51 | 41 | 41 |
+| 3.1 ウィンドウマネージャ | 51 | 45 | 45 |
 | 3.2 メニューマネージャ | 15 | 15 | 15 |
 | 3.3 パーツマネージャ | 33 | 33 | 32 |
 | 3.4 パネルマネージャ | 12 | 12 | 12 |
@@ -42,7 +42,7 @@
 | 3.9 フォントマネージャ | 14 | 14 | 14 |
 | 3.10 TCP/IP マネージャ | 28 | 28 | 28 |
 | 3.11 印刷マネージャ | 9 | 9 | 9 |
-| **合計** | **495** | **456** | **443** |
+| **合計** | **495** | **460** | **447** |
 
 ## 1.1 プロセス／タスク管理（16 関数）
 
@@ -386,9 +386,9 @@
 | `wugt_evt` | `ERR wugt_evt(WEVENT *evt)` | `wnd.mkn` | ○ | あり | `EX_ADR` `EX_NOSPC` |  |
 | `wpas_evt` | `ERR wpas_evt(WEVENT *evt)` | `wnd.mkn` | ○ | あり | `EX_ADR` `EX_PAR` |  |
 | `wswi_wnd` | `ERR wswi_wnd(W wid, WEVENT *evt)` | `wnd.mkn` | ○ | あり | `EX_ADR` `EX_PAR` `EX_WID` `EX_WND` |  |
-| `wsnd_evt` | `W wsnd_evt(WEVENT *evt)` | 未実装 | — | — | `EX_ADR` `EX_PAR` `EX_WID` `EX_WND` | — |
-| `wrsp_evt` | `ERR wrsp_evt(WEVENT *evt, W nak)` | 未実装 | — | — | `EX_ADR` `EX_PAR` | — |
-| `wwai_rsp` | `W wwai_rsp(WEVENT *evt, W cmd, UW tmout)` | 未実装 | — | — | `EX_ADR` `EX_PAR` | — |
+| `wsnd_evt` | `W wsnd_evt(WEVENT *evt)` | `wnd.mkn` | ○ | あり | `EX_ADR` `EX_PAR` `EX_WID` `EX_WND` | `EX_WND` |
+| `wrsp_evt` | `ERR wrsp_evt(WEVENT *evt, W nak)` | `wnd.mkn` | ○ | あり | `EX_ADR` `EX_PAR` |  |
+| `wwai_rsp` | `W wwai_rsp(WEVENT *evt, W cmd, UW tmout)` | `wnd.mkn` | ○ | あり | `EX_ADR` `EX_PAR` |  |
 | `wreq_dsp` | `ERR wreq_dsp(W wid)` | `wnd.mkn` | ○ | あり | — |  |
 | `wfnd_wnd` | `W wfnd_wnd(PNT *gpos, PNT *lpos, W *wid)` | `wnd.mkn` | ○ | あり | `EX_ADR` |  |
 | `wget_act` | `WID wget_act(W *pid)` | `wnd.mkn` | ○ | あり | `EX_ADR` |  |
@@ -411,7 +411,7 @@
 | `wget_dmn` | `ERR wget_dmn(TC **dmenu)` | 未実装 | — | — | `EX_ADR` | — |
 | `wexe_dmn` | `W wexe_dmn(W item)` | 未実装 | — | — | `EX_PAR` `EX_WPRC` | — |
 | `wdef_fep` | `ERR wdef_fep(W onoff)` | `wnd.mkn` | ○ | あり | `EX_LIMIT` `EX_WPRC` |  |
-| `wchk_dck` | `W wchk_dck(UW first)` | 未実装 | — | — | `EX_WPRC` | — |
+| `wchk_dck` | `W wchk_dck(UW first)` | `wnd.mkn` | ○ | あり | `EX_WPRC` |  |
 | `wchg_dck` | `W wchg_dck(W time)` | `wnd.mkn` | ○ | あり | — |  |
 | `wchg_ful` | `ERR wchg_ful(void)` | 未実装 | — | — | `EX_LIMIT` | — |
 | `wcnv_rec` | `ERR wcnv_rec(UW attr, RECT *r, UW opt)` | `wnd.mkn` | ○ | あり | `EX_ADR` `EX_PAR` |  |
