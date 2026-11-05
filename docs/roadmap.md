@@ -85,7 +85,7 @@
 - [x] 行程・メッセージ・同期・時刻・メモリ・装置・ファイル関連APIを規範条件と照合（第 1 章の 143 関数すべてが実装済み・引数一致、試験が呼ぶのは 137。原型・原文のエラーコードは [compat/btron3-matrix.md](compat/btron3-matrix.md)、定数の値 367 組の照合は [compat/btron3-constants.md](compat/btron3-constants.md)。照合で 3.3 `ccre_*` の引数と 3.9 `FT_*` の値の食い違いを見つけて修正。[compat/btron3-phase23.md](compat/btron3-phase23.md)）
 - [ ] エラーコード、引数、状態遷移、境界条件の適合テストを追加（引数の数と定数の値は原文から機械的に照合済み。エラーの発生条件・状態遷移・境界の仕様ベース試験は、TAD の LEN 規定 64 件を除き未整備）
 - [x] BTRON3本体とB-right/Vの補足・拡張を分離して記録（[compat/btron3-bright-v.md](compat/btron3-bright-v.md)。取得した全 34 ページに B-right/V の表示は 0 件。実装依存の 9 箇所は各設計書に記録）
-- [ ] 未対応・部分適合・任意機能を明示し、適合確認済みの範囲を更新（未実装の関数 43 は [compat/btron3-phase23.md](compat/btron3-phase23.md) に明示。適合確認済みは 0 件）
+- [ ] 未対応・部分適合・任意機能を明示し、適合確認済みの範囲を更新（未実装の関数 39 は [compat/btron3-phase23.md](compat/btron3-phase23.md) に明示。適合確認済みは 0 件）
 
 ### F5 — 実身・仮身モデルと篇藏
 

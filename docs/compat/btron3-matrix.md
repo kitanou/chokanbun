@@ -27,7 +27,7 @@
 | 1.8 イベント管理 | 20 | 20 | 20 |
 | 1.9 時計管理 | 4 | 4 | 4 |
 | 1.10 システム管理 | 4 | 4 | 4 |
-| 2.3 基本関数 | 37 | 33 | 31 |
+| 2.3 基本関数 | 37 | 37 | 35 |
 | 2.4 図形描画関数 | 42 | 42 | 42 |
 | 2.5 文字(列)描画関数 | 20 | 20 | 20 |
 | 2.6 ポインタ制御関数 | 6 | 6 | 6 |
@@ -42,7 +42,7 @@
 | 3.9 フォントマネージャ | 14 | 14 | 14 |
 | 3.10 TCP/IP マネージャ | 28 | 28 | 28 |
 | 3.11 印刷マネージャ | 9 | 9 | 9 |
-| **合計** | **495** | **452** | **439** |
+| **合計** | **495** | **456** | **443** |
 
 ## 1.1 プロセス／タスク管理（16 関数）
 
@@ -265,10 +265,10 @@
 | `gset_fra` | `ERR gset_fra ( GID gid, RECT r )` | `dp.mkn` | ○ | あり | `EG_GID` `EG_PAR` | `EG_PAR` |
 | `gget_vis` | `ERR gget_vis ( GID gid, RECT *rp )` | `dp.mkn` | ○ | あり | `EG_ADR` `EG_GID` | `EG_ADR` `EG_GID` |
 | `gset_vis` | `ERR gset_vis ( GID gid, RECT r )` | `dp.mkn` | ○ | あり | `EG_GID` `EG_PAR` | `EG_PAR` |
-| `gget_for` | `ERR gget_for ( GID gid, RLIST *rlp )` | 未実装 | — | — | `EG_ADR` `EG_GID` | — |
-| `gset_for` | `ERR gset_for ( GID gid, RLIST *rlp )` | 未実装 | — | — | `EG_GID` `EG_PAR` | — |
-| `gsiz_pat` | `ERR gsiz_pat ( GID gid, UW kind, UW hsize, UW vsize, W *size )` | 未実装 | — | — | `EG_ADR` `EG_GID` `EG_NOSPT` `EG_PAR` | — |
-| `gcre_pat` | `ERR gcre_pat ( GID gid, PAT *def, UB *loc, UB **pat, W *size、W cvt )` | 未実装 | — | — | `EG_ADR` `EG_FORM` `EG_GID` `EG_NOSPC` `EG_NOSPT` `EG_PAR` | — |
+| `gget_for` | `ERR gget_for ( GID gid, RLIST *rlp )` | `dpx.mkn` | ○ | あり | `EG_ADR` `EG_GID` |  |
+| `gset_for` | `ERR gset_for ( GID gid, RLIST *rlp )` | `dpx.mkn` | ○ | あり | `EG_GID` `EG_PAR` |  |
+| `gsiz_pat` | `ERR gsiz_pat ( GID gid, UW kind, UW hsize, UW vsize, W *size )` | `dpx.mkn` | ○ | あり | `EG_ADR` `EG_GID` `EG_NOSPT` `EG_PAR` |  |
+| `gcre_pat` | `ERR gcre_pat ( GID gid, PAT *def, UB *loc, UB **pat, W *size、W cvt )` | `dpx.mkn` | × | あり | `EG_ADR` `EG_FORM` `EG_GID` `EG_NOSPC` `EG_NOSPT` `EG_PAR` | `EG_FORM` `EG_NOSPC` |
 | `gset_lmk` | `ERR gset_lmk ( GID gid, UW nbytes, UB *mask )` | `dpx.mkn` | ○ | あり | `EG_ADR` `EG_GID` `EG_PAR` |  |
 | `gget_lmk` | `W gget_lmk ( GID gid, UB *mask )` | `dpx.mkn` | ○ | あり | `EG_ADR` `EG_GID` |  |
 | `gget_bmp` | `ERR gget_bmp ( GID gid, BMP *bmap )` | `dp.mkn` | ○ | あり | `EG_ADR` `EG_GID` |  |
