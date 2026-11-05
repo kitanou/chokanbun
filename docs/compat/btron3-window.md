@@ -1,7 +1,7 @@
 # BTRON3 OS 仕様編 第3章 3.1 ウィンドウマネージャ — 要求の整理（F7）
 
 > 出典: BTRON3 仕様書 Ver. 3.20.00 第2編 第3章 3.1（`os_spec/shell/window.html`、51 関数）。更新: 2026-10-30。
-> 状況: **第 1 段階と属性の読み書きを実装済**（`user/btron/wnd.mkn`、40 関数。後から `wchg_dck`・`wdef_fep`・`wcnv_rec`・`wera_wnd`・`wget_inf`・`wset_inf`・`wset_bgp`・`wget_bgp`・`wchg_dsp` を追加）。標準形状の図（border・fixed_win・reshape_win・frame_cont・active_process）は確認済。`EX_*` の数値は原文に無いので `er.mkn` の選択（`EX_WND`・`EX_WPRC` を追加）に従う。
+> 状況: **第 1 段階と属性の読み書きを実装済**（`user/btron/wnd.mkn`、41 関数。後から `wchg_dck`・`wdef_fep`・`wcnv_rec`・`wera_wnd`・`wget_inf`・`wset_inf`・`wset_bgp`・`wget_bgp`・`wchg_dsp`・`wscr_wnd` を追加）。標準形状の図（border・fixed_win・reshape_win・frame_cont・active_process）は確認済。`EX_*` の数値は原文に無いので `er.mkn` の選択（`EX_WND`・`EX_WPRC` を追加）に従う。
 
 ## 1. 位置づけ
 
@@ -90,7 +90,8 @@
 - `wera_wnd(wid, r)`: 作業領域の相対矩形（NULL なら全体）を背景パターン（）の色で塗る（既定は白）。重なった上のウィンドウは考慮しない（`窓作塗` と同じ）。
 - `wget_inf`/`wset_inf`: 対応は `WI_DCLICKT`（304、W 4 B、`wchg_dck` と同じ値）だけ。原文の他の番号（200〜205・300〜309・400・401・500・501）は `EX_NOSPT`、それ以外は `EX_PAR`。`wset_inf` は buf=NULL か size≦0 で既定に戻す。
 
-未実装（11）: `wopn_iwd` `wopn_pwd` `wchg_wnd` `wchg_ful` `wscr_wnd` `wsnd_evt` `wrsp_evt` `wwai_rsp` `wchk_dck` `wget_dmn` `wexe_dmn`。うち内部・パネルウィンドウと全面モードは、窓の再描画・走査（`窓全描` など）の全面的な見直しが要る。
+未実装（10）: `wopn_iwd` `wopn_pwd` `wchg_wnd` `wchg_ful` `wsnd_evt` `wrsp_evt` `wwai_rsp` `wchk_dck` `wget_dmn` `wexe_dmn`。うち内部・パネルウィンドウと全面モードは、窓の再描画・走査（`窓全描` など）の全面的な見直しが要る。
 
 - `wset_bgp`/`wget_bgp`: 背景パターンは spat（種類 0、24 B、マスク FILL0/FILL100）だけ。それ以外は `EX_PAR`。`wget_bgp` は NULL で必要サイズ 24 を返し、24 未満の領域は `EX_PAR`。設定前は白の 4×4。表は窓表 +0x1200 から 32 B ずつ。
 - `wchg_dsp(atr, bgpat)`: 既定の表示属性（WDDISP 20 B。frame・tlbg・barpat・barbg・tlcol）と既定の背景パターン（spat）を変える。NULL は変えない。`wget_sts` の `atr` と、背景を設定していないウィンドウの `wget_bgp`/`wera_wnd` の既定に反映する。表示属性の見た目への反映（枠幅・タイトル背景など）は未対応で、値の保持だけ。
+- `wscr_wnd(wid, r, dh, dv, mode)`: `gcop_bmp` で表示内容を (dh, dv) だけ動かし（重なりの向きを考慮）、動かした先が `r` を出た部分は失われ、新しく出た帯を背景パターンの色で塗る。`W_SCRL`(1) は作業領域の相対座標を (−dh, −dv) ずらす（`wset_wrk`）、`W_NOOVL`(2)、`W_RDSET`(4)（出た帯を再表示領域にする）。戻り値は `W_VALID`(1)・`W_NOOVL`(2)・`W_RDSET`(4) の和。重なりの判定は「前後が手前の他ウィンドウの外枠が `r` に掛かるか」だけ（隠れた画像は保存しない）。管理プロセスでなければ `EX_WPRC`。スクロールバーの再表示は未対応。
