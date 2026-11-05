@@ -27,7 +27,7 @@
 | 1.8 イベント管理 | 20 | 20 | 20 |
 | 1.9 時計管理 | 4 | 4 | 4 |
 | 1.10 システム管理 | 4 | 4 | 4 |
-| 2.3 基本関数 | 37 | 26 | 24 |
+| 2.3 基本関数 | 37 | 33 | 31 |
 | 2.4 図形描画関数 | 42 | 6 | 6 |
 | 2.5 文字(列)描画関数 | 20 | 20 | 20 |
 | 2.6 ポインタ制御関数 | 6 | 6 | 6 |
@@ -42,7 +42,7 @@
 | 3.9 フォントマネージャ | 14 | 14 | 14 |
 | 3.10 TCP/IP マネージャ | 28 | 28 | 28 |
 | 3.11 印刷マネージャ | 9 | 9 | 9 |
-| **合計** | **495** | **409** | **396** |
+| **合計** | **495** | **416** | **403** |
 
 ## 1.1 プロセス／タスク管理（16 関数）
 
@@ -252,10 +252,10 @@
 | `gget_dev` | `ERR gget_dev ( W gid, TC dev[11] )` | `dp.mkn` | ○ | あり | `EG_ADR` `EG_GID` |  |
 | `gget_dsp` | `ERR gget_dsp ( W gid, DEVSPEC *buf )` | `dp.mkn` | ○ | あり | `EG_ADR` `EG_GID` |  |
 | `gget_csp` | `ERR gget_csp ( W gid, CSPEC *buf )` | `dp.mkn` | ○ | あり | `EG_ADR` `EG_DEV` `EG_GID` |  |
-| `gset_bcs` | `ERR gset_bcs ( GID gid, CSPEC *cspec )` | 未実装 | — | — | `EG_ADR` `EG_ENV` `EG_GID` | — |
-| `gget_bcs` | `ERR gget_bcs ( GID gid, CSPEC *cspec )` | 未実装 | — | — | `EG_ADR` `EG_ENV` `EG_GID` | — |
-| `gset_col` | `W gset_col ( GID gid, UW p, COLOR *cv, UW cnt )` | 未実装 | — | — | `EG_ADR` `EG_ENV` `EG_GID` `EG_PAR` | — |
-| `gget_col` | `W gget_col ( GID gid, UW p, COLOR OUT *cv, UW cnt )` | 未実装 | — | — | `EG_ADR` `EG_ENV` `EG_GID` `EG_PAR` | — |
+| `gset_bcs` | `ERR gset_bcs ( GID gid, CSPEC *cspec )` | `dpx.mkn` | ○ | あり | `EG_ADR` `EG_ENV` `EG_GID` |  |
+| `gget_bcs` | `ERR gget_bcs ( GID gid, CSPEC *cspec )` | `dpx.mkn` | ○ | あり | `EG_ADR` `EG_ENV` `EG_GID` |  |
+| `gset_col` | `W gset_col ( GID gid, UW p, COLOR *cv, UW cnt )` | `dpx.mkn` | ○ | あり | `EG_ADR` `EG_ENV` `EG_GID` `EG_PAR` | `EG_ADR` `EG_PAR` |
+| `gget_col` | `W gget_col ( GID gid, UW p, COLOR OUT *cv, UW cnt )` | `dpx.mkn` | ○ | あり | `EG_ADR` `EG_ENV` `EG_GID` `EG_PAR` |  |
 | `gcnv_col` | `W gcnv_col ( GID gid, COLOR cv, PIXVAL OUT *pixv )` | `dp.mkn` | ○ | あり | `EG_ADR` `EG_ENV` `EG_GID` |  |
 | `gset_msk` | `ERR gset_msk ( GID gid, PIXVAL pixv )` | `dp.mkn` | ○ | あり | `EG_GID` `EG_NOSPT` | `EG_NOSPT` |
 | `gget_msk` | `ERR gget_msk ( GID gid, PIXVAL OUT *pixv )` | `dp.mkn` | ○ | あり | `EG_GID` `EG_NOSPT` | `EG_NOSPT` |
@@ -269,15 +269,15 @@
 | `gset_for` | `ERR gset_for ( GID gid, RLIST *rlp )` | 未実装 | — | — | `EG_GID` `EG_PAR` | — |
 | `gsiz_pat` | `ERR gsiz_pat ( GID gid, UW kind, UW hsize, UW vsize, W *size )` | 未実装 | — | — | `EG_ADR` `EG_GID` `EG_NOSPT` `EG_PAR` | — |
 | `gcre_pat` | `ERR gcre_pat ( GID gid, PAT *def, UB *loc, UB **pat, W *size、W cvt )` | 未実装 | — | — | `EG_ADR` `EG_FORM` `EG_GID` `EG_NOSPC` `EG_NOSPT` `EG_PAR` | — |
-| `gset_lmk` | `ERR gset_lmk ( GID gid, UW nbytes, UB *mask )` | 未実装 | — | — | `EG_ADR` `EG_GID` `EG_PAR` | — |
-| `gget_lmk` | `W gget_lmk ( GID gid, UB *mask )` | 未実装 | — | — | `EG_ADR` `EG_GID` | — |
+| `gset_lmk` | `ERR gset_lmk ( GID gid, UW nbytes, UB *mask )` | `dpx.mkn` | ○ | あり | `EG_ADR` `EG_GID` `EG_PAR` |  |
+| `gget_lmk` | `W gget_lmk ( GID gid, UB *mask )` | `dpx.mkn` | ○ | あり | `EG_ADR` `EG_GID` |  |
 | `gget_bmp` | `ERR gget_bmp ( GID gid, BMP *bmap )` | `dp.mkn` | ○ | あり | `EG_ADR` `EG_GID` |  |
 | `gget_bnd` | `ERR gget_bnd ( GID gid, RECT *rp )` | `dp.mkn` | ○ | あり | `EG_ADR` `EG_GID` | `EG_ADR` `EG_GID` |
 | `gmov_bnd` | `ERR gmov_bnd ( GID gid, W dh, W dv )` | `dp.mkn` | ○ | あり | `EG_GID` `EG_PAR` |  |
 | `gmov_cor` | `ERR gmov_cor ( GID gid, W dh, W dv )` | `dp.mkn` | ○ | あり | `EG_GID` `EG_PAR` |  |
 | `gcnv_abs` | `ERR gcnv_abs ( GID gid, PNT *pp )` | `dp.mkn` | ○ | あり | `EG_ADR` `EG_GID` `EG_PAR` | `EG_ADR` `EG_GID` `EG_PAR` |
 | `gcnv_rel` | `ERR gcnv_rel ( GID gid, PNT *pp )` | `dp.mkn` | ○ | あり | `EG_ADR` `EG_GID` `EG_PAR` | `EG_ADR` `EG_GID` `EG_PAR` |
-| `gloc_env` | `ERR gloc_env ( GID gid W lock )` | 未実装 | — | — | `EG_GID` `EG_LOCK` `EG_PAR` | — |
+| `gloc_env` | `ERR gloc_env ( GID gid W lock )` | `dpx.mkn` | × | あり | `EG_GID` `EG_LOCK` `EG_PAR` |  |
 
 ## 2.4 図形描画関数（42 関数）
 
