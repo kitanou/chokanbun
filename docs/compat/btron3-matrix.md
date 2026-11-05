@@ -28,7 +28,7 @@
 | 1.9 時計管理 | 4 | 4 | 4 |
 | 1.10 システム管理 | 4 | 4 | 4 |
 | 2.3 基本関数 | 37 | 33 | 31 |
-| 2.4 図形描画関数 | 42 | 37 | 37 |
+| 2.4 図形描画関数 | 42 | 42 | 42 |
 | 2.5 文字(列)描画関数 | 20 | 20 | 20 |
 | 2.6 ポインタ制御関数 | 6 | 6 | 6 |
 | 3.1 ウィンドウマネージャ | 51 | 41 | 41 |
@@ -42,7 +42,7 @@
 | 3.9 フォントマネージャ | 14 | 14 | 14 |
 | 3.10 TCP/IP マネージャ | 28 | 28 | 28 |
 | 3.11 印刷マネージャ | 9 | 9 | 9 |
-| **合計** | **495** | **447** | **434** |
+| **合計** | **495** | **452** | **439** |
 
 ## 1.1 プロセス／タスク管理（16 関数）
 
@@ -301,10 +301,10 @@
 | `gdra_pln` | `ERR gdra_pln ( GID gid, POLY *p, LATTR attr, PAT *pat, DCM mode )` | `dpfig.mkn` | ○ | あり | `EG_ADR` `EG_GID` `EG_LIMIT` `EG_NOSPC` `EG_PAR` | `EG_ADR` `EG_GID` `EG_LIMIT` `EG_NOSPC` `EG_PAR` |
 | `gfra_pol` | `ERR gfra_pol ( GID gid, POLY *p, LATTR attr, PAT *pat, DCM mode )` | `dpfig.mkn` | ○ | あり | `EG_ADR` `EG_GID` `EG_LIMIT` `EG_NOSPC` `EG_PAR` | `EG_ADR` `EG_GID` `EG_LIMIT` `EG_NOSPC` `EG_PAR` |
 | `gfil_pol` | `ERR gfil_pol ( GID gid, POLY *p, PAT *pat, DCM mode )` | `dpfig.mkn` | ○ | あり | `EG_ADR` `EG_GID` `EG_LIMIT` `EG_NOSPC` `EG_PAR` | `EG_ADR` `EG_GID` `EG_LIMIT` `EG_NOSPC` `EG_PAR` |
-| `gfil_gen` | `ERR gfil_gen ( GID gid, GRGN *rgn, PAT *pat, DCM mode )` | 未実装 | — | — | `EG_ADR` `EG_GID` `EG_LIMIT` `EG_NOSPC` `EG_PAR` | — |
+| `gfil_gen` | `ERR gfil_gen ( GID gid, GRGN *rgn, PAT *pat, DCM mode )` | `dpgen.mkn` | ○ | あり | `EG_ADR` `EG_GID` `EG_LIMIT` `EG_NOSPC` `EG_PAR` | `EG_ADR` `EG_GID` `EG_LIMIT` `EG_NOSPC` |
 | `gfil_rgn` | `Bool gfil_rgn ( GID gid, PIXVAL val, PNT p, PAT *pat, DCM mode )` | `dpbmp.mkn` | ○ | あり | `EG_ADR` `EG_GID` `EG_NOSPC` `EG_PAR` | `EG_ADR` |
-| `gdra_spl` | `ERR gdra_spl ( GID gid, UW np, PNT *pt, LATTR attr, PAT *pat, DCM mode )` | 未実装 | — | — | `EG_ADR` `EG_GID` `EG_LIMIT` `EG_NOSPC` `EG_PAR` | — |
-| `gfil_spl` | `ERR gfil_spl ( GID gid, UW np, PNT *pt, PAT *pat, DCM mode )` | 未実装 | — | — | `EG_ADR` `EG_GID` `EG_LIMIT` `EG_NOSPC` `EG_PAR` `EG_FORM` | — |
+| `gdra_spl` | `ERR gdra_spl ( GID gid, UW np, PNT *pt, LATTR attr, PAT *pat, DCM mode )` | `dpgen.mkn` | ○ | あり | `EG_ADR` `EG_GID` `EG_LIMIT` `EG_NOSPC` `EG_PAR` | `EG_ADR` `EG_GID` `EG_LIMIT` `EG_NOSPC` `EG_PAR` |
+| `gfil_spl` | `ERR gfil_spl ( GID gid, UW np, PNT *pt, PAT *pat, DCM mode )` | `dpgen.mkn` | ○ | あり | `EG_ADR` `EG_GID` `EG_LIMIT` `EG_NOSPC` `EG_PAR` `EG_FORM` | `EG_ADR` `EG_GID` `EG_LIMIT` `EG_NOSPC` `EG_PAR` `EG_FORM` |
 | `gcop_bmp` | `ERR gcop_bmp ( GID srcid, RECT *sr, GID dstid, RECT *dr, GRGN *mask, DCM mode )` | `dp.mkn` | ○ | あり | `EG_ADR` `EG_FORM` `EG_GID` `EG_LIMIT` `EG_NOSPC` `EG_NOSPT` `EG_PAR` | `EG_LIMIT` `EG_NOSPC` |
 | `gsav_bmp` | `ERR gsav_bmp ( GID gid, RECT *gr, BMP *bmap, RECT *br, GRGN *mask, DCM mode )` | `dpbmp.mkn` | ○ | あり | `EG_ADR` `EG_ENV` `EG_FORM` `EG_GID` `EG_LIMIT` `EG_NOSPC` `EG_NOSPT` `EG_PAR` | `EG_ADR` `EG_ENV` `EG_FORM` `EG_GID` `EG_LIMIT` `EG_NOSPC` `EG_NOSPT` `EG_PAR` |
 | `grst_bmp` | `ERR grst_bmp ( GID gid, RECT *gr, BMP *bmap, RECT *br, GRGN *mask, DCM mode )` | `dpbmp.mkn` | ○ | あり | `EG_ADR` `EG_ENV` `EG_FORM` `EG_GID` `EG_LIMIT` `EG_NOSPC` `EG_NOSPT` `EG_PAR` | `EG_ADR` `EG_ENV` `EG_FORM` `EG_GID` `EG_LIMIT` `EG_NOSPC` `EG_NOSPT` `EG_PAR` |
@@ -323,8 +323,8 @@
 | `gpic_cho` | `Bool gpic_cho ( PNT pt, RECT r, PNT sp, PNT ep, DEG angle, UW width )` | `dpfig.mkn` | ○ | あり | — |  |
 | `gpic_pln` | `Bool gpic_pln ( PNT pt, POLY *poly, UW width )` | `dpfig.mkn` | ○ | あり | `EG_ADR` | `EG_ADR` |
 | `gpic_pol` | `Bool gpic_pol ( PNT pt, POLY *poly, UW width )` | `dpfig.mkn` | ○ | あり | `EG_ADR` | `EG_ADR` |
-| `gpic_gen` | `Bool gpic_gen ( PNT pt, GRGN *rgn )` | 未実装 | — | — | `EG_ADR` | — |
-| `gpic_spl` | `Bool gpic_spl ( PNT p, UW np, PNT *pt, UW width )` | 未実装 | — | — | `EG_ADR` | — |
+| `gpic_gen` | `Bool gpic_gen ( PNT pt, GRGN *rgn )` | `dpgen.mkn` | ○ | あり | `EG_ADR` | `EG_ADR` |
+| `gpic_spl` | `Bool gpic_spl ( PNT p, UW np, PNT *pt, UW width )` | `dpgen.mkn` | ○ | あり | `EG_ADR` |  |
 
 ## 2.5 文字(列)描画関数（20 関数）
 
