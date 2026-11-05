@@ -100,7 +100,7 @@
 
 - 実装（第 2 弾で `cget_pos`・`cset_pos`・`cchg_par`・`cchg_pwd`・`cget_dat`・`cset_dat` を追加、計 18/33）: `ccre_asw`・`ccre_msw`・`cdel_par`・`cdel_pwd`・`cdsp_par`・`cdsp_pwd`・`cchk_par`・`cfnd_par`・`cact_par`・`cget_val`・`cset_val`・`cget_sts`（12/33）。型は `AS_PARTS`・`MS_PARTS` のみ。`EX_PID` を `er.mkn` に足した（0xFFFE000E）。
 - 表は共有画面の塊の +0x90000（窓表の続き）。パーツ ID は 1〜64 で行程をまたぐ。記録の欄は `wnd.mkn` の先頭に記す。窓を閉じる（`wcls_wnd`）と所属パーツも消える。
-- **【選択の記録】** 引数は PARTS 構造体の並びから `ccre_asw(wid, r, cv, name, atr)`・`ccre_msw(wid, r, name, atr)` とした（原文の引数表は未取得）。名は記録に写す（15 字まで）。座標は作業領域の左上が原点。
+- **【選択の記録】** 引数は PARTS 構造体の並びから `ccre_asw(wid, r, cv, name, atr)`・`ccre_msw(wid, r, name, atr)` とした（**2026-11-05 に原文を読み直して公開の `ccre_*` を原文の原型 `(wid, ty, r, …, PARTDISP *atr)` に直した。ここに書いた引数は内部の `部作*` のもの**）。名は記録に写す（15 字まで）。座標は作業領域の左上が原点。
   `cact_par` は NOMSG・NOWAIT で一定回数まで離すのを待ち、関係ないイベントや回数切れでは P_EVENT（0x6020）を返して中断、`ev = EV_NULL` で呼び直すと続ける。離したのが矩形の中なら P_CHANGE 付き（0x5003）、外なら 0x4003。AS は中で離すと反転する。終了コードの細部は (推定)。
   表示は白地・黒枠（P_EMPHAS は 2 ピクセル）・名を中央、ON と押下中は白黒反転、P_DISABLE・P_INACT は灰色の文字。消去は白で塗る（窓の背景は取れない）。
 - **【未対応】** 残りの 9 種、`ccre_par`・`copn_par`、`ccut_txt`・`cins_txt`・`cexe_par`・`cidl_par` ほか、点滅、パネルの所属、行程終了での自動削除。
@@ -122,7 +122,7 @@
 
 `ccre_sbx`・`ccre_pas`・`ccre_pms`・`ccre_sel`・`ccre_scr`・`ccre_vol`・`copn_par` の 7 関数を足し（計 33/33）、型は `SB_PARTS`・`PA_PARTS`・`PM_PARTS`・`WS_PARTS`・`SS_PARTS`・`VL_PARTS` を扱う（`描試` 10 項目を足して 31 項目）。`cget_val`・`cset_val`・`cget_dat`・`cset_dat`・`cact_par`・`cexe_par`・`ccre_par`・表示は型で分けた。`EX_DNUM`（0xFFFE0012）を `er.mkn` に足した。選び方は `parts.mkn` の第 4 弾の先頭にも記す。
 
-- **引数**: `ccre_sbx(wid, r, fmt, nfld, cv, atr)`・`ccre_pas(wid, r, cv, onpat, offpat, atr)`・`ccre_pms(wid, r, onpat, atr)`・`ccre_sel`・`ccre_scr(wid, r, cv, items, atr)`・`ccre_vol(wid, r, clo, chi, lo, hi, atr)`。`items` は TC の列で、項目ごとに NUL、最後に空の項目（127 字・32 項目まで）。`cv` は 0 起点で、`P_NOSEL` なら -1 も可。`ccre_par` の `PARTS` は +12・+16・+20・+24（atr）・+28 を型ごとに使い、SB は +32 に `cv` の番地を持つ 40 B。
+- **引数**（公開の `ccre_*` は原文の原型 `(wid, ty, r, …, PARTDISP *atr)`。`ty` の型ビットは無視、`atr` は NULL か 16 B の領域、`ccre_vol` の `val` は `W[4]`。内部の `部作*` は属性の語を受ける）。`ccre_sbx(wid, r, fmt, nfld, cv, atr)`・`ccre_pas(wid, r, cv, onpat, offpat, atr)`・`ccre_pms(wid, r, onpat, atr)`・`ccre_sel`・`ccre_scr(wid, r, cv, items, atr)`・`ccre_vol(wid, r, clo, chi, lo, hi, atr)`。`items` は TC の列で、項目ごとに NUL、最後に空の項目（127 字・32 項目まで）。`cv` は 0 起点で、`P_NOSEL` なら -1 も可。`ccre_par` の `PARTS` は +12・+16・+20・+24（atr）・+28 を型ごとに使い、SB は +32 に `cv` の番地を持つ 40 B。
 - **SB の `fmt`**: 数値欄は 0x0C00 + 桁数（1〜9）の後に最小・最大（0〜65535）、項目欄は 0x0800 + 選択肢の数（1〜16）の後に選択肢（NUL 終わり）、終わりは 0。欄は 8 まで。
 - **表示と操作**: WS・SS は 12 ピクセルごとの行で、選んだ行が白黒反転。VL は `P_HALIGN` で横、無ければ縦で、clo〜chi を帯にする。SB は欄を空白 1 字で区切る。PA・PM は `BMAP_DATA` が無いので、onpat か offpat が 0 でなければ中に小さな四角を描く。離したのが矩形の中なら、WS・SS は行の選択（`P_NOSEL` で再クリックすると解除）、VL は近い方の端を動かす（clo = chi なら両方）、SB は押した欄を 1 つ進める（最大の次は最小、選択肢は一巡）、PA は反転。値が変わると `P_CHANGE`。
 - **値・定義**: `cget_val` は SB が欄の値、WS が番号、SS が [番号, 見える行数, 先頭番号]、VL が clo・chi・lo・hi。`cset_val` は範囲を検査し、SS は見える所へスクロール。`cget_dat` は PA・PM が onpat・offpat、他は項目数・欄数・`patnum`。`cset_dat` は PA・PM が 2 語の番地、VL が `patnum`、SB・WS・SS は `EX_PAR`。

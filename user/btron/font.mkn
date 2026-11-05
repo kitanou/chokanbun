@@ -6,7 +6,7 @@
 註   +112 sheight UB、+113 swidth UB、+114 rsv H[2]、+118 imgform UB、+119 widform UB、+120 datasize W、+124 offimage W、
 註   +128 offwidth W、+132 offnote W。字像の形式は imgform 0 (ドット・固定イメージサイズ) と widform 0 (H の幅表、offwidth が 0 なら
 註   全て最大幅) だけ (他は EX_FTFMT)。字像は topcode から順に 1 字 rowbytes × size B (rowbytes = (width + 7) / 8)。注は offnote から
-註   TC の列 (TNULL で終わる)。FT_MEM = 1・FT_FILE = 2 (fdef_fnt の spec)・FT_RES = 0x100・FT_SYSTEM = 0x200 は原文に値が無いので選んだ。
+註   TC の列 (TNULL で終わる)。FT_MEM = 0・FT_FILE = 1・FT_SYSTEM = 2 (fdef_fnt の spec は (FT_MEM ‖ FT_FILE) | FT_RES | FT_SYSTEM の組み合わせ)・FT_RES = 0x100 は原文 (font_mgr.html) の値。
 註   FT_IMAGE = 1・FT_SYS = 2 (fget_img の mode)。FLIST は 48 B、FSSPEC は 36 B (name 24 B + fclass + attr + size H, V)、FDATA は 40 B
 註   (+0 rowbytes H、+2 pixbits UH、+8 image 8 B、+16 frame RECT、+24 width H、+26 height H、+28 imgofs PNT、+32 family UH)、
 註   FNTINFO は 16 B (+0 fid W、+4 width H、+6 height H、+8 base H、+10 leading H) と定めた。
@@ -26,10 +26,10 @@
 常「FDATA長」之無符六四 為 40
 常「FNTINFO長」之無符六四 為 16
 
-常「FT_MEM」之無符六四 為 1
-常「FT_FILE」之無符六四 為 2
+常「FT_MEM」之無符六四 為 0
+常「FT_FILE」之無符六四 為 1
 常「FT_RES」之無符六四 為 0x100
-常「FT_SYSTEM」之無符六四 為 0x200
+常「FT_SYSTEM」之無符六四 為 2
 常「FT_IMAGE」之無符六四 為 1
 常「FT_SYS」之無符六四 為 2
 常「FT_FONT」之無符六四 為 0
@@ -127,14 +127,10 @@
 
 註 フォントを登録する (loc は窓内の FDEF)。
 公開 記號「fdef_fnt」 術曰「fdef_fnt」 受「loc」之無符六四 受「spec」之無符六四 返 無符六四
-    設「法」之無符六四 為 「spec」 位與 3
-    若 ((「spec」 位與 0xFFFFFCFC)) 不等 0 則
+    若 (「spec」 位與 0xFFFFFEFC) 不等 0 則
         歸 「EX_PAR」
     終若
-    若 (「法」 等於 0) 或 (「法」 等於 3) 則
-        歸 「EX_PAR」
-    終若
-    若 「法」 等於 2 則
+    若 (「spec」 位與 1) 不等 0 則
         歸 「EX_FONT」
     終若
     若 呼「DP窓内」以(「loc」, 「FDEF長」) 等於 0 則
