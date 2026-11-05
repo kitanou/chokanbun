@@ -27,7 +27,7 @@
 
 ## 3. 選んだ設計（原文に無い所）
 
-- 値が原文に無い定数: `FT_MEM`=1・`FT_FILE`=2・`FT_RES`=0x100・`FT_SYSTEM`=0x200（`fdef_fnt` の spec）、`FT_IMAGE`=1・`FT_SYS`=2（`fget_img` の mode）。
+- `fdef_fnt` の spec は `(FT_MEM=0 ‖ FT_FILE=1) | FT_RES=0x100 | FT_SYSTEM=2` の組み合わせ（原文 font_mgr.html の値。以前は原文を読み切れず別の値を選んでいたのを 2026-11-05 に直した）。`fget_img` の mode は `FT_IMAGE`=1・`FT_SYS`=2。
 - FDEF は原文 3.9.1.3 の版で 136 B（欄の位置は `font.mkn` 冒頭）。字像は `imgform`=0（固定イメージサイズのドット）、幅は `widform`=0（H の表、`offwidth`=0 なら最大幅）だけ。他は `EX_FTFMT`。FLIST 48 B、FSSPEC 36 B、FDATA 40 B、FNTINFO 16 B と定めた。
 - 書体の選び方は、名称が同じなら 3 点・クラスが同じなら 2 点・文字セットだけ同じなら 1 点で、最高点（同点なら先に登録した方）。原文の 12 段階の探索は実装していない。
 - 字像は拡縮しない（`fget_fam` の寸法だけ `sheight`・`swidth` を基準に拡縮する）。`FT_SYS` なしでは字像を `cimg` の直後（`cimg` + 40）に写す（窓内に収まらなければ `EX_NOSPC`）。`FT_SYS` なら本体の字像を直接指す。

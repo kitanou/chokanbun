@@ -4,6 +4,7 @@
 使い方:
   python3 tools/spec_matrix.py fetch <作業ディレクトリ>     原文を取得して UTF-8 の .txt にする
   python3 tools/spec_matrix.py matrix <作業ディレクトリ>    docs/compat/btron3-matrix.md を標準出力へ
+  python3 tools/spec_matrix.py consts <作業ディレクトリ>    docs/compat/btron3-constants.md を標準出力へ
   python3 tools/spec_matrix.py shared <作業ディレクトリ>    docs/compat/btron3-shared-data-sections.md を標準出力へ
 
 原文は ISO-2022-JP の HTML。取得は curl、変換は iconv を使う。原文の本文は保存・転載しない
@@ -145,6 +146,17 @@ def tested(name, impl, tst):
     return False
 
 
+def arg_check(name, proto, impl, key):
+    """原型の引数の数と、実装の受ける引数の数が合うか。比べられないとき (3.8 の日本語名、原型なし) は「—」。"""
+    if name not in impl or not proto or key == "shell/omgr":
+        return "—"
+    m = re.search(r"\((.*)\)", proto)
+    args = m.group(1).strip() if m else ""
+    n = 0 if args in ("", "void", "VOID") else args.count(",") + 1
+    head = impl[name][1].split("\n")[0]
+    return "○" if head.count("受「") == n else "×"
+
+
 def matrix(work):
     impl = implementations()
     tst = tests()
@@ -179,6 +191,7 @@ def matrix(work):
     L.append("- 状態は機械的な判定で、「適合確認済み」は人が根拠を確認して付ける。ここでは 0 件。")
     L.append("")
     tot = {"all": 0, "impl": 0, "test": 0}
+    nbad_args = []
     summary = []
     body = []
     for title, key, funcs in rows:
@@ -191,8 +204,8 @@ def matrix(work):
         summary.append((title, n, ni, nt))
         body.append(f"## {title}（{n} 関数）")
         body.append("")
-        body.append("| 関数 | 原型 | 実装 | 試験 | 原文のエラー | 本体に現れないエラー |")
-        body.append("|---|---|---|---|---|---|")
+        body.append("| 関数 | 原型 | 実装 | 引数 | 試験 | 原文のエラー | 本体に現れないエラー |")
+        body.append("|---|---|---|---|---|---|---|")
         for name, proto, codes in funcs:
             if name in impl:
                 fn, src, jp = impl[name]
@@ -212,8 +225,14 @@ def matrix(work):
             else:
                 cell = " ".join("`" + c + "`" for c in miss)
             pr = proto.replace("|", "／").replace("`", "")
-            body.append(f"| `{name}` | {'`' + pr + '`' if pr else '—'} | {im} | {te} | {len(codes)} | {cell} |")
+            errs = " ".join("`" + c + "`" for c in codes) if codes else "—"
+            ar = arg_check(name, proto, impl, key)
+            if ar == "×":
+                nbad_args.append((key, name))
+            body.append(f"| `{name}` | {'`' + pr + '`' if pr else '—'} | {im} | {ar} | {te} | {errs} | {cell} |")
         body.append("")
+    L.append("- 引数: 原型の引数の数と、実装の受ける引数の数が合うか（○ 合う、× 合わない、— 比べられない）。型・意味までは見ない。")
+    L.append("")
     L.append("## 集計")
     L.append("")
     L.append("| 節 | 関数 | 実装 | 実装＋試験 |")
@@ -411,6 +430,45 @@ def tad_md(work):
     return "\n".join(L)
 
 
+def consts_md(work):
+    """原文の #define の値と、user/btron/*.mkn の 常「名」 の値を突き合わせる。"""
+    spec = {}
+    for f in sorted(glob.glob(os.path.join(work, "os_spec/*/*.txt")) + glob.glob(os.path.join(work, "shared_data/*.txt"))):
+        t = open(f).read().replace("&lt;", "<").replace("&gt;", ">")
+        for m in re.finditer(r"#define\s+([A-Za-z_]\w*)\s+(\(?-?(?:0x[0-9A-Fa-f]+|\d+)\)?)(?=\s|/|$)", t):
+            spec.setdefault(m.group(1), set()).add((m.group(2).strip("()"), os.path.basename(f)))
+    impl = {}
+    for f in glob.glob(os.path.join(ROOT, "user/btron/*.mkn")):
+        for m in re.finditer(r"常「([A-Za-z_]\w*)」之\S+ 為 (-?(?:0x[0-9A-Fa-f]+|\d+))", open(f).read()):
+            impl.setdefault(m.group(1), set()).add((m.group(2), os.path.basename(f)))
+
+    def val(x):
+        return int(x, 16) if x.lower().startswith(("0x", "-0x")) else int(x)
+
+    both = [k for k in spec if k in impl]
+    bad = []
+    n = 0
+    for k in both:
+        for sv, sf in spec[k]:
+            n += 1
+            ivs = {val(a) for a, _ in impl[k]}
+            if val(sv) not in ivs and (val(sv) & 0xFFFFFFFF) not in {i & 0xFFFFFFFF for i in ivs}:
+                bad.append((k, sv, sf, sorted(impl[k])))
+    L = ["# BTRON3 定数の値の照合（生成物）", "",
+         "> 親Issue: [#42](https://github.com/kitanou/chokanbun/issues/42)。`python3 tools/spec_matrix.py consts <作業ディレクトリ>` で生成（原文の取得は `fetch`）。",
+         "> 原文の `#define 名 数値` と、`user/btron/*.mkn` の `常「名」之… 為 数値` を名前で突き合わせる（32 ビットに丸めた値も同じとみなす）。", "",
+         "- 原文の数値の定数: **%d**。そのうち実装に同名の定数があるもの: **%d**（%d 組を比較）。" % (len(spec), len(both), n),
+         "- 値が食い違うもの: **%d**。" % len(bad), ""]
+    if bad:
+        L += ["| 定数 | 原文の値 | 原文のページ | 実装の値（ファイル） |", "|---|---|---|---|"]
+        for k, sv, sf, iv in bad:
+            L.append("| `%s` | %s | %s | %s |" % (k, sv, sf, "、".join("%s (%s)" % x for x in iv)))
+        L.append("")
+    L.append("実装に無い定数 %d 個は、未実装の関数やデータ構造に属するもの（一覧は生成時に `consts` の出力で確認する）。" % (len(spec) - len(both)))
+    L.append("")
+    return "\n".join(L)
+
+
 if __name__ == "__main__":
     cmd, work = sys.argv[1], sys.argv[2]
     if cmd == "fetch":
@@ -421,6 +479,8 @@ if __name__ == "__main__":
         print(tad_mkn(work))
     elif cmd == "tadcat":
         print(tad_md(work))
+    elif cmd == "consts":
+        print(consts_md(work))
     elif cmd == "shared":
         print(shared_md(work))
     else:
