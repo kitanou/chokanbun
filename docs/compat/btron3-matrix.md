@@ -38,11 +38,11 @@
 | 3.5 トレーマネージャ | 10 | 10 | 10 |
 | 3.6 データマネージャ | 7 | 7 | 7 |
 | 3.7 テキスト入力プリミティブ | 8 | 8 | 8 |
-| 3.8 実身／仮身マネージャ | 60 | 41 | 37 |
+| 3.8 実身／仮身マネージャ | 60 | 45 | 41 |
 | 3.9 フォントマネージャ | 14 | 14 | 14 |
 | 3.10 TCP/IP マネージャ | 28 | 28 | 28 |
 | 3.11 印刷マネージャ | 9 | 9 | 9 |
-| **合計** | **495** | **470** | **457** |
+| **合計** | **495** | **474** | **461** |
 
 ## 1.1 プロセス／タスク管理（16 関数）
 
@@ -592,11 +592,11 @@
 | `oput_fsn` | `ERR oput_fsn(W vid, W fd, VP dat)` | `omgr.mkn` | — | あり | `EX_ADR` `EX_VID` `EX_VOBJ` | —（日本語名の関数。要確認） |
 | `ocre_chd` | `W ocre_chd(W vid, TC *name, W *nvid)` | 未実装 | — | — | `EX_ADR` `EX_VID` `EX_VOBJ` `EX_PAR` | — |
 | `otad_vob` | `W otad_vob(W vid, RECT *r, UW disp, LINK *lnk)` | 未実装 | — | — | `EX_ADR` `EX_PAR` `EX_VID` `EX_WID` | — |
-| `aset_sel` | `W aset_sel(W period)` | 未実装 | — | — | — | — |
-| `adsp_sel` | `ERR adsp_sel(GID gid, SEL_RGN *selp, W mode)` | 未実装 | — | — | `EX_ADR` | — |
-| `adsp_slt` | `ERR adsp_slt(GID gid, SEL_LIST *selp, W mode, W dh, W dv)` | 未実装 | — | — | `EX_ADR` | — |
+| `aset_sel` | `W aset_sel(W period)` | `omgrs.mkn` | — | あり | — | —（日本語名の関数。要確認） |
+| `adsp_sel` | `ERR adsp_sel(GID gid, SEL_RGN *selp, W mode)` | `omgrs.mkn` | — | あり | `EX_ADR` | —（日本語名の関数。要確認） |
+| `adsp_slt` | `ERR adsp_slt(GID gid, SEL_LIST *selp, W mode, W dh, W dv)` | `omgrs.mkn` | — | あり | `EX_ADR` | —（日本語名の関数。要確認） |
 | `apnl_men` | `W apnl_men(W pnid, W pid, EVENT *epv)` | 未実装 | — | — | `EX_ADR` | — |
-| `achg_bgc` | `W achg_bgc(W *mask, COLOR *color, COLOR bgc)` | 未実装 | — | — | `EX_ADR` | — |
+| `achg_bgc` | `W achg_bgc(W *mask, COLOR *color, COLOR bgc)` | `omgrs.mkn` | — | あり | `EX_ADR` | —（日本語名の関数。要確認） |
 
 ## 3.9 フォントマネージャ（14 関数）
 
