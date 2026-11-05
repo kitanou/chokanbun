@@ -595,7 +595,7 @@
 | `aset_sel` | `W aset_sel(W period)` | `omgrs.mkn` | — | あり | — | —（日本語名の関数。要確認） |
 | `adsp_sel` | `ERR adsp_sel(GID gid, SEL_RGN *selp, W mode)` | `omgrs.mkn` | — | あり | `EX_ADR` | —（日本語名の関数。要確認） |
 | `adsp_slt` | `ERR adsp_slt(GID gid, SEL_LIST *selp, W mode, W dh, W dv)` | `omgrs.mkn` | — | あり | `EX_ADR` | —（日本語名の関数。要確認） |
-| `apnl_men` | `W apnl_men(W pnid, W pid, EVENT *epv)` | `omgrd.mkn` | — | あり | `EX_ADR` | —（日本語名の関数。要確認） |
+| `apnl_men` | `W apnl_men(W pnid, W pid, EVENT *epv)` | `wndx.mkn` | — | あり | `EX_ADR` | —（日本語名の関数。要確認） |
 | `achg_bgc` | `W achg_bgc(W *mask, COLOR *color, COLOR bgc)` | `omgrs.mkn` | — | あり | `EX_ADR` | —（日本語名の関数。要確認） |
 
 ## 3.9 フォントマネージャ（14 関数）
