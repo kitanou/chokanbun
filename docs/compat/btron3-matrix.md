@@ -28,7 +28,7 @@
 | 1.9 時計管理 | 4 | 4 | 4 |
 | 1.10 システム管理 | 4 | 4 | 4 |
 | 2.3 基本関数 | 37 | 33 | 31 |
-| 2.4 図形描画関数 | 42 | 6 | 6 |
+| 2.4 図形描画関数 | 42 | 20 | 20 |
 | 2.5 文字(列)描画関数 | 20 | 20 | 20 |
 | 2.6 ポインタ制御関数 | 6 | 6 | 6 |
 | 3.1 ウィンドウマネージャ | 51 | 41 | 41 |
@@ -42,7 +42,7 @@
 | 3.9 フォントマネージャ | 14 | 14 | 14 |
 | 3.10 TCP/IP マネージャ | 28 | 28 | 28 |
 | 3.11 印刷マネージャ | 9 | 9 | 9 |
-| **合計** | **495** | **416** | **403** |
+| **合計** | **495** | **430** | **417** |
 
 ## 1.1 プロセス／タスク管理（16 関数）
 
@@ -283,24 +283,24 @@
 
 | 関数 | 原型 | 実装 | 引数 | 試験 | 原文のエラー | 本体に現れないエラー |
 |---|---|---|---|---|---|---|
-| `gdra_lin` | `ERR gdra_lin ( GID gid, PNT p1, PNT p2, LATTR attr, PAT *pat, DCM mode )` | 未実装 | — | — | `EG_ADR` `EG_GID` `EG_PAR` | — |
+| `gdra_lin` | `ERR gdra_lin ( GID gid, PNT p1, PNT p2, LATTR attr, PAT *pat, DCM mode )` | `dpfig.mkn` | ○ | あり | `EG_ADR` `EG_GID` `EG_PAR` | `EG_ADR` `EG_GID` `EG_PAR` |
 | `gtst_pnt` | `Bool gtst_pnt ( GID gid, PNT p, PIXVAL *val )` | `dp.mkn` | ○ | あり | `EG_ADR` `EG_GID` |  |
 | `gdra_pnt` | `ERR gdra_pnt ( GID gid, PNT p, PIXVAL val, DCM mode )` | `dp.mkn` | ○ | あり | `EG_GID` `EG_PAR` |  |
 | `gfil_pnt` | `ERR gfil_pnt ( GID gid, PNT p, PAT *pat, DCM mode )` | `dp.mkn` | ○ | あり | `EG_ADR` `EG_GID` `EG_PAR` | `EG_ADR` |
 | `gfra_rec` | `ERR gfra_rec ( GID gid, RECT r, LATTR attr, PAT *pat, DEG angle, DCM mode )` | `dp.mkn` | ○ | あり | `EG_ADR` `EG_GID` `EG_PAR` | `EG_ADR` |
 | `gfil_rec` | `ERR gfil_rec ( GID gid, RECT r, PAT *pat, DEG angle, DCM mode )` | `dp.mkn` | ○ | あり | `EG_ADR` `EG_GID` `EG_PAR` | `EG_ADR` |
-| `gfra_rrc` | `ERR gfra_rrc ( GID gid, RECT r, UW rh, UW rv, LATTR attr, PAT *pat, DEG angle, DCM mode )` | 未実装 | — | — | `EG_ADR` `EG_GID` `EG_PAR` | — |
-| `gfil_rrc` | `ERR gfil_rrc ( GID gid, RECT r, UW rh, UW rv, PAT *pat, DEG angle, DCM mode )` | 未実装 | — | — | `EG_ADR` `EG_GID` `EG_PAR` | — |
-| `gfra_ovl` | `ERR gfra_ovl ( GID gid, RECT r, LATTR attr, PAT *pat, DEG angle, DCM mode )` | 未実装 | — | — | `EG_ADR` `EG_GID` `EG_PAR` | — |
-| `gfil_ovl` | `ERR gfil_ovl ( GID gid, RECT r, PAT *pat, DEG angle, DCM mode )` | 未実装 | — | — | `EG_ADR` `EG_GID` `EG_PAR` | — |
+| `gfra_rrc` | `ERR gfra_rrc ( GID gid, RECT r, UW rh, UW rv, LATTR attr, PAT *pat, DEG angle, DCM mode )` | `dpfig.mkn` | ○ | あり | `EG_ADR` `EG_GID` `EG_PAR` | `EG_ADR` `EG_GID` |
+| `gfil_rrc` | `ERR gfil_rrc ( GID gid, RECT r, UW rh, UW rv, PAT *pat, DEG angle, DCM mode )` | `dpfig.mkn` | ○ | あり | `EG_ADR` `EG_GID` `EG_PAR` | `EG_ADR` `EG_GID` |
+| `gfra_ovl` | `ERR gfra_ovl ( GID gid, RECT r, LATTR attr, PAT *pat, DEG angle, DCM mode )` | `dpfig.mkn` | ○ | あり | `EG_ADR` `EG_GID` `EG_PAR` | `EG_ADR` `EG_GID` |
+| `gfil_ovl` | `ERR gfil_ovl ( GID gid, RECT r, PAT *pat, DEG angle, DCM mode )` | `dpfig.mkn` | ○ | あり | `EG_ADR` `EG_GID` `EG_PAR` | `EG_ADR` `EG_GID` |
 | `gdra_arc` | `ERR gdra_arc ( GID gid, RECT r, PNT sp, PNT ep, LATTR attr, PAT *pat, DEG angle, DCM mode )` | 未実装 | — | — | `EG_ADR` `EG_GID` `EG_PAR` | — |
 | `gfra_sec` | `ERR gfra_sec ( GID gid, RECT r, PNT sp, PNT ep, LATTR attr, PAT *pat, DEG angle, DCM mode )` | 未実装 | — | — | `EG_ADR` `EG_GID` `EG_PAR` | — |
 | `gfil_sec` | `ERR gfil_sec ( GID gid, RECT r, PNT sp, PNT ep, PAT *pat, DEG angle, DCM mode )` | 未実装 | — | — | `EG_ADR` `EG_GID` `EG_PAR` | — |
 | `gfra_cho` | `ERR gfra_cho ( GID gid, RECT r, PNT sp, PNT ep, LATTR attr, PAT *pat, DEG angle, DCM mode )` | 未実装 | — | — | `EG_ADR` `EG_GID` `EG_PAR` | — |
 | `gfil_cho` | `ERR gfil_cho ( GID gid, RECT r, PNT sp, PNT ep, PAT *pat, DEG angle, DCM mode )` | 未実装 | — | — | `EG_ADR` `EG_GID` `EG_PAR` `EG_LIMIT` | — |
-| `gdra_pln` | `ERR gdra_pln ( GID gid, POLY *p, LATTR attr, PAT *pat, DCM mode )` | 未実装 | — | — | `EG_ADR` `EG_GID` `EG_LIMIT` `EG_NOSPC` `EG_PAR` | — |
-| `gfra_pol` | `ERR gfra_pol ( GID gid, POLY *p, LATTR attr, PAT *pat, DCM mode )` | 未実装 | — | — | `EG_ADR` `EG_GID` `EG_LIMIT` `EG_NOSPC` `EG_PAR` | — |
-| `gfil_pol` | `ERR gfil_pol ( GID gid, POLY *p, PAT *pat, DCM mode )` | 未実装 | — | — | `EG_ADR` `EG_GID` `EG_LIMIT` `EG_NOSPC` `EG_PAR` | — |
+| `gdra_pln` | `ERR gdra_pln ( GID gid, POLY *p, LATTR attr, PAT *pat, DCM mode )` | `dpfig.mkn` | ○ | あり | `EG_ADR` `EG_GID` `EG_LIMIT` `EG_NOSPC` `EG_PAR` | `EG_ADR` `EG_GID` `EG_LIMIT` `EG_NOSPC` `EG_PAR` |
+| `gfra_pol` | `ERR gfra_pol ( GID gid, POLY *p, LATTR attr, PAT *pat, DCM mode )` | `dpfig.mkn` | ○ | あり | `EG_ADR` `EG_GID` `EG_LIMIT` `EG_NOSPC` `EG_PAR` | `EG_ADR` `EG_GID` `EG_LIMIT` `EG_NOSPC` `EG_PAR` |
+| `gfil_pol` | `ERR gfil_pol ( GID gid, POLY *p, PAT *pat, DCM mode )` | `dpfig.mkn` | ○ | あり | `EG_ADR` `EG_GID` `EG_LIMIT` `EG_NOSPC` `EG_PAR` | `EG_ADR` `EG_GID` `EG_LIMIT` `EG_NOSPC` `EG_PAR` |
 | `gfil_gen` | `ERR gfil_gen ( GID gid, GRGN *rgn, PAT *pat, DCM mode )` | 未実装 | — | — | `EG_ADR` `EG_GID` `EG_LIMIT` `EG_NOSPC` `EG_PAR` | — |
 | `gfil_rgn` | `Bool gfil_rgn ( GID gid, PIXVAL val, PNT p, PAT *pat, DCM mode )` | 未実装 | — | — | `EG_ADR` `EG_GID` `EG_NOSPC` `EG_PAR` | — |
 | `gdra_spl` | `ERR gdra_spl ( GID gid, UW np, PNT *pt, LATTR attr, PAT *pat, DCM mode )` | 未実装 | — | — | `EG_ADR` `EG_GID` `EG_LIMIT` `EG_NOSPC` `EG_PAR` | — |
@@ -314,15 +314,15 @@
 | `gsiz_cbm` | `ERR gsiz_cbm ( GID gid, RECT *rp, W compac, W *size )` | 未実装 | — | — | `EG_ADR` `EG_GID` `EG_NOSPT` `EG_PAR` | — |
 | `gcom_bmp` | `Bool gcom_bmp ( GID gid, RECT *rp, CBMP *cbmp, W *stat )` | 未実装 | — | — | `EG_ADR` `EG_GID` `EG_NOSPT` `EG_PAR` | — |
 | `gunc_bmp` | `ERR gunc_bmp ( GID gid, RECT *dr, CBMP *cbmp, RECT *sr, DCM mode )` | 未実装 | — | — | `EG_ADR` `EG_FORM` `EG_GID` `EG_NOSPT` `EG_PAR` | — |
-| `gpic_lin` | `Bool gpic_lin ( PNT pt, PNT p0, PNT p1, UW width )` | 未実装 | — | — | — | — |
-| `gpic_rec` | `Bool gpic_rec ( PNT pt, RECT r, DEG angle, UW width )` | 未実装 | — | — | — | — |
-| `gpic_rrc` | `Bool gpic_rrc ( PNT pt, RECT r, UW rh, UW rv, DEG angle, UW width )` | 未実装 | — | — | — | — |
-| `gpic_ovl` | `Bool gpic_ovl ( PNT pt, RECT r, DEG angle, UW width )` | 未実装 | — | — | — | — |
+| `gpic_lin` | `Bool gpic_lin ( PNT pt, PNT p0, PNT p1, UW width )` | `dpfig.mkn` | ○ | あり | — |  |
+| `gpic_rec` | `Bool gpic_rec ( PNT pt, RECT r, DEG angle, UW width )` | `dpfig.mkn` | ○ | あり | — |  |
+| `gpic_rrc` | `Bool gpic_rrc ( PNT pt, RECT r, UW rh, UW rv, DEG angle, UW width )` | `dpfig.mkn` | ○ | あり | — |  |
+| `gpic_ovl` | `Bool gpic_ovl ( PNT pt, RECT r, DEG angle, UW width )` | `dpfig.mkn` | ○ | あり | — |  |
 | `gpic_arc` | `Bool gpic_arc ( PNT pt, RECT r, PNT sp, PNT ep, DEG angle, UW width )` | 未実装 | — | — | — | — |
 | `gpic_sec` | `Bool gpic_sec ( PNT pt, RECT r, PNT sp, PNT ep, DEG angle, UW width )` | 未実装 | — | — | — | — |
 | `gpic_cho` | `Bool gpic_cho ( PNT pt, RECT r, PNT sp, PNT ep, DEG angle, UW width )` | 未実装 | — | — | — | — |
-| `gpic_pln` | `Bool gpic_pln ( PNT pt, POLY *poly, UW width )` | 未実装 | — | — | `EG_ADR` | — |
-| `gpic_pol` | `Bool gpic_pol ( PNT pt, POLY *poly, UW width )` | 未実装 | — | — | `EG_ADR` | — |
+| `gpic_pln` | `Bool gpic_pln ( PNT pt, POLY *poly, UW width )` | `dpfig.mkn` | ○ | あり | `EG_ADR` | `EG_ADR` |
+| `gpic_pol` | `Bool gpic_pol ( PNT pt, POLY *poly, UW width )` | `dpfig.mkn` | ○ | あり | `EG_ADR` | `EG_ADR` |
 | `gpic_gen` | `Bool gpic_gen ( PNT pt, GRGN *rgn )` | 未実装 | — | — | `EG_ADR` | — |
 | `gpic_spl` | `Bool gpic_spl ( PNT p, UW np, PNT *pt, UW width )` | 未実装 | — | — | `EG_ADR` | — |
 
