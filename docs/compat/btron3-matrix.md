@@ -31,7 +31,7 @@
 | 2.4 図形描画関数 | 42 | 42 | 42 |
 | 2.5 文字(列)描画関数 | 20 | 20 | 20 |
 | 2.6 ポインタ制御関数 | 6 | 6 | 6 |
-| 3.1 ウィンドウマネージャ | 51 | 45 | 45 |
+| 3.1 ウィンドウマネージャ | 51 | 47 | 47 |
 | 3.2 メニューマネージャ | 15 | 15 | 15 |
 | 3.3 パーツマネージャ | 33 | 33 | 32 |
 | 3.4 パネルマネージャ | 12 | 12 | 12 |
@@ -42,7 +42,7 @@
 | 3.9 フォントマネージャ | 14 | 14 | 14 |
 | 3.10 TCP/IP マネージャ | 28 | 28 | 28 |
 | 3.11 印刷マネージャ | 9 | 9 | 9 |
-| **合計** | **495** | **477** | **464** |
+| **合計** | **495** | **479** | **466** |
 
 ## 1.1 プロセス／タスク管理（16 関数）
 
@@ -408,8 +408,8 @@
 | `wget_org` | `ERR wget_org(W wid, W *parent, RECT *org)` | `wnd.mkn` | ○ | あり | `EX_ADR` `EX_WID` `EX_WND` |  |
 | `wset_org` | `ERR wset_org(W wid, W parent, RECT *org)` | `wnd.mkn` | ○ | あり | `EX_ADR` `EX_WID` `EX_WND` |  |
 | `wlst_wnd` | `W wlst_wnd(W wid, W size, W *wids)` | `wnd.mkn` | ○ | あり | `EX_ADR` |  |
-| `wget_dmn` | `ERR wget_dmn(TC **dmenu)` | 未実装 | — | — | `EX_ADR` | — |
-| `wexe_dmn` | `W wexe_dmn(W item)` | 未実装 | — | — | `EX_PAR` `EX_WPRC` | — |
+| `wget_dmn` | `ERR wget_dmn(TC **dmenu)` | `wndx.mkn` | ○ | あり | `EX_ADR` |  |
+| `wexe_dmn` | `W wexe_dmn(W item)` | `wndx.mkn` | ○ | あり | `EX_PAR` `EX_WPRC` | `EX_WPRC` |
 | `wdef_fep` | `ERR wdef_fep(W onoff)` | `wnd.mkn` | ○ | あり | `EX_LIMIT` `EX_WPRC` |  |
 | `wchk_dck` | `W wchk_dck(UW first)` | `wnd.mkn` | ○ | あり | `EX_WPRC` |  |
 | `wchg_dck` | `W wchg_dck(W time)` | `wnd.mkn` | ○ | あり | — |  |
