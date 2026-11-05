@@ -38,11 +38,11 @@
 | 3.5 トレーマネージャ | 10 | 10 | 10 |
 | 3.6 データマネージャ | 7 | 7 | 7 |
 | 3.7 テキスト入力プリミティブ | 8 | 8 | 8 |
-| 3.8 実身／仮身マネージャ | 60 | 54 | 50 |
+| 3.8 実身／仮身マネージャ | 60 | 55 | 51 |
 | 3.9 フォントマネージャ | 14 | 14 | 14 |
 | 3.10 TCP/IP マネージャ | 28 | 28 | 28 |
 | 3.11 印刷マネージャ | 9 | 9 | 9 |
-| **合計** | **495** | **487** | **474** |
+| **合計** | **495** | **488** | **475** |
 
 ## 1.1 プロセス／タスク管理（16 関数）
 
@@ -552,7 +552,7 @@
 | `ochg_col` | `ERR ochg_col(W vid, COLOR frcol, COLOR chcol, COLOR tbcol, COLOR bgcol, UW disp)` | `omgrx.mkn` | — | あり | `EX_PAR` `EX_VID` | —（日本語名の関数。要確認） |
 | `ochg_nam` | `W ochg_nam(W vid, TC *name)` | `omgr.mkn` | — | あり | `EX_ADR` `EX_VID` `EX_VOBJ` | —（日本語名の関数。要確認） |
 | `ochg_rel` | `W ochg_rel(W vid, W index)` | `omgr.mkn` | — | あり | `EX_PAR` `EX_VID` `EX_VOBJ` | —（日本語名の関数。要確認） |
-| `onew_obj` | `VID onew_obj(W vid, VLINK *vlnk)` | 未実装 | — | — | `EX_ADR` `EX_LIMIT` `EX_VID` `EX_VOBJ` | — |
+| `onew_obj` | `VID onew_obj(W vid, VLINK *vlnk)` | `omgrd.mkn` | — | あり | `EX_ADR` `EX_LIMIT` `EX_VID` `EX_VOBJ` | —（日本語名の関数。要確認） |
 | `ocre_obj` | `W ocre_obj(W vid, TC *name, W *nvid, LINK *lnk, W copy)` | `omgr.mkn` | — | あり | `EX_ADR` `EX_PAR` `EX_VID` `EX_VOBJ` | —（日本語名の関数。要確認） |
 | `odsp_inf` | `ERR odsp_inf(W vid)` | `omgri.mkn` | — | あり | `EX_NOEXS` `EX_VID` `EX_VOBJ` | —（日本語名の関数。要確認） |
 | `odsk_inf` | `ERR odsk_inf(W vid, W used, W gabage)` | `omgri.mkn` | — | あり | `EX_VID` `EX_VOBJ` | —（日本語名の関数。要確認） |
