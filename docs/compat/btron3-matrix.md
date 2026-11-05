@@ -38,11 +38,11 @@
 | 3.5 トレーマネージャ | 10 | 10 | 10 |
 | 3.6 データマネージャ | 7 | 7 | 7 |
 | 3.7 テキスト入力プリミティブ | 8 | 8 | 8 |
-| 3.8 実身／仮身マネージャ | 60 | 55 | 51 |
+| 3.8 実身／仮身マネージャ | 60 | 57 | 53 |
 | 3.9 フォントマネージャ | 14 | 14 | 14 |
 | 3.10 TCP/IP マネージャ | 28 | 28 | 28 |
 | 3.11 印刷マネージャ | 9 | 9 | 9 |
-| **合計** | **495** | **488** | **475** |
+| **合計** | **495** | **490** | **477** |
 
 ## 1.1 プロセス／タスク管理（16 関数）
 
@@ -561,8 +561,8 @@
 | `osta_prc` | `ERR osta_prc(W vid, W wid)` | `omgr.mkn` | — | あり | `EX_PAR` `EX_VID` `EX_VOBJ` | —（日本語名の関数。要確認） |
 | `oend_prc` | `GID oend_prc(W vid, VP dat, W update)` | `omgr.mkn` | — | あり | `EX_ADR` `EX_VID` | —（日本語名の関数。要確認） |
 | `oend_req` | `ERR oend_req(W vid, W stat)` | `omgr.mkn` | — | あり | `EX_VID` `EX_VOBJ` | —（日本語名の関数。要確認） |
-| `oreq_prc` | `W oreq_prc(W wid, W req, B *resp)` | 未実装 | — | — | `EX_ADR` `EX_PAR` `EX_WID` | — |
-| `orsp_prc` | `ERR orsp_prc(EVENT *evt, B *resp, UW size, W status)` | 未実装 | — | — | `EX_ADR` `EX_PAR` | — |
+| `oreq_prc` | `W oreq_prc(W wid, W req, B *resp)` | `wndx.mkn` | — | あり | `EX_ADR` `EX_PAR` `EX_WID` | —（日本語名の関数。要確認） |
+| `orsp_prc` | `ERR orsp_prc(EVENT *evt, B *resp, UW size, W status)` | `wndx.mkn` | — | あり | `EX_ADR` `EX_PAR` | —（日本語名の関数。要確認） |
 | `oput_dat` | `ERR oput_dat(W vid)` | 未実装 | — | — | `EX_VID` `EX_VOBJ` | — |
 | `oupd_fil` | `ERR oupd_fil(W vid, LINK *lnk, W update)` | `omgr.mkn` | — | あり | `EX_ADR` `EX_VID` `EX_VOBJ` | —（日本語名の関数。要確認） |
 | `oset_tmf` | `ERR oset_tmf(LINK *lnk)` | `omgr.mkn` | — | あり | `EX_ADR` | —（日本語名の関数。要確認） |
