@@ -38,11 +38,11 @@
 | 3.5 トレーマネージャ | 10 | 10 | 10 |
 | 3.6 データマネージャ | 7 | 7 | 7 |
 | 3.7 テキスト入力プリミティブ | 8 | 8 | 8 |
-| 3.8 実身／仮身マネージャ | 60 | 52 | 48 |
+| 3.8 実身／仮身マネージャ | 60 | 54 | 50 |
 | 3.9 フォントマネージャ | 14 | 14 | 14 |
 | 3.10 TCP/IP マネージャ | 28 | 28 | 28 |
 | 3.11 印刷マネージャ | 9 | 9 | 9 |
-| **合計** | **495** | **483** | **470** |
+| **合計** | **495** | **485** | **472** |
 
 ## 1.1 プロセス／タスク管理（16 関数）
 
@@ -542,9 +542,9 @@
 | `odel_vob` | `W odel_vob(W vid, W clr)` | `omgr.mkn` | — | なし | `EX_VID` | —（日本語名の関数。要確認） |
 | `ocls_wnd` | `ERR ocls_wnd(W wid)` | `omgri.mkn` | — | あり | — | —（日本語名の関数。要確認） |
 | `odsp_vob` | `W odsp_vob(W vid, RECT *r, UW disp)` | `omgrx.mkn` | — | あり | `EX_ADR` `EX_PAR` `EX_VID` `EX_WID` | —（日本語名の関数。要確認） |
-| `odsp_vor` | `W odsp_vor(W vid, RECT *r, UW disp, PNT scal)` | 未実装 | — | — | `EX_ADR` `EX_PAR` `EX_VID` `EX_WID` | — |
+| `odsp_vor` | `W odsp_vor(W vid, RECT *r, UW disp, PNT scal)` | `omgrx.mkn` | — | あり | `EX_ADR` `EX_PAR` `EX_VID` `EX_WID` | —（日本語名の関数。要確認） |
 | `odra_vob` | `ERR odra_vob(VLINK *vlnk, VP vseg, W wid, UW disp)` | `omgrx.mkn` | — | あり | `EX_ADR` `EX_NOSPC` `EX_PAR` `EX_WID` | —（日本語名の関数。要確認） |
-| `odra_vor` | `ERR odra_vor(VLINK *vlnk, VP vseg, W wid, UW disp, PNT scal)` | 未実装 | — | — | `EX_ADR` `EX_NOSPC` `EX_PAR` `EX_WID` | — |
+| `odra_vor` | `ERR odra_vor(VLINK *vlnk, VP vseg, W wid, UW disp, PNT scal)` | `omgrx.mkn` | — | あり | `EX_ADR` `EX_NOSPC` `EX_PAR` `EX_WID` | —（日本語名の関数。要確認） |
 | `ofnd_vob` | `W ofnd_vob(W wid, PNT pos, W *vid)` | `omgrx.mkn` | — | あり | `EX_ADR` `EX_VID` | —（日本語名の関数。要確認） |
 | `omov_vob` | `ERR omov_vob(W vid, W wid, RECT *newr, UW disp)` | `omgrx.mkn` | — | あり | `EX_ADR` `EX_PAR` `EX_VID` `EX_WID` | —（日本語名の関数。要確認） |
 | `orsz_vob` | `ERR orsz_vob(W vid, RECT *newr, UW mode)` | `omgrx.mkn` | — | あり | `EX_ADR` `EX_PAR` `EX_VID` `EX_VOBJ` | —（日本語名の関数。要確認） |
