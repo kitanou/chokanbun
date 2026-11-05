@@ -1,7 +1,7 @@
 # BTRON3 OS 仕様編 第3章 3.1 ウィンドウマネージャ — 要求の整理（F7）
 
 > 出典: BTRON3 仕様書 Ver. 3.20.00 第2編 第3章 3.1（`os_spec/shell/window.html`、51 関数）。更新: 2026-10-30。
-> 状況: **第 1 段階と属性の読み書きを実装済**（`user/btron/wnd.mkn`、37 関数。後から `wchg_dck`・`wdef_fep`・`wcnv_rec`・`wera_wnd`・`wget_inf`・`wset_inf` を追加）。標準形状の図（border・fixed_win・reshape_win・frame_cont・active_process）は確認済。`EX_*` の数値は原文に無いので `er.mkn` の選択（`EX_WND`・`EX_WPRC` を追加）に従う。
+> 状況: **第 1 段階と属性の読み書きを実装済**（`user/btron/wnd.mkn`、39 関数。後から `wchg_dck`・`wdef_fep`・`wcnv_rec`・`wera_wnd`・`wget_inf`・`wset_inf`・`wset_bgp`・`wget_bgp` を追加）。標準形状の図（border・fixed_win・reshape_win・frame_cont・active_process）は確認済。`EX_*` の数値は原文に無いので `er.mkn` の選択（`EX_WND`・`EX_WPRC` を追加）に従う。
 
 ## 1. 位置づけ
 
@@ -87,7 +87,9 @@
 - `wchg_dck(time)`: ダブルクリック間隔（秒）。`time` ≦ 0 なら変えず、変更前の値を返す。既定 1。表の先頭 +64 に保持。
 - `wdef_fep(onoff)`: フロントエンドプロセスの登録（>0 一般、<0 特殊、0 解消）。最大 4 個、超えると `EX_LIMIT`。通常ウィンドウを開いたままの登録と、前面ウィンドウを開いたままの解消は `EX_WPRC`。プロセス終了での自動解消は未対応。
 - `wcnv_rec(attr, r, opt)`: `WA_STD`/`WA_WORK`/`WA_FRAME` の相互変換。`WA_STD` は `WA_FRAME` と同じ外枠として扱う。作業領域は外枠から左右下 3、上 13（`WA_TITL` ならタイトルバー無しで 3）。`attr` に 0x7FFF を超えるビット、`opt` が 3 種以外は `EX_PAR`。
-- `wera_wnd(wid, r)`: 作業領域の相対矩形（NULL なら全体）を白で塗る。背景パターン（`wset_bgp`）が未対応なので白固定。重なった上のウィンドウは考慮しない（`窓作塗` と同じ）。
+- `wera_wnd(wid, r)`: 作業領域の相対矩形（NULL なら全体）を背景パターン（）の色で塗る（既定は白）。重なった上のウィンドウは考慮しない（`窓作塗` と同じ）。
 - `wget_inf`/`wset_inf`: 対応は `WI_DCLICKT`（304、W 4 B、`wchg_dck` と同じ値）だけ。原文の他の番号（200〜205・300〜309・400・401・500・501）は `EX_NOSPT`、それ以外は `EX_PAR`。`wset_inf` は buf=NULL か size≦0 で既定に戻す。
 
-未実装（15）: `wopn_iwd` `wopn_pwd` `wchg_wnd` `wchg_ful` `wscr_wnd` `wsnd_evt` `wrsp_evt` `wwai_rsp` `wchk_dck` `wset_bgp` `wget_bgp` `wchg_dsp` `wget_dmn` `wexe_dmn`。うち内部・パネルウィンドウと全面モードは、窓の再描画・走査（`窓全描` など）の全面的な見直しが要る。
+未実装（12）: `wopn_iwd` `wopn_pwd` `wchg_wnd` `wchg_ful` `wscr_wnd` `wsnd_evt` `wrsp_evt` `wwai_rsp` `wchk_dck` `wchg_dsp` `wget_dmn` `wexe_dmn`。うち内部・パネルウィンドウと全面モードは、窓の再描画・走査（`窓全描` など）の全面的な見直しが要る。
+
+- `wset_bgp`/`wget_bgp`: 背景パターンは spat（種類 0、24 B、マスク FILL0/FILL100）だけ。それ以外は `EX_PAR`。`wget_bgp` は NULL で必要サイズ 24 を返し、24 未満の領域は `EX_PAR`。設定前は白の 4×4。表は窓表 +0x1200 から 32 B ずつ。

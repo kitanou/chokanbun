@@ -93,7 +93,7 @@ API 一覧: [btron3-api-inventory.md](btron3-api-inventory.md)（2.3: 37、2.4: 
 
 ### 第3章 外殻（シェル。HMI・統合情報環境）
 
-API 一覧: [btron3-api-inventory.md](btron3-api-inventory.md)（約 247 関数）。3.1 ウィンドウマネージャ（37/51 関数）と 3.8 の一部（表示を除く）を実装済み。他は未実装。
+API 一覧: [btron3-api-inventory.md](btron3-api-inventory.md)（約 247 関数）。3.1 ウィンドウマネージャ（39/51 関数）と 3.8 の一部（表示を除く）を実装済み。他は未実装。
 
 | § | 項目 | 参照 | 状態 |
 |---|---|---|---|
