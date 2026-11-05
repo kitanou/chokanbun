@@ -31,7 +31,7 @@
 | 2.4 図形描画関数 | 42 | 42 | 42 |
 | 2.5 文字(列)描画関数 | 20 | 20 | 20 |
 | 2.6 ポインタ制御関数 | 6 | 6 | 6 |
-| 3.1 ウィンドウマネージャ | 51 | 47 | 47 |
+| 3.1 ウィンドウマネージャ | 51 | 49 | 49 |
 | 3.2 メニューマネージャ | 15 | 15 | 15 |
 | 3.3 パーツマネージャ | 33 | 33 | 32 |
 | 3.4 パネルマネージャ | 12 | 12 | 12 |
@@ -42,7 +42,7 @@
 | 3.9 フォントマネージャ | 14 | 14 | 14 |
 | 3.10 TCP/IP マネージャ | 28 | 28 | 28 |
 | 3.11 印刷マネージャ | 9 | 9 | 9 |
-| **合計** | **495** | **485** | **472** |
+| **合計** | **495** | **487** | **474** |
 
 ## 1.1 プロセス／タスク管理（16 関数）
 
@@ -367,8 +367,8 @@
 | 関数 | 原型 | 実装 | 引数 | 試験 | 原文のエラー | 本体に現れないエラー |
 |---|---|---|---|---|---|---|
 | `wopn_wnd` | `WID wopn_wnd(UW attr, UW par, RECT *r, RECT *org, W pict, TC *tit, PAT *bgpat, WDDISP * atr)` | `wnd.mkn` | ○ | あり | `EX_ADR` `EX_NOSPC` `EX_WID` `EX_WPRC` `EX_WND` | `EX_WPRC` `EX_WND` |
-| `wopn_iwd` | `WID wopn_iwd(W gid)` | 未実装 | — | — | `EX_NOSPC` `EG_GID` `EX_WPRC` | — |
-| `wopn_pwd` | `WID wopn_pwd(RECT *r)` | 未実装 | — | — | `EX_ADR` `EX_NOSPC` | — |
+| `wopn_iwd` | `WID wopn_iwd(W gid)` | `wnd.mkn` | ○ | あり | `EX_NOSPC` `EG_GID` `EX_WPRC` | `EX_NOSPC` `EX_WPRC` |
+| `wopn_pwd` | `WID wopn_pwd(RECT *r)` | `wnd.mkn` | ○ | あり | `EX_ADR` `EX_NOSPC` | `EX_NOSPC` |
 | `wcls_wnd` | `ERR wcls_wnd(W wid, W opt)` | `wnd.mkn` | ○ | あり | `EX_WID` `EX_ADR` |  |
 | `wchg_wnd` | `W wchg_wnd(W wid, RECT *r, W mode)` | 未実装 | — | — | `EX_ADR` `EX_PAR` `EX_WID` `EX_WND` | — |
 | `wmov_wnd` | `W wmov_wnd(W wid, RECT *newr)` | `wnd.mkn` | ○ | あり | `EX_ADR` `EX_WID` `EX_WND` |  |
