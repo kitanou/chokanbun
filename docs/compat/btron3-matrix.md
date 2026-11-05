@@ -38,11 +38,11 @@
 | 3.5 トレーマネージャ | 10 | 10 | 10 |
 | 3.6 データマネージャ | 7 | 7 | 7 |
 | 3.7 テキスト入力プリミティブ | 8 | 8 | 8 |
-| 3.8 実身／仮身マネージャ | 60 | 45 | 41 |
+| 3.8 実身／仮身マネージャ | 60 | 48 | 44 |
 | 3.9 フォントマネージャ | 14 | 14 | 14 |
 | 3.10 TCP/IP マネージャ | 28 | 28 | 28 |
 | 3.11 印刷マネージャ | 9 | 9 | 9 |
-| **合計** | **495** | **474** | **461** |
+| **合計** | **495** | **477** | **464** |
 
 ## 1.1 プロセス／タスク管理（16 関数）
 
@@ -540,7 +540,7 @@
 | `oreg_vob` | `VID oreg_vob(VLINK *vlnk, VP vseg, W wid, UW disp)` | `omgr.mkn` | — | なし | `EX_ADR` `EX_LIMIT` `EX_NOSPC` `EX_PAR` `EX_WID` | —（日本語名の関数。要確認） |
 | `b_odup_vob` | `VID b_odup_vob(W org)` | `omgr.mkn` | — | なし | `EX_LIMIT` `EX_NOSPC` `EX_VID` | —（日本語名の関数。要確認） |
 | `odel_vob` | `W odel_vob(W vid, W clr)` | `omgr.mkn` | — | なし | `EX_VID` | —（日本語名の関数。要確認） |
-| `ocls_wnd` | `ERR ocls_wnd(W wid)` | 未実装 | — | — | — | — |
+| `ocls_wnd` | `ERR ocls_wnd(W wid)` | `omgri.mkn` | — | あり | — | —（日本語名の関数。要確認） |
 | `odsp_vob` | `W odsp_vob(W vid, RECT *r, UW disp)` | `omgrx.mkn` | — | あり | `EX_ADR` `EX_PAR` `EX_VID` `EX_WID` | —（日本語名の関数。要確認） |
 | `odsp_vor` | `W odsp_vor(W vid, RECT *r, UW disp, PNT scal)` | 未実装 | — | — | `EX_ADR` `EX_PAR` `EX_VID` `EX_WID` | — |
 | `odra_vob` | `ERR odra_vob(VLINK *vlnk, VP vseg, W wid, UW disp)` | `omgrx.mkn` | — | あり | `EX_ADR` `EX_NOSPC` `EX_PAR` `EX_WID` | —（日本語名の関数。要確認） |
@@ -554,8 +554,8 @@
 | `ochg_rel` | `W ochg_rel(W vid, W index)` | `omgr.mkn` | — | あり | `EX_PAR` `EX_VID` `EX_VOBJ` | —（日本語名の関数。要確認） |
 | `onew_obj` | `VID onew_obj(W vid, VLINK *vlnk)` | 未実装 | — | — | `EX_ADR` `EX_LIMIT` `EX_VID` `EX_VOBJ` | — |
 | `ocre_obj` | `W ocre_obj(W vid, TC *name, W *nvid, LINK *lnk, W copy)` | `omgr.mkn` | — | あり | `EX_ADR` `EX_PAR` `EX_VID` `EX_VOBJ` | —（日本語名の関数。要確認） |
-| `odsp_inf` | `ERR odsp_inf(W vid)` | 未実装 | — | — | `EX_NOEXS` `EX_VID` `EX_VOBJ` | — |
-| `odsk_inf` | `ERR odsk_inf(W vid, W used, W gabage)` | 未実装 | — | — | `EX_VID` `EX_VOBJ` | — |
+| `odsp_inf` | `ERR odsp_inf(W vid)` | `omgri.mkn` | — | あり | `EX_NOEXS` `EX_VID` `EX_VOBJ` | —（日本語名の関数。要確認） |
+| `odsk_inf` | `ERR odsk_inf(W vid, W used, W gabage)` | `omgri.mkn` | — | あり | `EX_VID` `EX_VOBJ` | —（日本語名の関数。要確認） |
 | `oget_vob` | `W oget_vob(W vid, VLINK *vlnk, VP vseg, UW size, UW *rsize)` | `omgr.mkn` | — | あり | `EX_ADR` `EX_VID` `EX_NOEXS` | —（日本語名の関数。要確認） |
 | `ochg_sts` | `W ochg_sts(W vid, UW mode)` | `omgr.mkn` | — | あり | `EX_PAR` `EX_VID` | —（日本語名の関数。要確認） |
 | `osta_prc` | `ERR osta_prc(W vid, W wid)` | `omgr.mkn` | — | あり | `EX_PAR` `EX_VID` `EX_VOBJ` | —（日本語名の関数。要確認） |
