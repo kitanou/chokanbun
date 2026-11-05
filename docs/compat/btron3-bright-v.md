@@ -1,7 +1,7 @@
 # BTRON3 本体と B-right/V の補足・拡張の分離
 
 > 親Issue: [#42](https://github.com/kitanou/chokanbun/issues/42) / 全体表: [btron3-conformance.md](btron3-conformance.md)
-> 基準: BTRON3仕様書 Ver. 3.20.00。更新: 2026-10-29。
+> 基準: BTRON3仕様書 Ver. 3.20.00。更新: 2026-11-05。
 
 ## 目的と方針
 
@@ -13,13 +13,14 @@
 
 | 範囲 | 確認の方法 | B-right/V の表示 |
 |---|---|---|
-| 第1編 共有データ 第1章（基本データタイプ） | 原文を直接読んだ | 見つかっていない |
-| 第1編 第2章（TRON コード） | 原文を `iconv` で読んだ（2026-10-29） | 見つかっていない |
-| 第1編 第3章（TAD）3.3〜3.6 と付録 A | 原文を `iconv` と図（`variable_seg.gif`・`data_struct.gif`）で読んだ | 見つかっていない。ただし各付箋に「基本レベル」「拡張レベル」の区分がある（下記） |
-| 第1編 第4章（フロッピーディスク形式） | 原文が崩れていて未確認 | 未確認 |
-| 第2編 第1章（カーネル） | 以前に直接読んだ（[btron3-spec-verification.md](btron3-spec-verification.md)） | 記録なし。B-right/V 名の規定は見つかっていない |
-| 第2編 第2章（ディスプレイプリミティブ） | 2.1〜2.3 と 2.4 の一部を読んだ | 見つかっていない |
-| 第2編 第3章（外殻） | 未読（API 名のみ） | 未確認 |
+| 第1編 共有データ（第1〜4章。`data_type`・`tron_code`・`tad1`〜`tad3`・`fd_format`） | 2026-11-05 に全ページを取得して `iconv` で変換し、全文検索 | 見つかっていない（0 件）。TAD は各付箋に本体の中の「基本レベル」「拡張レベル」の区分がある（下記） |
+| 第2編 第1章（カーネル。`proc`・`message`・`taskcomm`・`gname`・`memory`・`file`・`device`・`event`・`clk`・`system`） | 同上 | 見つかっていない（0 件） |
+| 第2編 第2章（ディスプレイプリミティブ。`intro`・`basic_concept`・`basic_func`・`figure_func`・`character_func`・`pointer_func`） | 同上 | 見つかっていない（0 件） |
+| 第2編 第3章（外殻。`window`・`menu`・`parts`・`panel`・`tray`・`data`・`tip`・`omgr`・`font_mgr`・`tcpip`・`printmgr`） | 同上 | 見つかっていない（0 件） |
+
+検索語は「B-right」「B-Right」「ビーライト」「超漢字」。取得した 34 ページに 1 件も無かった。B-right/V 側の制限・補足は別の文書（B-right/V 仕様書）にあり、BTRON3 仕様書の本文には現れない。採用する場合は独立した決定として別に記録する。
+
+**実装依存の箇所**: 原文が「インプリメント依存」とした箇所は 9 つ（TAD 3.6 の 1、パーツ 3.3 の 2、テキスト入力 3.7 の 3、実身／仮身 3.8 の 1、メニュー 3.2 の 1、システム管理 1.10 の 1）。これらは本体の規定が実装に任せている部分で、選んだ内容と理由を各 `docs/compat/btron3-*.md` に記録する（B-right/V の拡張とは区別する）。
 
 ## 本体の中の「基本レベル」と「拡張レベル」
 
