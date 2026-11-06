@@ -2,6 +2,7 @@
 
 > 親Issue: [#42](https://github.com/kitanou/chokanbun/issues/42)。基準: BTRON3仕様書 Ver. 3.20.00 第2編。更新: 2026-11-05。
 > 原文は `tools/spec_matrix.py fetch` で取得し `iconv` で読む。照合の結果は次の 3 つの生成物にある。再生成は `matrix`・`consts`（`shared` と `tadcat` は第1編）。
+> Phase 3 を完了とするための残りの差と判定の基準は [btron3-phase3-gap.md](btron3-phase3-gap.md)。
 
 | 生成物 | 内容 |
 |---|---|
