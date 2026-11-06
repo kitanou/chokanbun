@@ -19,7 +19,7 @@ permissions:
 jobs:
   test:
     name: make test (macOS arm64)
-    runs-on: macos-14
+    runs-on: macos-15
     timeout-minutes: 90
     env:
       HOMEBREW_NO_AUTO_UPDATE: "1"
