@@ -4706,6 +4706,8 @@
     設「枠窓」之無符六四 為 呼「wopn_pwd」以(矩)
     設「枠環」之無符六四 為 呼「wget_gid」以(枠窓)
     設「枠資」之無符六四 為 呼「wset_dat」以(枠窓, 1)
+    設「内移」之無符六四 為 呼「wmov_wnd」以(内窓, 矩)
+    設「枠題」之無符六四 為 呼「wget_sts」以(枠窓, 矩, 0)
     設「枠閉」之無符六四 為 呼「wcls_wnd」以(枠窓, 0)
     設「内閉」之無符六四 為 呼「wcls_wnd」以(内窓, 0)
     設「閉後」之無符六四 為 呼「wget_gid」以(内窓)
@@ -4713,10 +4715,10 @@
     設「環誤」之無符六四 為 呼「wopn_iwd」以(9999)
     設「矩誤」之無符六四 為 呼「wopn_pwd」以(1)
     設「範囲」之無符六四 為 呼「wcls_wnd」以(30, 0)
-    若 (内窓 大等 17) 且 (内窓 小等 32) 且 (内環 等於 環) 且 (資設 等於 0) 且 (資取 等於 0) 且 (資値 等於 77) 且 (枠窓 大等 17) 且 (枠窓 不等 内窓) 且 (枠環 等於 「EX_WND」) 且 (枠資 等於 「EX_WND」) 且 (枠閉 等於 0) 且 (内閉 等於 0) 且 (閉後 等於 「EX_WID」) 且 (再閉 等於 「EX_WID」) 且 (環誤 等於 「EG_GID」) 且 (矩誤 等於 「EX_ADR」) 且 (範囲 等於 「EX_WID」) 則
+    若 (内窓 大等 17) 且 (内窓 小等 32) 且 (内環 等於 環) 且 (資設 等於 0) 且 (資取 等於 0) 且 (資値 等於 77) 且 (枠窓 大等 17) 且 (枠窓 不等 内窓) 且 (枠環 等於 「EX_WND」) 且 (枠資 等於 「EX_WND」) 且 (内移 等於 「EX_WND」) 且 (枠題 等於 「EX_WND」) 且 (枠閉 等於 0) 且 (内閉 等於 0) 且 (閉後 等於 「EX_WID」) 且 (再閉 等於 「EX_WID」) 且 (環誤 等於 「EG_GID」) 且 (矩誤 等於 「EX_ADR」) 且 (範囲 等於 「EX_WID」) 則
         置「甲」為 1
     終若
-    置「失」為 「失」 加 呼「判定」以(取址(『wopn_iwd・wopn_pwdが内部ウィンドウ・パネルウィンドウ(ID 17〜)を開き、内部ウィンドウはwget_gid・wset_dat・wget_datが使え、パネルはEX_WND、wcls_wndで閉じると以後EX_WID』), 長度(『wopn_iwd・wopn_pwdが内部ウィンドウ・パネルウィンドウ(ID 17〜)を開き、内部ウィンドウはwget_gid・wset_dat・wget_datが使え、パネルはEX_WND、wcls_wndで閉じると以後EX_WID』), 甲)
+    置「失」為 「失」 加 呼「判定」以(取址(『wopn_iwd・wopn_pwdが内部ウィンドウ・パネルウィンドウ(ID 17〜)を開き、内部ウィンドウはwget_gid・wset_dat・wget_datが使え、パネルはEX_WND、他の関数(wmov_wnd・wget_sts)もEX_WND、wcls_wndで閉じると以後EX_WID』), 長度(『wopn_iwd・wopn_pwdが内部ウィンドウ・パネルウィンドウ(ID 17〜)を開き、内部ウィンドウはwget_gid・wset_dat・wget_datが使え、パネルはEX_WND、他の関数(wmov_wnd・wget_sts)もEX_WND、wcls_wndで閉じると以後EX_WID』), 甲)
     歸 失
 終術
 
