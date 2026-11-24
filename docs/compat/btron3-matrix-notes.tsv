@@ -29,4 +29,4 @@ pdel_pnl	パネルに属するパーツも削除
 pget_itm	PARTS_ITEM はパーツ ID を返す
 pact_pnl	ボックス (TB・XB・NB の PARTS_ITEM) へキーを、他のパーツへ押下・離しを渡す
 apnl_men	PD の押下でメニュー (Tray: Copy・Paste・Move・Take・Delete) を出して msel_men で選ぶ。命令シフト + C・Z・V・X はキーメニュー。実装依存: メニューの項目名と並び (A)
-otad_vob	V_DISPALL の開いた仮身は M_TADREQ で既定アプリに表示エリアの TAD を作らせて仮身セグメントの後ろに入れる (先頭 4 個まで)。失敗時の M_DISPREQ の画像の TAD 化は未対応
+otad_vob	V_DISPALL の開いた仮身は M_TADREQ で既定アプリに表示エリアの TAD を作らせて仮身セグメントの後ろに入れる (先頭 4 個まで)。失敗したら M_DISPREQ の画像を画像セグメント (1 ビットの白黒、実装依存 A) にする
