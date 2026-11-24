@@ -9,7 +9,7 @@
 註      付箋操作: Fusen / 1 Start   共通項目だけの仮身操作: Vobj / 1 Info
 註  - 項目リストの「不能状態」は、リストの属性にも MENUITEM にも入らないので、親項目だけのリストで表す。
 註  - 実行できるのは Open・Close・Info (VM_OPEN・VM_CLOSE・VM_INFO)、Start (VM_EXREQ)、Disk (VM_DISK)、Name (1 つの仮身なら名前変更パネル = ochg_nam(vid, NULL)、戻りは VM_NONE。
-註    取り消しも VM_NONE。名前が変われば仮身要求イベント 0 が届く)。続柄変更は選択パネルがまだ無いので VM_NONE (何も変えない)。仮身の並び (vid <= 0) の Name・Relation も何も変えない。
+註    取り消しも VM_NONE。名前が変われば仮身要求イベント 0 が届く)、Relation (続柄変更パネル = ochg_rel(vid, -1)、戻りは VM_NONE)。仮身の並び (vid <= 0) の Name・Relation も何も変えない。
 註    表示属性・新版のパネルは未対応。
 註  - 付箋の vid では付箋操作メニューだけが有効で、仮身操作の項目は EX_VOBJ。付箋操作の Start は VM_EXREQ (起動は oexe_apg で行う)。仮身の vid に付箋操作の項目は EX_VOBJ。
 
@@ -384,6 +384,13 @@
     終若
     若 「op」 等於 「VM_CLOSE」 則
         歸 呼「orsz_vob」以(「vid」, 「矩」, 「V_CLOSE」)
+    終若
+    若 「op」 等於 0x102 則
+        設「続結」之無符六四 為 呼「続柄変更」以(「vid」, 0xFFFFFFFF)
+        若 (続結 等於 「EX_PAR」) 或 (呼「登負」以(続結) 等於 0) 則
+            歸 0
+        終若
+        歸 続結
     終若
     若 「op」 等於 0x101 則
         設「名結」之無符六四 為 呼「実身名変更」以(「vid」, 0)
