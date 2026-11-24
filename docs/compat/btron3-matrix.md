@@ -596,7 +596,7 @@
 | `aset_sel` | `W aset_sel(W period)` | `omgrs.mkn` | — | あり | — | —（日本語名の関数。要確認） | 実装依存: チラツキの間隔の分解能 (呼ぶたびに入れ替え) (A) |
 | `adsp_sel` | `ERR adsp_sel(GID gid, SEL_RGN *selp, W mode)` | `omgrs.mkn` | — | あり | `EX_ADR` | —（日本語名の関数。要確認） | 実装依存: 選択枠の線 (XOR、幅 W) (A) |
 | `adsp_slt` | `ERR adsp_slt(GID gid, SEL_LIST *selp, W mode, W dh, W dv)` | `omgrs.mkn` | — | あり | `EX_ADR` | —（日本語名の関数。要確認） | 実装依存: 選択枠の線 (XOR、幅 W) (A) |
-| `apnl_men` | `W apnl_men(W pnid, W pid, EVENT *epv)` | `wndx.mkn` | — | あり | `EX_ADR` | —（日本語名の関数。要確認） |  |
+| `apnl_men` | `W apnl_men(W pnid, W pid, EVENT *epv)` | `wndx.mkn` | — | あり | `EX_ADR` | —（日本語名の関数。要確認） | PD の押下でメニュー (Tray: Copy・Paste・Move・Take・Delete) を出して msel_men で選ぶ。命令シフト + C・Z・V・X はキーメニュー。実装依存: メニューの項目名と並び (A) |
 | `achg_bgc` | `W achg_bgc(W *mask, COLOR *color, COLOR bgc)` | `omgrs.mkn` | — | あり | `EX_ADR` | —（日本語名の関数。要確認） | ウィンドウ背景色変更パネル (選択パネル) で 8 色から選ぶ。実装依存: パネルの形と色の選択肢 (A) |
 
 ## 3.9 フォントマネージャ（14 関数）
@@ -664,5 +664,7 @@
 | `rlst_prn` | `WERR rlst_prn(PR_INFO *info, W cnt)` | `prn.mkn` | ○ | あり | `EX_ADR` |  |  |
 | `rget_cnf` | `WERR rget_cnf(TC *prname, PR_CONF *cnf)` | `prn.mkn` | ○ | あり | `EX_ADR` `EX_NOEXS` |  |  |
 | `rset_cnf` | `ERR rset_cnf(TC *prname, PR_CONF *cnf)` | `prn.mkn` | ○ | あり | `EX_ADR` `EX_LIMIT` `EX_EXS` `EX_NOEXS` `EX_PAR` |  |  |
+
+
 
 
