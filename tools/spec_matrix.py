@@ -4,6 +4,7 @@
 使い方:
   python3 tools/spec_matrix.py fetch <作業ディレクトリ>     原文を取得して UTF-8 の .txt にする
   python3 tools/spec_matrix.py matrix <作業ディレクトリ>    docs/compat/btron3-matrix.md を標準出力へ
+  python3 tools/spec_matrix.py renote docs/compat/btron3-matrix.md   注記の列だけを入れ直して標準出力へ
   python3 tools/spec_matrix.py consts <作業ディレクトリ>    docs/compat/btron3-constants.md を標準出力へ
   python3 tools/spec_matrix.py shared <作業ディレクトリ>    docs/compat/btron3-shared-data-sections.md を標準出力へ
 
@@ -157,6 +158,40 @@ def arg_check(name, proto, impl, key):
     return "○" if head.count("受「") == n else "×"
 
 
+NOTES = os.path.join(ROOT, "docs/compat/btron3-matrix-notes.tsv")
+
+
+def notes():
+    """btron3-matrix-notes.tsv (関数 TAB 注記) を読む。# の行は註。"""
+    d = {}
+    if os.path.exists(NOTES):
+        for line in open(NOTES, encoding="utf-8"):
+            line = line.rstrip("\n")
+            if not line or line.startswith("#") or "\t" not in line:
+                continue
+            k, v = line.split("\t", 1)
+            d[k.strip()] = v.strip().replace("|", "／")
+    return d
+
+
+def renote(path):
+    """生成済みの btron3-matrix.md の「注記」の列だけを notes から入れ直す (原文を取り直さずに注記を更新する)。"""
+    nt = notes()
+    out = []
+    for line in open(path, encoding="utf-8").read().split("\n"):
+        if line.startswith("| 関数 | 原型 |"):
+            line = "| 関数 | 原型 | 実装 | 引数 | 試験 | 原文のエラー | 本体に現れないエラー | 注記 |"
+        elif line.startswith("|---|---|---|---|---|---|---|"):
+            line = "|---|---|---|---|---|---|---|---|"
+        elif line.startswith("| `"):
+            cells = line.split("|")[1:-1]
+            name = cells[0].strip().strip("`")
+            cells = cells[:7] + [" " + nt.get(name, "") + " "]
+            line = "|" + "|".join(cells) + "|"
+        out.append(line)
+    return "\n".join(out)
+
+
 def matrix(work):
     impl = implementations()
     tst = tests()
@@ -189,7 +224,9 @@ def matrix(work):
     L.append("- 本体に現れないエラー: 原文のエラーコードのうち、**その関数の本体に名前が直接現れないもの**。他の関数が返す場合や、そもそも未対応の場合がある（要確認）。第1章は核が返すので対象外。")
     L.append("- 3.8 は日本語名の関数で実装している。定義の直前の註に BTRON 名が書いてあるものを実装済みと数える（誤差があり得る）。対応は [design-object-model.md](design-object-model.md) と [btron3-conformance.md](btron3-conformance.md) の 3.8 の行を参照。")
     L.append("- 状態は機械的な判定で、「適合確認済み」は人が根拠を確認して付ける。ここでは 0 件。")
+    L.append("- 注記: [btron3-matrix-notes.tsv](btron3-matrix-notes.tsv) から入れる。「実装依存」は原文が実装に任せる画面デザイン（[btron3-phase3-gap.md](btron3-phase3-gap.md) の A）で、操作の意味は仕様どおり。注記だけ直すときは `python3 tools/spec_matrix.py renote docs/compat/btron3-matrix.md`。")
     L.append("")
+    nt = notes()
     tot = {"all": 0, "impl": 0, "test": 0}
     nbad_args = []
     summary = []
@@ -204,8 +241,8 @@ def matrix(work):
         summary.append((title, n, ni, nt))
         body.append(f"## {title}（{n} 関数）")
         body.append("")
-        body.append("| 関数 | 原型 | 実装 | 引数 | 試験 | 原文のエラー | 本体に現れないエラー |")
-        body.append("|---|---|---|---|---|---|---|")
+        body.append("| 関数 | 原型 | 実装 | 引数 | 試験 | 原文のエラー | 本体に現れないエラー | 注記 |")
+        body.append("|---|---|---|---|---|---|---|---|")
         for name, proto, codes in funcs:
             if name in impl:
                 fn, src, jp = impl[name]
@@ -229,7 +266,7 @@ def matrix(work):
             ar = arg_check(name, proto, impl, key)
             if ar == "×":
                 nbad_args.append((key, name))
-            body.append(f"| `{name}` | {'`' + pr + '`' if pr else '—'} | {im} | {ar} | {te} | {errs} | {cell} |")
+            body.append(f"| `{name}` | {'`' + pr + '`' if pr else '—'} | {im} | {ar} | {te} | {errs} | {cell} | {nt.get(name, '')} |")
         body.append("")
     L.append("- 引数: 原型の引数の数と、実装の受ける引数の数が合うか（○ 合う、× 合わない、— 比べられない）。型・意味までは見ない。")
     L.append("")
@@ -475,6 +512,8 @@ if __name__ == "__main__":
         fetch(work)
     elif cmd == "matrix":
         print(matrix(work))
+    elif cmd == "renote":
+        print(renote(work))
     elif cmd == "tadvec":
         print(tad_mkn(work))
     elif cmd == "tadcat":

@@ -1,0 +1,30 @@
+# 関数 TAB 注記。tools/spec_matrix.py が btron3-matrix.md の「注記」の列に入れる (matrix と renote)。
+# 「実装依存」は原文が図しか無い・インプリメント依存とする画面デザイン (btron3-phase3-gap.md の A)。操作の意味 (戻り値・状態・イベント) は仕様どおり。
+odsp_vob	実装依存: 枠・タイトル部・表示エリアの描き方、状態の見た目 (処理中・虚身の地の色)、共有描画環境の大きさ (A)。V_DISPALL は M_DISPREQ で既定アプリに描かせる
+odra_vob	実装依存: 枠・タイトル部・表示エリアの描き方 (A)
+odsp_vor	実装依存: 枠・タイトル部・表示エリアの描き方 (A)
+odra_vor	実装依存: 枠・タイトル部・表示エリアの描き方 (A)
+oget_men	実装依存: 仮身操作・実身操作・ディスク操作・付箋操作メニューの項目名と並び (A)
+oget_vmn	実装依存: 仮身操作メニューの項目名と並び (A)
+oexe_vmn	Name・Relation は名前変更・続柄変更パネルを出す (VM_NONE)。項目番号は oget_men・oget_vmn の並び (実装依存、A)
+wget_dmn	実装依存: 表示管理メニューの項目名 (A)
+wopn_wnd	実装依存: ウィンドウの枠・タイトルバー・影の形 (A)
+wchg_ful	実装依存: 全面モードの見た目 (枠・タイトルバー・影を描かない) (A)
+wchg_wnd	実装依存: 全面モードの見た目 (A)
+aset_sel	実装依存: チラツキの間隔の分解能 (呼ぶたびに入れ替え) (A)
+adsp_sel	実装依存: 選択枠の線 (XOR、幅 W) (A)
+adsp_slt	実装依存: 選択枠の線 (XOR、幅 W) (A)
+achg_bgc	ウィンドウ背景色変更パネル (選択パネル) で 8 色から選ぶ。実装依存: パネルの形と色の選択肢 (A)
+ochg_nam	name = NULL は名前変更パネル (omgrp.mkn の名入板)。取り消しは EX_PAR。実装依存: パネルの形 (A)
+ochg_rel	index < 0 は続柄変更パネル (選択パネル)。取り消しは EX_PAR。実装依存: パネルの形 (A)
+ocre_obj	名前が空・NULL は保存先指定パネル (名入板)。取り消しは EX_PAR。実装依存: パネルの形 (A)
+ocre_chd	名前が空・NULL は保存先指定パネル (名入板)。実装依存: パネルの形 (A)
+onew_obj	新版作成パネル (名入板)。空は元の名前、Cancel は EX_PAR。実装依存: パネルの形 (A)
+odsk_inf	ディスク状態パネル (確入板。使用量の表示は未対応)。実装依存: パネルの形 (A)
+oatt_vob	接続前にデバイス接続パネル (確入板)。Cancel は 0。実装依存: パネルの形 (A)
+odel_obj	mode ≠ 0 でエラーならエラーパネル (確入板)。試験は日本語名の 実身削除 で行う。実装依存: パネルの形 (A)
+oprc_dev	挿入イベントの devno は get_dev の番号。接続名はシステムディスク (rom) なら SYS
+pcre_pnl	PARTS_ITEM はパネルの描画環境に属するパーツを作る (所属 -gid)
+pdel_pnl	パネルに属するパーツも削除
+pget_itm	PARTS_ITEM はパーツ ID を返す
+pact_pnl	ボックス (TB・XB・NB の PARTS_ITEM) へキーを、他のパーツへ押下・離しを渡す
