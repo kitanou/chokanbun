@@ -1,4 +1,4 @@
-註 BTRON3 OS 仕様編 第3章 3.4 パネルマネージャ (docs/compat/btron3-panel.md) の最小実装。要: btron/dp.mkn・btron/dpchr.mkn・btron/er.mkn・btron/evt.mkn・btron/wnd.mkn・btron/parts.mkn (PARTS_ITEM)・btron/menu.mkn (画面の退避を借りる)・btron/clk.mkn (pdsp_tim の時刻)。
+註 BTRON3 OS 仕様編 第3章 3.4 パネルマネージャ (docs/compat/btron3-panel.md) の最小実装。要: btron/dp.mkn・btron/dpchr.mkn・btron/er.mkn・btron/evt.mkn・btron/wnd.mkn・btron/parts.mkn (PARTS_ITEM)・btron/menu.mkn (画面の退避を借りる)・btron/data.mkn (popn_pnl)・btron/clk.mkn (pdsp_tim の時刻)。
 註 実装するのは pcre_pnl・pdel_pnl・pget_gid・pact_pnl・pget_itm・pset_itm の 6 関数と、項目 NULL_ITEM・TEXT_ITEM (どちらも ACT_ITEM を重ねられる)・PARTS_ITEM。
 註 【選択の記録: PARTS_ITEM】ptr は PARTS (ccre_par の引数と同じ 32 B)。pcre_pnl がパネルの描画環境に属するパーツ (parts.mkn の所属 -gid) を作り、ID を記録の +96 に持つ。
 註   座標はパネルの描画環境の座標 (パネルの左上が原点、pget_gid と同じ)。ir は使わない。pget_itm はパーツ ID を返す。pdel_pnl はパーツも削除する。
