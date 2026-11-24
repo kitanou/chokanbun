@@ -483,7 +483,7 @@
 | `pcre_pnl` | `PNID pcre_pnl(PANEL *pnl, PNT *p)` | `panel.mkn` | ○ | あり | `EX_ADR` `EX_NOSPC` `EX_PAR` `EX_SAVE` || PARTS_ITEM はパネルの描画環境に属するパーツを作る (B5 の 1〜2 段) |
 | `popn_pnl` | `PNID popn_pnl(W dnum, PNT *p)` | `panel.mkn` | ○ | あり | `EX_ADR` `EX_DNUM` `EX_NOSPC` `EX_PAR` `EX_SAVE` | `EX_NOSPC` `EX_SAVE` |
 | `pdel_pnl` | `ERR pdel_pnl(W pnid)` | `panel.mkn` | ○ | あり | `EX_PNID` || パネルに属するパーツも削除 |
-| `pact_pnl` | `W pact_pnl(W pnid, EVENT *ev, W *itemno)` | `panel.mkn` | ○ | あり | `EX_ADR` `EX_PNID` |  |
+| `pact_pnl` | `W pact_pnl(W pnid, EVENT *ev, W *itemno)` | `panel.mkn` | ○ | あり | `EX_ADR` `EX_PNID` | ボックス (TB・XB・NB の PARTS_ITEM) へキーを渡す。タブ・改行の扱いはファイル先頭の選択 |
 | `pget_itm` | `W pget_itm(W pnid, W itemno, PNL_ITEM *item)` | `panel.mkn` | ○ | あり | `EX_ADR` `EX_PAR` `EX_PNID` || PARTS_ITEM はパーツ ID を返す |
 | `pset_itm` | `W pset_itm(W pnid, W itemno, PNL_ITEM *item)` | `panel.mkn` | ○ | あり | — |  |
 | `psel_box` | `W psel_box(W pnid, W itemno)` | `panel.mkn` | ○ | あり | `EX_PAR` `EX_PNID` |  |
