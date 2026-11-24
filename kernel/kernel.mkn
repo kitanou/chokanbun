@@ -1497,8 +1497,11 @@
             終若
         終若
         若 (番号 大等 128) 且 (番号 小等 137) 則
-            註 ファイル管理 1.6 (録層): 128 att_fls 129 det_fls 130 lst_fls 131 fls_sts 132 syn_fls 133 chg_fls 134 chg_fsm 136 get_lnk 137 chg_wrk。
+            註 ファイル管理 1.6 (録層): 128 att_fls 129 det_fls 130 lst_fls 131 fls_sts 132 syn_fls 133 chg_fls 134 chg_fsm 135 整形 (ofmt_vob の下請け) 136 get_lnk 137 chg_wrk。
             設「録果」之無符六四 為 誤未知
+            若 番号 等於 135 則
+                置「録果」為 呼「整形処理」以(引甲)
+            終若
             若 番号 等於 128 則
                 置「録果」為 呼「接続処理」以(引甲, 引乙, 引丙, 引丁)
             終若

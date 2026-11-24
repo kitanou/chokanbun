@@ -261,6 +261,7 @@
   | 132 | FS 同期 | なし | 0（この核の FS は書き戻す媒体が無いので常に成功）。`syn_fls` |
   | 133 | FS 情報変更 | `x0`=装置名（NULL は `-EINVAL`）, `x1`=新しい FS 名（TC、NULL は変えない）, `x2`=新しい位置名（TC、NULL は変えない） | 0／`-ENOENT`（未登録）・`-ENODEV`（FS の無い装置）・`-EACCES`（接続権 F または書込権 W が足りない）・`-EROFS`（読取専用の接続）・`-ENAMETOOLONG`（FS 名が空）・`-EEXIST`（同名の FS）・`-EFAULT`。ルートファイルの名前も変わる。`chg_fls` |
   | 134 | 接続モード変更 | `x0`=装置名, `x1`=モード（0 SYNC・1 RONLY・2 ASYN） | 変更前のモード／`-EINVAL`・`-ENODEV`（FS が接続されていない・未登録）・`-EACCES`・`-EFAULT`。以後の書込は新しいモードで判定される。`chg_fsm` |
+  | 135 | 整形 | `x0`=装置名（TC） | 0／`-EBUSY`（接続中）・`-ENODEV`（FS の無い装置）。切断されている FS の全ファイルを返し、次のファイル ID を 1 に戻してルート（ID 0、名前は FS 名）を作り直す。BTRON3 の `ofmt_vob` の下請け（原文の 1.6 に無い核の拡張） |
   | 136 | リンク取 | `x0`=パス（TC、256 文字まで。NULL は基準のファイルそのもの）, `x1`=LINK（52 B、F_BASED では基準として入力も）, `x2`=方式（0=F_NORM, 1=F_BASED, +2=F_DIRECT） | 0／`-ENOENT`・`-ENODEV`・`-ENAMETOOLONG`（パス・名前が不正）・`-EACCES`（途中のファイルに E 権が無い）・`-EINVAL`・`-EFAULT`。`get_lnk`。絶対パスは先頭が `/`（TC_FDLM）+ 接続名。先頭の `≡`（TC_FOWN）と NULL は作業ファイル |
   | 137 | 作業変 | `x0`=LINK（52 B）。NULL は作業ファイルを未定義にする | 0／`-ENODEV`・`-ENOENT`・`-EACCES`（E 権）・`-EFAULT`。`chg_wrk`。作業ファイルは子が継ぐ。最初の行程は未定義 |
   | 144 | ファイル作成 | `x0`=LINK（F_FLOAT: FS の指定のみ。F_FIX: 親ファイル。F_FILEID: ID 指定。成功で新しいファイルの LINK に置き換わる）, `x1`=名前（TC）, `x2`=A_MODE（NULL 可）, `x3`=atype, `x4`=opt（0=F_FLOAT, 1=F_FIX, 2=F_FILEID） | 記述子（正）／`-ENOENT`・`-ENODEV`・`-EROFS`・`-ENAMETOOLONG`・`-EINVAL`・`-EFAULT`・`-EMFILE`・`-ENOSPC`・`-E2BIG`・`-EEXIST`（ID が既にある）・`-EACCES`・`-EBUSY`。`cre_fil`。F_FLOAT は固定リンクを作らず参照数 0、F_FIX は親の末尾に固定リンクを足して参照数 1 |
