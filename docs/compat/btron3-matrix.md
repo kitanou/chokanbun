@@ -550,10 +550,10 @@
 | `orsz_vob` | `ERR orsz_vob(W vid, RECT *newr, UW mode)` | `omgrx.mkn` | — | あり | `EX_ADR` `EX_PAR` `EX_VID` `EX_VOBJ` | —（日本語名の関数。要確認） |
 | `ochg_chs` | `W ochg_chs(W vid, W chsz, RECT *newr, UW mode)` | `omgrx.mkn` | — | あり | `EX_ADR` `EX_PAR` `EX_VID` | —（日本語名の関数。要確認） |
 | `ochg_col` | `ERR ochg_col(W vid, COLOR frcol, COLOR chcol, COLOR tbcol, COLOR bgcol, UW disp)` | `omgrx.mkn` | — | あり | `EX_PAR` `EX_VID` | —（日本語名の関数。要確認） |
-| `ochg_nam` | `W ochg_nam(W vid, TC *name)` | `omgr.mkn` | — | あり | `EX_ADR` `EX_VID` `EX_VOBJ` | —（日本語名の関数。要確認） |
+| `ochg_nam` | `W ochg_nam(W vid, TC *name)` | `omgr.mkn` | — | あり | `EX_ADR` `EX_VID` `EX_VOBJ` | —（日本語名の関数。要確認）。name = NULL は名前変更パネル (omgrp.mkn の名入板)。取り消しは EX_PAR |
 | `ochg_rel` | `W ochg_rel(W vid, W index)` | `omgr.mkn` | — | あり | `EX_PAR` `EX_VID` `EX_VOBJ` | —（日本語名の関数。要確認） |
 | `onew_obj` | `VID onew_obj(W vid, VLINK *vlnk)` | `omgrd.mkn` | — | あり | `EX_ADR` `EX_LIMIT` `EX_VID` `EX_VOBJ` | —（日本語名の関数。要確認） |
-| `ocre_obj` | `W ocre_obj(W vid, TC *name, W *nvid, LINK *lnk, W copy)` | `omgr.mkn` | — | あり | `EX_ADR` `EX_PAR` `EX_VID` `EX_VOBJ` | —（日本語名の関数。要確認） |
+| `ocre_obj` | `W ocre_obj(W vid, TC *name, W *nvid, LINK *lnk, W copy)` | `omgr.mkn` | — | あり | `EX_ADR` `EX_PAR` `EX_VID` `EX_VOBJ` | —（日本語名の関数。要確認）。名前が空・NULL は保存先指定パネル (名入板)。取り消しは EX_PAR |
 | `odsp_inf` | `ERR odsp_inf(W vid)` | `omgri.mkn` | — | あり | `EX_NOEXS` `EX_VID` `EX_VOBJ` | —（日本語名の関数。要確認） |
 | `odsk_inf` | `ERR odsk_inf(W vid, W used, W gabage)` | `omgri.mkn` | — | あり | `EX_VID` `EX_VOBJ` | —（日本語名の関数。要確認） |
 | `oget_vob` | `W oget_vob(W vid, VLINK *vlnk, VP vseg, UW size, UW *rsize)` | `omgr.mkn` | — | あり | `EX_ADR` `EX_VID` `EX_NOEXS` | —（日本語名の関数。要確認） |
@@ -590,7 +590,7 @@
 | `odel_obj` | `W odel_obj(LINK *lnk, W mode)` | `omgr.mkn` | — | なし | `EX_ADR` | —（日本語名の関数。要確認） |
 | `oget_fsn` | `ERR oget_fsn(W vid, W fd, VP dat, UW size)` | `omgr.mkn` | — | あり | `EX_ADR` `EX_VID` `EX_VOBJ` `EX_PAR` | —（日本語名の関数。要確認） |
 | `oput_fsn` | `ERR oput_fsn(W vid, W fd, VP dat)` | `omgr.mkn` | — | あり | `EX_ADR` `EX_VID` `EX_VOBJ` | —（日本語名の関数。要確認） |
-| `ocre_chd` | `W ocre_chd(W vid, TC *name, W *nvid)` | `omgrd.mkn` | — | あり | `EX_ADR` `EX_VID` `EX_VOBJ` `EX_PAR` | —（日本語名の関数。要確認） |
+| `ocre_chd` | `W ocre_chd(W vid, TC *name, W *nvid)` | `omgrd.mkn` | — | あり | `EX_ADR` `EX_VID` `EX_VOBJ` `EX_PAR` | —（日本語名の関数。要確認）。名前が空・NULL は保存先指定パネル (名入板) |
 | `otad_vob` | `W otad_vob(W vid, RECT *r, UW disp, LINK *lnk)` | `omgrd.mkn` | — | あり | `EX_ADR` `EX_PAR` `EX_VID` `EX_WID` | —（日本語名の関数。要確認） |
 | `aset_sel` | `W aset_sel(W period)` | `omgrs.mkn` | — | あり | — | —（日本語名の関数。要確認） |
 | `adsp_sel` | `ERR adsp_sel(GID gid, SEL_RGN *selp, W mode)` | `omgrs.mkn` | — | あり | `EX_ADR` | —（日本語名の関数。要確認） |

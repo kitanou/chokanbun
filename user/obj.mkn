@@ -13,6 +13,7 @@
 註 @取込 btron/er.mkn
 註 @取込 btron/file.mkn
 註 @取込 btron/omgr.mkn
+註 @取込 btron/omgrp0.mkn
 
 常「名一」之無符六四 為 0x40700000    註 TC の名前 (48 B)
 常「名二」之無符六四 為 0x40700040
