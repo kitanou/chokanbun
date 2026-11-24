@@ -552,10 +552,10 @@
 | `ochg_col` | `ERR ochg_col(W vid, COLOR frcol, COLOR chcol, COLOR tbcol, COLOR bgcol, UW disp)` | `omgrx.mkn` | — | あり | `EX_PAR` `EX_VID` | —（日本語名の関数。要確認） |
 | `ochg_nam` | `W ochg_nam(W vid, TC *name)` | `omgr.mkn` | — | あり | `EX_ADR` `EX_VID` `EX_VOBJ` | —（日本語名の関数。要確認）。name = NULL は名前変更パネル (omgrp.mkn の名入板)。取り消しは EX_PAR |
 | `ochg_rel` | `W ochg_rel(W vid, W index)` | `omgr.mkn` | — | あり | `EX_PAR` `EX_VID` `EX_VOBJ` | —（日本語名の関数。要確認） |
-| `onew_obj` | `VID onew_obj(W vid, VLINK *vlnk)` | `omgrd.mkn` | — | あり | `EX_ADR` `EX_LIMIT` `EX_VID` `EX_VOBJ` | —（日本語名の関数。要確認） |
+| `onew_obj` | `VID onew_obj(W vid, VLINK *vlnk)` | `omgrd.mkn` | — | あり | `EX_ADR` `EX_LIMIT` `EX_VID` `EX_VOBJ` | —（日本語名の関数。要確認）。新版作成パネル (名入板)。空は元の名前、Cancel は EX_PAR |
 | `ocre_obj` | `W ocre_obj(W vid, TC *name, W *nvid, LINK *lnk, W copy)` | `omgr.mkn` | — | あり | `EX_ADR` `EX_PAR` `EX_VID` `EX_VOBJ` | —（日本語名の関数。要確認）。名前が空・NULL は保存先指定パネル (名入板)。取り消しは EX_PAR |
 | `odsp_inf` | `ERR odsp_inf(W vid)` | `omgri.mkn` | — | あり | `EX_NOEXS` `EX_VID` `EX_VOBJ` | —（日本語名の関数。要確認） |
-| `odsk_inf` | `ERR odsk_inf(W vid, W used, W gabage)` | `omgri.mkn` | — | あり | `EX_VID` `EX_VOBJ` | —（日本語名の関数。要確認） |
+| `odsk_inf` | `ERR odsk_inf(W vid, W used, W gabage)` | `omgri.mkn` | — | あり | `EX_VID` `EX_VOBJ` | —（日本語名の関数。要確認）。ディスク状態パネル (確入板、使用量の表示は未対応) |
 | `oget_vob` | `W oget_vob(W vid, VLINK *vlnk, VP vseg, UW size, UW *rsize)` | `omgr.mkn` | — | あり | `EX_ADR` `EX_VID` `EX_NOEXS` | —（日本語名の関数。要確認） |
 | `ochg_sts` | `W ochg_sts(W vid, UW mode)` | `omgr.mkn` | — | あり | `EX_PAR` `EX_VID` | —（日本語名の関数。要確認） |
 | `osta_prc` | `ERR osta_prc(W vid, W wid)` | `omgr.mkn` | — | あり | `EX_PAR` `EX_VID` `EX_VOBJ` | —（日本語名の関数。要確認） |
@@ -582,12 +582,12 @@
 | `oatt_fls` | `ERR oatt_fls(TC *dev, TC *name, LINK *lnk, W ronly)` | `omgr.mkn` | — | あり | `EX_ADR` | —（日本語名の関数。要確認） |
 | `ofat_fls` | `ERR ofat_fls(TC *dev, TC *name, LINK *lnk, W ronly)` | `omgr.mkn` | — | あり | `EX_ADR` `ER_BUSY` | —（日本語名の関数。要確認） |
 | `odet_vob` | `W odet_vob(W vid, TC *dev)` | `omgr.mkn` | — | あり | `EX_ADR` `EX_VID` `EX_VOBJ` | —（日本語名の関数。要確認） |
-| `oatt_vob` | `W oatt_vob(W vid, W ronly)` | `omgr.mkn` | — | あり | `EX_VID` `EX_VOBJ` | —（日本語名の関数。要確認） |
+| `oatt_vob` | `W oatt_vob(W vid, W ronly)` | `omgr.mkn` | — | あり | `EX_VID` `EX_VOBJ` | —（日本語名の関数。要確認）。接続前にデバイス接続パネル (確入板)。Cancel は 0 |
 | `oprc_dev` | `ERR oprc_dev(EVENT *evt, TC *dev, W ronly)` | `omgrd.mkn` | — | あり | `EX_ADR` `EX_PAR` | —（日本語名の関数。要確認） |
 | `ofmt_vob` | `W ofmt_vob(W vid)` | `omgrd.mkn` | — | あり | `EX_VID` `EX_VOBJ` | —（日本語名の関数。要確認） |
 | `ocnv_vob` | `W ocnv_vob(W org, W vid, LINK *lnk)` | `omgr.mkn` | — | あり | `EX_ADR` `EX_VID` `EX_VOBJ` | —（日本語名の関数。要確認） |
 | `oopn_obj` | `W oopn_obj(W vid, LINK *lnk, UW omode, TC *pwd)` | `omgr.mkn` | — | あり | `EX_ADR` `EX_VID` `EX_VOBJ` | —（日本語名の関数。要確認） |
-| `odel_obj` | `W odel_obj(LINK *lnk, W mode)` | `omgr.mkn` | — | なし | `EX_ADR` | —（日本語名の関数。要確認） |
+| `odel_obj` | `W odel_obj(LINK *lnk, W mode)` | `omgr.mkn` | — | あり | `EX_ADR` | —（日本語名の関数。要確認）。mode ≠ 0 でエラーならエラーパネル (確入板) |
 | `oget_fsn` | `ERR oget_fsn(W vid, W fd, VP dat, UW size)` | `omgr.mkn` | — | あり | `EX_ADR` `EX_VID` `EX_VOBJ` `EX_PAR` | —（日本語名の関数。要確認） |
 | `oput_fsn` | `ERR oput_fsn(W vid, W fd, VP dat)` | `omgr.mkn` | — | あり | `EX_ADR` `EX_VID` `EX_VOBJ` | —（日本語名の関数。要確認） |
 | `ocre_chd` | `W ocre_chd(W vid, TC *name, W *nvid)` | `omgrd.mkn` | — | あり | `EX_ADR` `EX_VID` `EX_VOBJ` `EX_PAR` | —（日本語名の関数。要確認）。名前が空・NULL は保存先指定パネル (名入板) |
