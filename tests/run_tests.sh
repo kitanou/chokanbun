@@ -1118,19 +1118,19 @@ if [ -f "$OUT/kernel.elf" ]; then
         # --- #42 1.6 B1: ファイル管理の接続とパス解決 ----------------------------------
         FL_N="$(grep -ac '^録試 ' "$KLOG" 2>/dev/null)"
         FL_BAD="$(grep -a '^録試 ' "$KLOG" 2>/dev/null | grep -vc '0x0000000000000001$')"
-        if [ "${FL_N:-0}" -eq 122 ] && [ "${FL_BAD:-1}" -eq 0 ]; then
+        if [ "${FL_N:-0}" -eq 123 ] && [ "${FL_BAD:-1}" -eq 0 ]; then
             pass "kernel qemu: BTRON3 互換層 ファイル管理 B1・B2 (接続・get_lnk・chg_wrk・作成・削除・開閉・状態の ${FL_N} 項目)"
         else
-            fail "kernel qemu: BTRON3 互換層 ファイル管理 B1 (項目=${FL_N:-0}/122、失敗=${FL_BAD:-?})"
+            fail "kernel qemu: BTRON3 互換層 ファイル管理 B1 (項目=${FL_N:-0}/123、失敗=${FL_BAD:-?})"
             grep -a '^録試 ' "$KLOG" 2>/dev/null | sed 's/^/      /'
         fi
         # --- #42 G6b: メッセージバッファとランデブポート (1.3) ------------------------
         CM_N="$(grep -ac '^緩試 ' "$KLOG" 2>/dev/null)"
         CM_BAD="$(grep -a '^緩試 ' "$KLOG" 2>/dev/null | grep -vc '0x0000000000000001$')"
-        if [ "${CM_N:-0}" -eq 35 ] && [ "${CM_BAD:-1}" -eq 0 ]; then
+        if [ "${CM_N:-0}" -eq 36 ] && [ "${CM_BAD:-1}" -eq 0 ]; then
             pass "kernel qemu: BTRON3 互換層 メッセージバッファ・ランデブ (環の折り返し・待ち・中断・転送・削除の ${CM_N} 項目)"
         else
-            fail "kernel qemu: BTRON3 互換層 メッセージバッファ・ランデブ (項目=${CM_N:-0}/35、失敗=${CM_BAD:-?})"
+            fail "kernel qemu: BTRON3 互換層 メッセージバッファ・ランデブ (項目=${CM_N:-0}/36、失敗=${CM_BAD:-?})"
             grep -a '^緩試 ' "$KLOG" 2>/dev/null | sed 's/^/      /'
         fi
         # --- #42 G6a: セマフォとイベントフラグ (1.3) -------------------------------------
