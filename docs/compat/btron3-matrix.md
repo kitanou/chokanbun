@@ -592,7 +592,7 @@
 | `oget_fsn` | `ERR oget_fsn(W vid, W fd, VP dat, UW size)` | `omgr.mkn` | — | あり | `EX_ADR` `EX_VID` `EX_VOBJ` `EX_PAR` | —（日本語名の関数。要確認） |  |
 | `oput_fsn` | `ERR oput_fsn(W vid, W fd, VP dat)` | `omgr.mkn` | — | あり | `EX_ADR` `EX_VID` `EX_VOBJ` | —（日本語名の関数。要確認） |  |
 | `ocre_chd` | `W ocre_chd(W vid, TC *name, W *nvid)` | `omgrd.mkn` | — | あり | `EX_ADR` `EX_VID` `EX_VOBJ` `EX_PAR` | —（日本語名の関数。要確認） | 名前が空・NULL は保存先指定パネル (名入板)。実装依存: パネルの形 (A) |
-| `otad_vob` | `W otad_vob(W vid, RECT *r, UW disp, LINK *lnk)` | `omgrd.mkn` | — | あり | `EX_ADR` `EX_PAR` `EX_VID` `EX_WID` | —（日本語名の関数。要確認） |  |
+| `otad_vob` | `W otad_vob(W vid, RECT *r, UW disp, LINK *lnk)` | `omgrd.mkn` | — | あり | `EX_ADR` `EX_PAR` `EX_VID` `EX_WID` | —（日本語名の関数。要確認） | V_DISPALL の開いた仮身は M_TADREQ で既定アプリに表示エリアの TAD を作らせて仮身セグメントの後ろに入れる (先頭 4 個まで)。失敗時の M_DISPREQ の画像の TAD 化は未対応 |
 | `aset_sel` | `W aset_sel(W period)` | `omgrs.mkn` | — | あり | — | —（日本語名の関数。要確認） | 実装依存: チラツキの間隔の分解能 (呼ぶたびに入れ替え) (A) |
 | `adsp_sel` | `ERR adsp_sel(GID gid, SEL_RGN *selp, W mode)` | `omgrs.mkn` | — | あり | `EX_ADR` | —（日本語名の関数。要確認） | 実装依存: 選択枠の線 (XOR、幅 W) (A) |
 | `adsp_slt` | `ERR adsp_slt(GID gid, SEL_LIST *selp, W mode, W dh, W dv)` | `omgrs.mkn` | — | あり | `EX_ADR` | —（日本語名の関数。要確認） | 実装依存: 選択枠の線 (XOR、幅 W) (A) |
@@ -664,6 +664,8 @@
 | `rlst_prn` | `WERR rlst_prn(PR_INFO *info, W cnt)` | `prn.mkn` | ○ | あり | `EX_ADR` |  |  |
 | `rget_cnf` | `WERR rget_cnf(TC *prname, PR_CONF *cnf)` | `prn.mkn` | ○ | あり | `EX_ADR` `EX_NOEXS` |  |  |
 | `rset_cnf` | `ERR rset_cnf(TC *prname, PR_CONF *cnf)` | `prn.mkn` | ○ | あり | `EX_ADR` `EX_LIMIT` `EX_EXS` `EX_NOEXS` `EX_PAR` |  |  |
+
+
 
 
 
