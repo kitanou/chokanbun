@@ -1095,10 +1095,10 @@ if [ -f "$OUT/kernel.elf" ]; then
         # --- 1.1 副タスク (cre_tsk・ext_tsk・ter_tsk・slp/wup/can_wup・chg_pri・配分比) ------
         SB_N="$(grep -ac '^副試 ' "$KLOG" 2>/dev/null)"
         SB_BAD="$(grep -a '^副試 ' "$KLOG" 2>/dev/null | grep -vc '0x0000000000000001$')"
-        if [ "${SB_N:-0}" -eq 21 ] && [ "${SB_BAD:-1}" -eq 0 ]; then
+        if [ "${SB_N:-0}" -eq 22 ] && [ "${SB_BAD:-1}" -eq 0 ]; then
             pass "kernel qemu: BTRON3 互換層 副タスク (cre_tsk・ext_tsk・ter_tsk・slp_tsk/wup_tsk/can_wup・chg_pri・get_inf の ${SB_N} 項目)"
         else
-            fail "kernel qemu: BTRON3 互換層 副タスク (項目=${SB_N:-0}/21、失敗=${SB_BAD:-?})"
+            fail "kernel qemu: BTRON3 互換層 副タスク (項目=${SB_N:-0}/22、失敗=${SB_BAD:-?})"
             grep -a '^副試 ' "$KLOG" 2>/dev/null | sed 's/^/      /' | head -40
         fi
         # --- 篇藏 F1〜F3 (#6): 篇ID・屬、章とパス、名替、權・志・器・術・法 ---------------
@@ -1145,10 +1145,10 @@ if [ -f "$OUT/kernel.elf" ]; then
         # --- #42 G5: ter_prc (MS_TERM・TERM_ALL・ER_LEVEL・ER_SELF) と prc_sts ------------
         TM_N="$(grep -ac '^強試 ' "$KLOG" 2>/dev/null)"
         TM_BAD="$(grep -a '^強試 ' "$KLOG" 2>/dev/null | grep -vc '0x0000000000000001$')"
-        if [ "${TM_N:-0}" -eq 23 ] && [ "${TM_BAD:-1}" -eq 0 ]; then
+        if [ "${TM_N:-0}" -eq 24 ] && [ "${TM_BAD:-1}" -eq 0 ]; then
             pass "kernel qemu: BTRON3 互換層 強制終了・行程状態 (${TM_N} 項目)"
         else
-            fail "kernel qemu: BTRON3 互換層 強制終了・行程状態 (項目=${TM_N:-0}/23、失敗=${TM_BAD:-?})"
+            fail "kernel qemu: BTRON3 互換層 強制終了・行程状態 (項目=${TM_N:-0}/24、失敗=${TM_BAD:-?})"
             grep -a '^強試 ' "$KLOG" 2>/dev/null | sed 's/^/      /'
         fi
         # --- #42 G4: 利用者情報 (get_usr / chg_usr) と set_tim / set_tod の権限 --------
