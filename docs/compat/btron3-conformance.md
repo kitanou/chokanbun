@@ -75,8 +75,8 @@
 | 1.6 | ファイル管理（構成、構造、アクセス制御、操作、詳細情報、システムコール） | kernel/file.html | `kernel/vfs/`、篇藏設計 | 部分適合（B1〜B5 と接続系の `syn_fls`/`chg_fls`/`chg_fsm` まで実装済・未検証。`F_SYSTEM`（民の行程から使えない空間）への写像と永続化が未実装、[詳細](btron3-os.md)） |
 | 1.7 | イベント管理（イベント、キーボード、ポインティングデバイス） | kernel/event.html | `kernel/proc/evt.mkn`、`user/btron/evt.mkn`（漢令 192〜211） | 実装済・未検証（[詳細](btron3-os.md)） |
 | 1.8 | デバイス管理 | kernel/device.html | `kernel/proc/dev.mkn`、`user/btron/dev.mkn`（漢令 212〜220） | 実装済・未検証（[詳細](btron3-os.md)） |
-| 1.9 | 時計管理 | kernel/clk.html | 汎用タイマー | 部分適合（取得系のみ、[詳細](btron3-os.md)） |
-| 1.10 | システム管理 | kernel/system.html | `kernel/proc/sys.mkn`、`kernel/proc/exc.mkn`、`user/btron/sys.mkn`、`user/btron/exc.mkn`（漢令 179〜182。`get_ver`/`get_cnf`/`def_exc`/`ret_exc`） | 部分適合（[詳細](btron3-os.md)） |
+| 1.9 | 時計管理 | kernel/clk.html | `user/btron/clk.mkn`（漢令 176〜178、PL031 RTC） | 実装済・未検証（`get_tim`/`get_tod`/`set_tim`/`set_tod` の 4 本。時刻帯の設定手段が無く常に 0、[詳細](btron3-os.md)） |
+| 1.10 | システム管理 | kernel/system.html | `kernel/proc/sys.mkn`、`kernel/proc/exc.mkn`、`user/btron/sys.mkn`、`user/btron/exc.mkn`（漢令 179〜182。`get_ver`/`get_cnf`/`def_exc`/`ret_exc`） | 実装済・検証済（`系試` 38 項目・`例試` 16 項目。例外は同期例外の upcall のみ、[詳細](btron3-os.md)） |
 
 ### 第2章 ディスプレイプリミティブ
 
