@@ -585,7 +585,7 @@
 | `odet_vob` | `W odet_vob(W vid, TC *dev)` | `omgr.mkn` | — | あり | `EX_ADR` `EX_VID` `EX_VOBJ` | —（日本語名の関数。要確認） |  |
 | `oatt_vob` | `W oatt_vob(W vid, W ronly)` | `omgr.mkn` | — | あり | `EX_VID` `EX_VOBJ` | —（日本語名の関数。要確認） | 接続前にデバイス接続パネル (確入板)。Cancel は 0。実装依存: パネルの形 (A) |
 | `oprc_dev` | `ERR oprc_dev(EVENT *evt, TC *dev, W ronly)` | `omgrd.mkn` | — | あり | `EX_ADR` `EX_PAR` | —（日本語名の関数。要確認） | 挿入イベントの devno は get_dev の番号。接続名はシステムディスク (rom) なら SYS |
-| `ofmt_vob` | `W ofmt_vob(W vid)` | `omgrd.mkn` | — | あり | `EX_VID` `EX_VOBJ` | —（日本語名の関数。要確認） |  |
+| `ofmt_vob` | `W ofmt_vob(W vid)` | `omgrd.mkn` | — | あり | `EX_VID` `EX_VOBJ` | —（日本語名の関数。要確認） | デバイス仮身 (ルートを指す仮身) の FS を切断・整形 (漢令 135、核の拡張)・再接続。フォーマットパネルの Cancel は 1 |
 | `ocnv_vob` | `W ocnv_vob(W org, W vid, LINK *lnk)` | `omgr.mkn` | — | あり | `EX_ADR` `EX_VID` `EX_VOBJ` | —（日本語名の関数。要確認） |  |
 | `oopn_obj` | `W oopn_obj(W vid, LINK *lnk, UW omode, TC *pwd)` | `omgr.mkn` | — | あり | `EX_ADR` `EX_VID` `EX_VOBJ` | —（日本語名の関数。要確認） |  |
 | `odel_obj` | `W odel_obj(LINK *lnk, W mode)` | `omgr.mkn` | — | なし | `EX_ADR` | —（日本語名の関数。要確認） | mode ≠ 0 でエラーならエラーパネル (確入板)。試験は日本語名の 実身削除 で行う。実装依存: パネルの形 (A) |
@@ -664,6 +664,8 @@
 | `rlst_prn` | `WERR rlst_prn(PR_INFO *info, W cnt)` | `prn.mkn` | ○ | あり | `EX_ADR` |  |  |
 | `rget_cnf` | `WERR rget_cnf(TC *prname, PR_CONF *cnf)` | `prn.mkn` | ○ | あり | `EX_ADR` `EX_NOEXS` |  |  |
 | `rset_cnf` | `ERR rset_cnf(TC *prname, PR_CONF *cnf)` | `prn.mkn` | ○ | あり | `EX_ADR` `EX_LIMIT` `EX_EXS` `EX_NOEXS` `EX_PAR` |  |  |
+
+
 
 
 
