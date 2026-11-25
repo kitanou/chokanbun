@@ -9,6 +9,7 @@
 - 本書は **適合を主張しない**。「完全準拠」は、対象項目すべてが「適合確認済み」で未解決の非適合がない状態を指す（#42）。
 - **2026-10-18 に原文を文字化けなしで直接読んだ**（[btron3-spec-verification.md](btron3-spec-verification.md)）。第2編 第1章 1.1〜1.4・1.6・1.9・1.10 と第1編 第1・2章の「要確認」の多くが確定し、特に **1.6 のモデルが実装と大きく食い違う**ことが分かった。下の各表の「状態」は、この食い違いを反映するまで暫定。
 - 第2編 第1章（カーネル）は [btron3-os.md](btron3-os.md) で照合済み（以前の読みは文字化けによる。上記の確認で更新する）。第2章・第3章を含む OS 仕様編の全 495 関数は [btron3-matrix.md](btron3-matrix.md) で照合済み（2026-11-25 時点で実装 495・試験が呼ぶもの 482。名前の棚卸しは [btron3-api-inventory.md](btron3-api-inventory.md)）。共有データ編は [btron3-shared-data.md](btron3-shared-data.md) に要約済み（原文の文字化けで要確認事項が多い）。「関連する既存実装」欄は照合の出発点であり、適合の根拠ではない。
+- 既存設計（篇藏・漢令・漢殻・POSIX・AArch64 と独自 CPU 構想）との境界と、衝突する箇所の移行手順は [btron3-integration.md](btron3-integration.md)（#42 Phase 4）。漢令・ISA は適合の対象にしない。
 - 仕様書本文は転載しない。要求は独自の言い回しで要約し、参照箇所（章・節・URL アンカー）を記す。
 - `ER_*` の API 別対応と、試験が参照していない 5 名は [`ER_*` 網羅表](btron3-error-coverage.md) にまとめた。
 - B-right/V の補足・拡張は本書の対象外。別表 [btron3-bright-v.md](btron3-bright-v.md) で管理する。

@@ -1,6 +1,6 @@
 # 設計: BTRON3 互換層（EL0 ライブラリ → 既存の漢令）
 
-状態: **設計のみ（未実装）**。親Issue: [#42](https://github.com/kitanou/chokanbun/issues/42)
+状態: **実装済み**（G0〜G11。第 1 章 1.1〜1.10 の全 API を互換層と漢令で実装。現在の適合状態は [btron3-os.md](btron3-os.md)、ISA・漢令と BTRON3 の境界は [btron3-integration.md](btron3-integration.md)）。親Issue: [#42](https://github.com/kitanou/chokanbun/issues/42)
 関連: [btron3-os.md](btron3-os.md)（API 照合）、[abi-aarch64.md](../abi-aarch64.md)（漢令 ABI v0.1）、[design-process-exec.md](../design-process-exec.md)
 
 ## 1. 決定事項
@@ -65,6 +65,8 @@ BTRON3 の各 API を、互換層だけでできるか、核の拡張が要る�
 
 ### 4.1 新しい漢令の番号の割当
 
+> この表は実装前の案で、[btron3-file-design.md](btron3-file-design.md) §8 の案とも食い違う。確定した番号は [abi-aarch64.md](../abi-aarch64.md) の漢令表を正とする（[btron3-integration.md](btron3-integration.md) §2.3）。
+
 既存は 1〜31（19–20・22–23 は予約、31 は診断）。互換層向けに次の帯を**予約する**（番号は案。確定は実装時に `abi-aarch64.md` に記載する）。
 
 | 帯 | 用途 |
@@ -91,8 +93,8 @@ BTRON3 の 1 API が 1 漢令に対応するとは限らない。核の都合で
 2. **ハンドラ（`def_msg`/`def_exc`）**: EL0 への上り呼びが要る。核が EL0 の保存フレームに差し込む方式（ハンドラのエントリへ `ELR` を向け、復帰用のスタブへ戻す）を採る。`ret_msg`/`ret_exc` はこのスタブから呼ぶ漢令。入れ子禁止は核が保持する。`def_exc`/`ret_exc` は同期例外について M7d（§6.9）、`def_msg`/`ret_msg` はメッセージの到着・タイマー・保留分の非同期配送について M7e（§6.10）で実装済み。どちらも同じ保存フレーム差し替えを使う。
 3. **ファイルのリンク（`LINK`）**: `cre_prc` や `opn_fil` は名前でなく `LINK` を取る。当面は互換層が「典籍名＋接続名」の構造体として `LINK` を表現し、`get_lnk` が典籍名へ解決する。ファイル ID・レコード構造は篇藏との分離設計（1.6）の後に拡張する。
 4. **待ち時間の意味**: `T_NOWAIT`/`T_FOREVER`/正の ms を互換層が刻に換算して漢令へ渡す。タイムアウトの `ER_NONE` と中断の `ER_MINTR` は核が区別して返す。
-5. **優先度**: 群 A（0–127、厳密）／B・C（128–255、配分）のスケジューラは核側の作業。それまでは優先度を保持だけして無視するか、`chg_pri` を `ER_PAR` で拒否するかを**段階ごとに選び、選択を適合表に記録**する。
-6. **副タスク**: 行程表の枠を従属させ、資源の持ち主を主の枠にする案 A で実装した（M7f。[design-subtask.md](../design-subtask.md) §9、[btron3-spec-verification.md](btron3-spec-verification.md) §6.11）。副タスクは `rcv_msg` などのメッセージ待ちができない点だけを非適合として記録する。
+5. **優先度**: 群 A（0–127、厳密）／B・C（128–255、配分）のスケジューラは核側の作業。群 A の厳密な優先順と群 B・C の配分比、`cre_prc`・`wup_tsk`・`chg_pri` での即時の横取りまで実装した（`副試`）。
+6. **副タスク**: 行程表の枠を従属させ、資源の持ち主を主の枠にする案 A で実装した（M7f。[design-subtask.md](../design-subtask.md) §9、[btron3-spec-verification.md](btron3-spec-verification.md) §6.11）。副タスクのメッセージ待ちと、持ったまま終わった排他セマフォの返却も実装した（#185）。
 7. **利用者情報・レベル**: 行程表に利用者名・グループ・レベルを足す。初期行程の値は核が設定する。ファイルのアクセス判定（1.6）と時計設定の権限（1.9）に使う。
 8. **デバイスの模型（1.8）**: 実機（ディスク・コンソール・印刷）を繋がないため、核内に 5 ユニットの模型デバイスを持つ（`rda`・`rom`・`con`・`prn`・`mem`。`mem` は RAM のファイルシステムが結びつく、記憶域を持たないブロック型ユニット）。器類表の登録を差し替えれば実機へ移せる形にした。`opn_dev` は媒体の書禁（`wprt`）を `ER_RONLY`、デバイスの向き（読否）を `ER_DEV` で返し、`D_READ` オープンでの `wri_dev` と `D_WRITE` オープンでの `rea_dev` は `ER_DD`（原文の誤り一覧どおり）。`D_NOWAIT` でなくても文字型は待たない（データ終了通知が無いため）。詳細は [btron3-spec-verification.md](btron3-spec-verification.md) §6.7。
 9. **実装依存の値の選択（1.10）**: 原文が `T_VER` の各欄と構成情報の項目名を「インプリメント依存」とするため、核と互換層で同じ組を選んで公開する（`T_VER` = `maker`/`id`/`spver`/`prver`/`prno[4]`/`cpu`/`var`、項目名 = `NPRC`/`PGSZ`/`NDEV`/`SYSNAM`/`SYSVER`）。詳細は [btron3-spec-verification.md](btron3-spec-verification.md) §6.8。
@@ -114,7 +116,7 @@ BTRON3 の 1 API が 1 漢令に対応するとは限らない。核の都合で
 | G5 **（一部完了）** | 1.1 の `ter_prc`（`MS_TERM`、`TERM_ALL`、`ER_LEVEL`）と `prc_sts`（漢令 68–69）。1.3 同期通信、1.5 メモリ、1.6 ファイル、`chg_pri` は未着手 | G4 | 試験 `強試` 16 項目（子孫の深い順の終了、呼出側自身が終わる場合を含む） |
 | G5b **（完了）** | 1.3 同期通信のセマフォとイベントフラグ（漢令 96–104）。時間待ちのため、タイマー割込を直接確認する `刻巡` と空き待ち `閑巡` を追加（EL0 が IRQ 禁止でも時間切れが進む） | G3a | 試験 `同試` 29 項目（FIFO・時間切れ・削除・DELEXIT・排他の自動返却・`MH_BREAK` 中断と再使用、カウント上限 65535、各 16 個の上限 `ER_LIMIT` と再利用、`TWF_ORW` の OR 待ちを行程間で確認） |
 | G5c **（完了）** | 1.3 のメッセージバッファとランデブポート（漢令 105–111・115–117）。呼出側の復帰は「記録を写して眠り、返答で再実行」方式 | G5b | 試験 `緩試` 35 項目（環の折り返し、行程間の待ち、転送、削除、MB 受信・満杯送信・ランデブ呼出・受付の `MH_BREAK` 中断と再使用を確認） |
-| G7 **（B0〜B5 完了）** | 1.6 ファイル管理: 設計（[btron3-file-design.md](btron3-file-design.md)）→ 段階 B0〜B6。B1 で録層の骨格と接続・パス解決、B2 で作成・削除・開閉・状態（`gen_fil` を除く）、B3 でレコード操作とロック（`fnd_lnk` を除く）、B4 で属性・アクセス制御・パスワード、B5 で SYS FS の像ファイルと `cre_prc` の LINK 版 | G2・G4 | 試験 `録試` 79 項目。B6 以降は未着手 |
+| G7 **（B0〜B6 完了）** | 1.6 ファイル管理: 設計（[btron3-file-design.md](btron3-file-design.md)）→ 段階 B0〜B6。B1 で録層の骨格と接続・パス解決、B2 で作成・削除・開閉・状態（`gen_fil` を除く）、B3 でレコード操作とロック（`fnd_lnk` を除く）、B4 で属性・アクセス制御・パスワード、B5 で SYS FS の像ファイルと `cre_prc` の LINK 版 | G2・G4 | 試験 `録試` 79 項目（B5 時点）。B6 で `gen_fil`・`fnd_lnk`・写像（局所・`F_COMMON`・`F_SYSTEM`）・`syn_fls` の永続化まで実装し、`録試` は 125 項目 |
 | G8 **（完了）** | 1.5 メモリ管理（漢令 120–122）。民の窓の頁 8〜247 をローカル塊域、248〜255 を共有・システム塊域にする。`DELEXIT` は持主の終了で自動解放。詳細は [btron3-spec-verification.md](btron3-spec-verification.md) §6.5 | G0・G2 | 試験 `貯試` 45 項目（get_mbk・rel_mbk・mbk_sts・malloc 族・共有・システム・DELEXIT 権限・枯渇。子は 3 役: DELEXIT の自動解放・共有塊の横断確認・level 1 の権限拒否） |
 | G9 **（完了）** | 1.7 イベント管理（漢令 192–211）。隊 5 欄 × 32 項、優先度クラス、`EV_NULL`/`EV_AUTKEY` の合成、`req_evt` の `MS_SYS5`、キーボード・ポインティングデバイス・ブザーを核内の模型として持つ。詳細は [btron3-spec-verification.md](btron3-spec-verification.md) §6.6 | G0・G2・G3a | 試験 `件試` 73 項目（往復・優先度・満杯・引数検査・属性・キー反映・`MS_SYS5`・`EV_AUTKEY`） |
 | G10 **（完了）** | 1.8 デバイス管理（漢令 212–220）。器表 32 相、器類表 8 ユニット、論理名の最長前綴り一致、`o_mode` と排他、塊型／文字型の入出力、`DEV_STATE`/`DEV_INFO`（24 B。名前は TC）、サスペンドの禁止カウンタ。実機の代わりに核内の模型 4 ユニット（`rda`/`rom`/`con`/`prn`）。詳細は [btron3-spec-verification.md](btron3-spec-verification.md) §6.7 | G0・G2 | 試験 `設試` 97 項目（名前解決・`o_mode`・排他・上限・読み書き・属性・向き・`dev_sts`/`get_dev`/`lst_dev`・権限・サスペンド） |

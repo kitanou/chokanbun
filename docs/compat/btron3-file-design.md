@@ -1,6 +1,6 @@
 # 設計: BTRON3 ファイル管理（1.6）と篇藏の分離
 
-状態: **設計のみ（未実装）**。親Issue: [#42](https://github.com/kitanou/chokanbun/issues/42)（Phase 4「既存設計との統合」の中心）
+状態: **段階 B0〜B6 を実装済み**（本書は設計と各段階の選択の記録で、途中の段階の「未実装」「暫定」の記述は当時のもの。現在の状態は [btron3-os.md](btron3-os.md) 1.6、Phase 4 の残りは [btron3-integration.md](btron3-integration.md)）。親Issue: [#42](https://github.com/kitanou/chokanbun/issues/42)（Phase 4「既存設計との統合」の中心）
 関連: [btron3-os.md](btron3-os.md) §1.6（API 照合）、[btron3-compat-layer.md](btron3-compat-layer.md)、[../design-pianfs.md](../design-pianfs.md)（篇藏 v0.1）、[../design-process-exec.md](../design-process-exec.md)（柄表・開表）
 
 ## 0. この文書の位置づけ
@@ -150,9 +150,11 @@
 | ロック・交換 | `loc_rec` `xch_fil` | §5 | B3 |
 | 属性・名前 | `chk_fil` `chg_fmd` `chg_fat` `chg_fpw` `chg_fnm` `chg_ftm` `get_dfm` `set_dfm` | 見出しの更新、§6 | B4 |
 | 情報 | `fil_sts` `ofl_sts` | `F_STATE`/`F_LINK` の組立て | B2 |
-| 写像 | `map_rec` `ump_rec` | 漢令 174・175。ファイルの本体の頁を民の窓へ写す（行程内。共有写像は未実装） | B6（一部実装済） |
+| 写像 | `map_rec` `ump_rec` | 漢令 174・175。ファイルの本体の頁を民の窓へ写す（局所・`F_COMMON`・`F_SYSTEM`） | B6 |
 
 ## 8. 漢令帯 128〜159 の割当（案）
+
+> 実装前の案。実際の番号は 128〜175 に広げて割り当てた。確定した番号は [abi-aarch64.md](../abi-aarch64.md) の漢令表を正とする。
 
 1 API につき 1 番号。引数が 6 個を超える API（`cre_fil` など）は、構造体にまとめて 1 つのポインタで渡す。番号は実装時に `abi-aarch64.md` に確定する。
 
