@@ -1860,7 +1860,8 @@ PYEOF
           printf '時元試 無効\n時\n終\n' > "$RTC_IMG.in" ) &
         RTC_FEED=$!
         for _ in $(seq 1 50); do
-            grep -q '^時元試 T4: 削 時元 ' "$OUT/rtc_off.log" 2>/dev/null && break
+            # 最後に出る 時 の行（単調 … ms まで）を待つ。削 時元 の行で止めると 時 の出力より先に QEMU を止めることがある
+            grep -Eq '^時 黄紀 .* 単調 [0-9]+ ms$' "$OUT/rtc_off.log" 2>/dev/null && break
             sleep 0.5
         done
         kill "$RTC_QEMU" 2>/dev/null
