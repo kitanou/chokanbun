@@ -141,11 +141,13 @@
 
 | API | 要点 | 既存実装 | 状態 |
 |---|---|---|---|
-| `cre_nam` | `N_CREATE`/`N_MODIFY`/`N_FORCE`（＋`DELEXIT`）。`ER_EXS`/`ER_NOEXS`/`ER_NOSPC`/`ER_PAR`/`ER_ADR` | `user/btron/gname.mkn` → 漢令 名作 112（`kernel/proc/gname.mkn`）。試験 `名試` 22 項目 | 適合確認済（[台帳](btron3-ledger.md)） |
-| `del_nam` | 削除 | `user/btron/gname.mkn` → 漢令 名削 113（`kernel/proc/gname.mkn`）。試験 `名試` 22 項目 | 適合確認済（[台帳](btron3-ledger.md)） |
-| `get_nam` | 値の取得 | `user/btron/gname.mkn` → 漢令 名取 114（`kernel/proc/gname.mkn`）。試験 `名試` 22 項目 | 適合確認済（[台帳](btron3-ledger.md)） |
+| `cre_nam` | `N_CREATE`/`N_MODIFY`/`N_FORCE`（＋`DELEXIT`）。`ER_EXS`/`ER_NOEXS`/`ER_NOSPC`/`ER_PAR`/`ER_ADR` | `user/btron/gname.mkn` → 漢令 名作 112（`kernel/proc/gname.mkn`）。試験 `名試` 25 項目 | 適合確認済（[台帳](btron3-ledger.md)） |
+| `del_nam` | 削除 | `user/btron/gname.mkn` → 漢令 名削 113（`kernel/proc/gname.mkn`）。試験 `名試` 25 項目 | 適合確認済（[台帳](btron3-ledger.md)） |
+| `get_nam` | 値の取得 | `user/btron/gname.mkn` → 漢令 名取 114（`kernel/proc/gname.mkn`）。試験 `名試` 25 項目 | 適合確認済（[台帳](btron3-ledger.md)） |
 
-**G1 の選択（実装依存・解釈）**: 名前は先頭 8 文字だけを使う（9 文字目以降は無視、原文に誤りの規定なし）。値は下位 32 ビットを保持。表は 16 件。`DELEXIT` は指定した行程を持ち主にし（指定が無い変更では持ち主を変えない）、持ち主の終了で削る。原文の `DELEXIT` の説明は後半が文字化けしているが、残った語から「他の行程が `DELEXIT` を指定済みでも、この指定で持ち主が移る」と読み、子行程が変えた名が子の終了で消えることを `名試` で確かめた。`DELEXIT` を付けない変更で持ち主を変えないのは、この OS の選択（原文の「最後にデータを変更したプロセス」は `DELEXIT` を付けた変更と読む）。表の 16 件は `ER_NOSPC` を起こす大きさで、実装依存。
+**G1 の選択（実装依存・解釈）**: 名前は先頭 8 文字だけを使う（9 文字目以降は無視、原文に誤りの規定なし）。値は下位 32 ビットを保持。表は 16 件。`DELEXIT` は指定した行程を持ち主にし（指定が無い変更では持ち主を変えない）、持ち主の終了で削る。原文どおり、他の行程が `DELEXIT` を指定済みでも、`DELEXIT` を付けて最後に呼んだ行程が持ち主になる。自動削除の有無は生成／変更のたびに指定するので、`DELEXIT` を付けない変更は持ち主を外し、存続する名にする。表の 16 件は `ER_NOSPC` を起こす大きさで、実装依存。
+
+**直した不具合（2026-11-26）**: 核が指定を 0x7FFFFFFF で切っていたため `DELEXIT`（0x8000）が残り、`DELEXIT` 付きの作成・変更が全て `ER_PAR` になっていた。`名試` の `DELEXIT` の項目は名が無いことしか見ておらず通っていた。指定から `DELEXIT` だけを外して見るように直し、作成と子の操作の成功を確かめる項目を足した。
 
 **方針メモ**: 小さい固定表で足りる。実装は最も軽く、1.1 の後に単独で試験しやすい（良い先行候補）。引数検査（`-EFAULT`）の既存経路をそのまま使える。
 
@@ -294,7 +296,7 @@ BTRON3 の `get_tim`・`get_tod`・`set_tim`・`set_tod` の STIME と `DATE_TIM
 | 状態 | 節 |
 |---|---|
 | 実装済（節単位） | 1.6（41 関数。`F_SYSTEM` の写像と `syn_fls` の永続化まで）、1.1（16 関数。`ext_prc` の資源解放・`prc_sts` の名前・`get_inf` の stime・副タスクのメッセージ待ちと排他セマフォの返却まで） |
-| 適合確認済 | 1.4（API 3 本。`名試` 22 項目。[台帳](btron3-ledger.md)） |
+| 適合確認済 | 1.4（API 3 本。`名試` 25 項目。[台帳](btron3-ledger.md)） |
 | 実装済・未検証 | 1.5（API 3 本 + `malloc` 系 18 関数。試験は QEMU 上 `貯試` 45 項目）、1.7（API 20 本。試験は QEMU 上 `件試` 73 項目。実機の入力は核内の模型で代用）、1.8（API 9 本。試験は QEMU 上 `設試` 97 項目。実機は核内の模型 4 ユニットで代用） |
 | 実装済・検証済（一部） | 1.2（`信試` 46 項目・`信手試` 25 項目。`def_msg`/`ret_msg`・`MH_*` を含む）、1.10 の `get_ver`/`get_cnf`（`系試` 38 項目）、`def_exc`/`ret_exc`（`例試` 16 項目。同期例外の upcall のみ） |
 | 実装済・未検証（API 単位） | 1.9 の `set_tim`/`set_tod`、1.1 の `get_usr`/`chg_usr`/`get_tid`/`ter_prc` |
@@ -312,7 +314,7 @@ BTRON3 の `get_tim`・`get_tod`・`set_tim`・`set_tod` の STIME と `DATE_TIM
 
 ## 未解決の確認事項
 
-- 原文の文字化け箇所（`P_INFO`、`rcv_mbf` 末尾、`get_nam` の戻り動作、タイムアウト単位）を原文ページで直接確認する。
+- 原文の文字化け箇所（`P_INFO`、`rcv_mbf` 末尾、タイムアウト単位）を原文ページで直接確認する。`get_nam` は 2026-11-26 に確認済み（欠けていたのは `cre_nam` の `DELEXIT` の文で、取得時の `iconv` が後半を落としていた。`tools/spec_matrix.py fetch` を Python の復号に替えた）。他の箇所も同じ原因の可能性がある。
 - `ER_*` の数値は **規範ページに規定が無いことを確認した**（G0）。実装依存として `(eclass<<16)|detail`、eclass=-1 を選び、`user/btron/er.mkn` に理由を記録した。`T_FOREVER` など他の定数値は各節の定数定義で引き続き確認する。
 - 基本データタイプ（B/H/W/UB/UH/UW/ID/MSEC/STIME/TC/ERR/WERR）の幅は共有データ編 第1章で確認済み（`user/btron/types.mkn`）。
 - ~~副タスクを持つか（`cre_tsk` 系）。持たない場合は「非適合／未対応」として理由を記録する必要がある。~~ 案 A（行程表の枠を従属させる）で実装した。残る非適合は、副タスクがメッセージ待ちをできない点と、持った排他セマフォを解放しない点（§1.1 の副タスクの制限）。
