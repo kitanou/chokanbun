@@ -1210,10 +1210,10 @@ if [ -f "$OUT/kernel.elf" ]; then
         # --- #42 G1: グローバル名 (cre_nam / del_nam / get_nam) -------------------
         GN_N="$(grep -ac '^名試 ' "$KLOG" 2>/dev/null)"
         GN_BAD="$(grep -a '^名試 ' "$KLOG" 2>/dev/null | grep -vc '0x0000000000000001$')"
-        if [ "${GN_N:-0}" -eq 21 ] && [ "${GN_BAD:-1}" -eq 0 ]; then
+        if [ "${GN_N:-0}" -eq 22 ] && [ "${GN_BAD:-1}" -eq 0 ]; then
             pass "kernel qemu: BTRON3 互換層 グローバル名 (作成・取得・変更・強制・削除・ER_*・8文字・16件・DELEXIT の ${GN_N} 項目)"
         else
-            fail "kernel qemu: BTRON3 互換層 グローバル名 (項目=${GN_N:-0}/21、失敗=${GN_BAD:-?})"
+            fail "kernel qemu: BTRON3 互換層 グローバル名 (項目=${GN_N:-0}/22、失敗=${GN_BAD:-?})"
             grep -a '^名試 ' "$KLOG" 2>/dev/null | sed 's/^/      /'
         fi
         K_UNK="$(grep -ac '殻不明' "$KLOG" 2>/dev/null)"
