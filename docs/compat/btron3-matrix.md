@@ -53,7 +53,7 @@
 | `ext_prc` | `VOID ext_prc(W code)` | `msg.mkn` | ○ | あり | — | —（核が返す） |  |
 | `ter_prc` | `ERR ter_prc(W pid, W code, W opt)` | `proc.mkn` | ○ | あり | `ER_SELF` `ER_NOPRC` `ER_LEVEL` `ER_PAR` | —（核が返す） |  |
 | `chg_pri` | `WERR chg_pri(W id, W pri, W opt)` | `proc.mkn` | ○ | あり | `ER_NOPRC` `ER_ID` `ER_PPRI` `ER_PAR` | —（核が返す） |  |
-| `prc_sts` | `WERR prc_sts(W pid, P_STATE* buff, TC* name)` | `proc.mkn` | ○ | あり | — | —（核が返す） |  |
+| `prc_sts` | `WERR prc_sts(W pid, P_STATE* buff, TC* name)` | `proc.mkn` | ○ | あり | `ER_ADR` `ER_NOPRC` | —（核が返す） |  |
 | `chg_usr` | `ERR chg_usr(P_USER* buff)` | `proc.mkn` | ○ | あり | `ER_ADR` `ER_PAR` | —（核が返す） |  |
 | `get_usr` | `WERR get_usr(W pid, P_USER* buff)` | `proc.mkn` | ○ | あり | `ER_ADR` `ER_NOPRC` | —（核が返す） |  |
 | `get_inf` | `ERR get_inf(W pid, P_INFO* buff)` | `proc.mkn` | ○ | あり | `ER_ADR` `ER_NOPRC` | —（核が返す） |  |
@@ -370,47 +370,47 @@
 | `wopn_wnd` | `WID wopn_wnd(UW attr, UW par, RECT *r, RECT *org, W pict, TC *tit, PAT *bgpat, WDDISP * atr)` | `wnd.mkn` | ○ | あり | `EX_ADR` `EX_NOSPC` `EX_WID` `EX_WPRC` `EX_WND` | `EX_WPRC` | 実装依存: ウィンドウの枠・タイトルバー・影の形 (A) |
 | `wopn_iwd` | `WID wopn_iwd(W gid)` | `wnd.mkn` | ○ | あり | `EX_NOSPC` `EG_GID` `EX_WPRC` | `EX_NOSPC` `EX_WPRC` |  |
 | `wopn_pwd` | `WID wopn_pwd(RECT *r)` | `wnd.mkn` | ○ | あり | `EX_ADR` `EX_NOSPC` | `EX_NOSPC` |  |
-| `wcls_wnd` | `ERR wcls_wnd(W wid, W opt)` | `wnd.mkn` | ○ | あり | `EX_WID` `EX_ADR` |  |  |
-| `wchg_wnd` | `W wchg_wnd(W wid, RECT *r, W mode)` | `wnd.mkn` | ○ | あり | `EX_ADR` `EX_PAR` `EX_WID` `EX_WND` |  | 実装依存: 全面モードの見た目 (A) |
-| `wmov_wnd` | `W wmov_wnd(W wid, RECT *newr)` | `wnd.mkn` | ○ | あり | `EX_ADR` `EX_WID` `EX_WND` |  |  |
+| `wcls_wnd` | `ERR wcls_wnd(W wid, W opt)` | `wnd.mkn` | ○ | あり | `EX_WID` `EX_ADR` | `EX_WID` |  |
+| `wchg_wnd` | `W wchg_wnd(W wid, RECT *r, W mode)` | `wnd.mkn` | ○ | あり | `EX_ADR` `EX_PAR` `EX_WID` `EX_WND` | `EX_WID` | 実装依存: 全面モードの見た目 (A) |
+| `wmov_wnd` | `W wmov_wnd(W wid, RECT *newr)` | `wnd.mkn` | ○ | あり | `EX_ADR` `EX_WID` `EX_WND` | `EX_WID` |  |
 | `wmov_drg` | `W wmov_drg(WEVENT *evt, RECT *newr)` | `wnd.mkn` | ○ | あり | `EX_WID` `EX_PAR` `EX_ADR` `EX_WND` | `EX_PAR` |  |
-| `wrsz_wnd` | `W wrsz_wnd(W wid, RECT *newr)` | `wnd.mkn` | ○ | あり | `EX_ADR` `EX_PAR` `EX_WID` `EX_WND` |  |  |
+| `wrsz_wnd` | `W wrsz_wnd(W wid, RECT *newr)` | `wnd.mkn` | ○ | あり | `EX_ADR` `EX_PAR` `EX_WID` `EX_WND` | `EX_WID` |  |
 | `wrsz_drg` | `W wrsz_drg(WEVENT *evt, RECT *limit, RECT *newr)` | `wnd.mkn` | ○ | あり | `EX_ADR` `EX_PAR` `EX_WID` `EX_WND` | `EX_PAR` |  |
-| `wscr_wnd` | `W wscr_wnd(W wid, RECT *r, W dh, W dv, W mode)` | `wnd.mkn` | ○ | あり | `EX_ADR` `EX_PAR` `EX_WID` `EX_WND` | `EX_WND` |  |
-| `wsta_dsp` | `W wsta_dsp(W wid, RECT *r, RLIST *rlst)` | `wnd.mkn` | ○ | あり | `EX_ADR` `EX_WID` `EX_WND` | `EX_WND` |  |
-| `wend_dsp` | `W wend_dsp(W wid)` | `wnd.mkn` | ○ | あり | `EX_WID` `EX_WND` `EX_ADR` | `EX_WND` `EX_ADR` |  |
+| `wscr_wnd` | `W wscr_wnd(W wid, RECT *r, W dh, W dv, W mode)` | `wnd.mkn` | ○ | あり | `EX_ADR` `EX_PAR` `EX_WID` `EX_WND` | `EX_WID` `EX_WND` |  |
+| `wsta_dsp` | `W wsta_dsp(W wid, RECT *r, RLIST *rlst)` | `wnd.mkn` | ○ | あり | `EX_ADR` `EX_WID` `EX_WND` | `EX_WID` `EX_WND` |  |
+| `wend_dsp` | `W wend_dsp(W wid)` | `wnd.mkn` | ○ | あり | `EX_WID` `EX_WND` `EX_ADR` | `EX_WID` `EX_WND` `EX_ADR` |  |
 | `wchk_dsp` | `W wchk_dsp(W wid)` | `wnd.mkn` | ○ | あり | `EX_WID` `EX_WND` | `EX_WND` |  |
-| `wsta_drg` | `GID wsta_drg(W wid, W lock)` | `wnd.mkn` | ○ | あり | `EX_DRAG` `EX_NOSPC` `EX_WID` `EX_WND` `EX_ADR` |  |  |
+| `wsta_drg` | `GID wsta_drg(W wid, W lock)` | `wnd.mkn` | ○ | あり | `EX_DRAG` `EX_NOSPC` `EX_WID` `EX_WND` `EX_ADR` | `EX_WID` |  |
 | `wend_drg` | `ERR wend_drg(void)` | `wnd.mkn` | ○ | あり | `EX_DRAG` |  |  |
 | `wget_drg` | `W wget_drg(PNT *pos, WEVENT *evt)` | `wnd.mkn` | ○ | あり | `EX_ADR` `EX_DRAG` |  |  |
 | `wget_evt` | `W wget_evt(WEVENT *evt, W mode)` | `wnd.mkn` | ○ | あり | `EX_ADR` |  |  |
 | `wugt_evt` | `ERR wugt_evt(WEVENT *evt)` | `wnd.mkn` | ○ | あり | `EX_ADR` `EX_NOSPC` |  |  |
 | `wpas_evt` | `ERR wpas_evt(WEVENT *evt)` | `wnd.mkn` | ○ | あり | `EX_ADR` `EX_PAR` |  |  |
-| `wswi_wnd` | `ERR wswi_wnd(W wid, WEVENT *evt)` | `wnd.mkn` | ○ | あり | `EX_ADR` `EX_PAR` `EX_WID` `EX_WND` |  |  |
+| `wswi_wnd` | `ERR wswi_wnd(W wid, WEVENT *evt)` | `wnd.mkn` | ○ | あり | `EX_ADR` `EX_PAR` `EX_WID` `EX_WND` | `EX_WID` |  |
 | `wsnd_evt` | `W wsnd_evt(WEVENT *evt)` | `wnd.mkn` | ○ | あり | `EX_ADR` `EX_PAR` `EX_WID` `EX_WND` | `EX_WND` |  |
 | `wrsp_evt` | `ERR wrsp_evt(WEVENT *evt, W nak)` | `wnd.mkn` | ○ | あり | `EX_ADR` `EX_PAR` |  |  |
 | `wwai_rsp` | `W wwai_rsp(WEVENT *evt, W cmd, UW tmout)` | `wnd.mkn` | ○ | あり | `EX_ADR` `EX_PAR` |  |  |
 | `wreq_dsp` | `ERR wreq_dsp(W wid)` | `wnd.mkn` | ○ | あり | — |  |  |
 | `wfnd_wnd` | `W wfnd_wnd(PNT *gpos, PNT *lpos, W *wid)` | `wnd.mkn` | ○ | あり | `EX_ADR` |  |  |
 | `wget_act` | `WID wget_act(W *pid)` | `wnd.mkn` | ○ | あり | `EX_ADR` |  |  |
-| `wget_tit` | `W wget_tit(W wid, W *pict, TC *title)` | `wnd.mkn` | ○ | あり | `EX_ADR` `EX_WID` `EX_WND` | `EX_WND` |  |
-| `wset_tit` | `ERR wset_tit(W wid, W pict, TC *title, W mode)` | `wnd.mkn` | ○ | あり | `EX_ADR` `EX_WID` `EX_WND` | `EX_WND` |  |
-| `wget_sts` | `W wget_sts(W wid, WDSTAT *stat, WDDISP *atr)` | `wnd.mkn` | ○ | あり | `EX_ADR` `EX_WID` `EX_WND` | `EX_WND` |  |
-| `wget_gid` | `GID wget_gid(W wid)` | `wnd.mkn` | ○ | あり | `EX_WID` |  |  |
-| `wset_bgp` | `ERR wset_bgp(W wid, PAT *pat)` | `wnd.mkn` | ○ | あり | `EX_ADR` `EX_NOSPC` `EX_PAR` `EX_WID` `EX_WND` | `EX_NOSPC` `EX_WND` |  |
-| `wget_bgp` | `W wget_bgp(W wid, PAT *pat, W size)` | `wnd.mkn` | ○ | あり | `EX_ADR` `EX_PAR` `EX_WID` `EX_WND` | `EX_WND` |  |
-| `wera_wnd` | `ERR wera_wnd(W wid, RECT *r)` | `wnd.mkn` | ○ | あり | `EX_ADR` `EX_WID` `EX_WND` | `EX_WND` |  |
+| `wget_tit` | `W wget_tit(W wid, W *pict, TC *title)` | `wnd.mkn` | ○ | あり | `EX_ADR` `EX_WID` `EX_WND` | `EX_WID` `EX_WND` |  |
+| `wset_tit` | `ERR wset_tit(W wid, W pict, TC *title, W mode)` | `wnd.mkn` | ○ | あり | `EX_ADR` `EX_WID` `EX_WND` | `EX_WID` `EX_WND` |  |
+| `wget_sts` | `W wget_sts(W wid, WDSTAT *stat, WDDISP *atr)` | `wnd.mkn` | ○ | あり | `EX_ADR` `EX_WID` `EX_WND` | `EX_WID` `EX_WND` |  |
+| `wget_gid` | `GID wget_gid(W wid)` | `wnd.mkn` | ○ | あり | `EX_WID` | `EX_WID` |  |
+| `wset_bgp` | `ERR wset_bgp(W wid, PAT *pat)` | `wnd.mkn` | ○ | あり | `EX_ADR` `EX_NOSPC` `EX_PAR` `EX_WID` `EX_WND` | `EX_NOSPC` `EX_WID` `EX_WND` |  |
+| `wget_bgp` | `W wget_bgp(W wid, PAT *pat, W size)` | `wnd.mkn` | ○ | あり | `EX_ADR` `EX_PAR` `EX_WID` `EX_WND` | `EX_WID` `EX_WND` |  |
+| `wera_wnd` | `ERR wera_wnd(W wid, RECT *r)` | `wnd.mkn` | ○ | あり | `EX_ADR` `EX_WID` `EX_WND` | `EX_WID` `EX_WND` |  |
 | `wchg_dsp` | `ERR wchg_dsp(WDDISP *atr, PAT *bgpat)` | `wnd.mkn` | ○ | あり | `EX_ADR` `EX_PAR` |  |  |
-| `wget_bar` | `ERR wget_bar(W wid, W *rbar, W *bbar, W *lbar)` | `wnd.mkn` | ○ | あり | `EX_ADR` `EX_WID` `EX_WND` |  |  |
-| `wget_dat` | `ERR wget_dat(W wid, W *dat)` | `wnd.mkn` | ○ | あり | `EX_ADR` `EX_WID` |  |  |
-| `wset_dat` | `ERR wset_dat(W wid, W dat)` | `wnd.mkn` | ○ | あり | `EX_WID` |  |  |
-| `wget_wrk` | `ERR wget_wrk(W wid, RECT *r)` | `wnd.mkn` | ○ | あり | `EX_ADR` `EX_WID` `EX_WND` |  |  |
-| `wset_wrk` | `ERR wset_wrk(W wid, RECT *r)` | `wnd.mkn` | ○ | あり | `EX_ADR` `EX_WID` `EX_WND` |  |  |
-| `wget_org` | `ERR wget_org(W wid, W *parent, RECT *org)` | `wnd.mkn` | ○ | あり | `EX_ADR` `EX_WID` `EX_WND` |  |  |
+| `wget_bar` | `ERR wget_bar(W wid, W *rbar, W *bbar, W *lbar)` | `wnd.mkn` | ○ | あり | `EX_ADR` `EX_WID` `EX_WND` | `EX_WID` |  |
+| `wget_dat` | `ERR wget_dat(W wid, W *dat)` | `wnd.mkn` | ○ | あり | `EX_ADR` `EX_WID` | `EX_WID` |  |
+| `wset_dat` | `ERR wset_dat(W wid, W dat)` | `wnd.mkn` | ○ | あり | `EX_WID` | `EX_WID` |  |
+| `wget_wrk` | `ERR wget_wrk(W wid, RECT *r)` | `wnd.mkn` | ○ | あり | `EX_ADR` `EX_WID` `EX_WND` | `EX_WID` |  |
+| `wset_wrk` | `ERR wset_wrk(W wid, RECT *r)` | `wnd.mkn` | ○ | あり | `EX_ADR` `EX_WID` `EX_WND` | `EX_WID` |  |
+| `wget_org` | `ERR wget_org(W wid, W *parent, RECT *org)` | `wnd.mkn` | ○ | あり | `EX_ADR` `EX_WID` `EX_WND` | `EX_WID` |  |
 | `wset_org` | `ERR wset_org(W wid, W parent, RECT *org)` | `wnd.mkn` | ○ | あり | `EX_ADR` `EX_WID` `EX_WND` |  |  |
 | `wlst_wnd` | `W wlst_wnd(W wid, W size, W *wids)` | `wnd.mkn` | ○ | あり | `EX_ADR` |  |  |
 | `wget_dmn` | `ERR wget_dmn(TC **dmenu)` | `wndx.mkn` | ○ | あり | `EX_ADR` |  | 実装依存: 表示管理メニューの項目名 (A) |
-| `wexe_dmn` | `W wexe_dmn(W item)` | `wndx.mkn` | ○ | あり | `EX_PAR` `EX_WPRC` | `EX_WPRC` |  |
+| `wexe_dmn` | `W wexe_dmn(W item)` | `wndx.mkn` | ○ | あり | `EX_PAR` `EX_WPRC` |  |  |
 | `wdef_fep` | `ERR wdef_fep(W onoff)` | `wnd.mkn` | ○ | あり | `EX_LIMIT` `EX_WPRC` |  |  |
 | `wchk_dck` | `W wchk_dck(UW first)` | `wnd.mkn` | ○ | あり | `EX_WPRC` |  |  |
 | `wchg_dck` | `W wchg_dck(W time)` | `wnd.mkn` | ○ | あり | — |  |  |
@@ -424,7 +424,7 @@
 | 関数 | 原型 | 実装 | 引数 | 試験 | 原文のエラー | 本体に現れないエラー | 注記 |
 |---|---|---|---|---|---|---|---|
 | `mcre_men` | `MNID mcre_men(W nitem, MENUITEM *item, MENUDISP *attr)` | `menu.mkn` | ○ | あり | `EX_ADR` `EX_NOSPC` `EX_PAR` |  |  |
-| `mopn_men` | `MNID mopn_men(W dnum)` | `menu.mkn` | ○ | あり | — |  |  |
+| `mopn_men` | `MNID mopn_men(W dnum)` | `menu.mkn` | ○ | あり | `EX_DNUM` `EX_NOSPC` `EX_PAR` | `EX_NOSPC` |  |
 | `mdel_men` | `ERR mdel_men(W mid)` | `menu.mkn` | ○ | あり | `EX_MID` |  |  |
 | `msel_men` | `W msel_men(W mid, PNT pos)` | `menu.mkn` | ○ | あり | `EX_MID` |  |  |
 | `mfnd_key` | `W mfnd_key(W mid, TC ch)` | `menu.mkn` | ○ | あり | `EX_MID` |  |  |
@@ -610,7 +610,7 @@
 | `fget_not` | `WERR fget_not(FID fid, B *buff, UW len)` | `font.mkn` | ○ | あり | `EX_ADR` `EX_FTID` `EX_PAR` |  |  |
 | `flst_fon` | `WERR flst_fon(FID fid, W mode, FLIST *buff, UW len)` | `font.mkn` | ○ | あり | `EX_ADR` `EX_FTID` `EX_PAR` |  |  |
 | `fopn_fon` | `WERR fopn_fon()` | `font.mkn` | ○ | あり | `EX_NOMEM` |  |  |
-| `fcls_fon` | `ERR fcls_fon(W fdesc)` | `font.mkn` | ○ | あり | — |  |  |
+| `fcls_fon` | `ERR fcls_fon(W fdesc)` | `font.mkn` | ○ | あり | `EX_FTD` |  |  |
 | `fset_fon` | `ERR fset_fon(W fdesc, FSSPEC *spec)` | `font.mkn` | ○ | あり | `EX_ADR` `EX_FTD` `EX_PAR` |  |  |
 | `fget_fon` | `ERR fget_fon(W fdesc, FSSPEC *spec)` | `font.mkn` | ○ | あり | `EX_ADR` `EX_FTD` |  |  |
 | `fset_ang` | `ERR fset_ang(W fdesc, W ang);` | `font.mkn` | ○ | あり | `EX_FTD` `EX_PAR` |  |  |
@@ -664,17 +664,4 @@
 | `rlst_prn` | `WERR rlst_prn(PR_INFO *info, W cnt)` | `prn.mkn` | ○ | あり | `EX_ADR` |  |  |
 | `rget_cnf` | `WERR rget_cnf(TC *prname, PR_CONF *cnf)` | `prn.mkn` | ○ | あり | `EX_ADR` `EX_NOEXS` |  |  |
 | `rset_cnf` | `ERR rset_cnf(TC *prname, PR_CONF *cnf)` | `prn.mkn` | ○ | あり | `EX_ADR` `EX_LIMIT` `EX_EXS` `EX_NOEXS` `EX_PAR` |  |  |
-
-
-
-
-
-
-
-
-
-
-
-
-
 
