@@ -141,11 +141,11 @@
 
 | API | 要点 | 既存実装 | 状態 |
 |---|---|---|---|
-| `cre_nam` | `N_CREATE`/`N_MODIFY`/`N_FORCE`（＋`DELEXIT`）。`ER_EXS`/`ER_NOEXS`/`ER_NOSPC`/`ER_PAR`/`ER_ADR` | `user/btron/gname.mkn` → 漢令 名作 112（`kernel/proc/gname.mkn`）。試験 `名試` 21 項目 | 実装済・未検証 |
-| `del_nam` | 削除 | `user/btron/gname.mkn` → 漢令 名削 113（`kernel/proc/gname.mkn`）。試験 `名試` 21 項目 | 実装済・未検証 |
-| `get_nam` | 値の取得 | `user/btron/gname.mkn` → 漢令 名取 114（`kernel/proc/gname.mkn`）。試験 `名試` 21 項目 | 実装済・未検証 |
+| `cre_nam` | `N_CREATE`/`N_MODIFY`/`N_FORCE`（＋`DELEXIT`）。`ER_EXS`/`ER_NOEXS`/`ER_NOSPC`/`ER_PAR`/`ER_ADR` | `user/btron/gname.mkn` → 漢令 名作 112（`kernel/proc/gname.mkn`）。試験 `名試` 22 項目 | 適合確認済（[台帳](btron3-ledger.md)） |
+| `del_nam` | 削除 | `user/btron/gname.mkn` → 漢令 名削 113（`kernel/proc/gname.mkn`）。試験 `名試` 22 項目 | 適合確認済（[台帳](btron3-ledger.md)） |
+| `get_nam` | 値の取得 | `user/btron/gname.mkn` → 漢令 名取 114（`kernel/proc/gname.mkn`）。試験 `名試` 22 項目 | 適合確認済（[台帳](btron3-ledger.md)） |
 
-**G1 の選択（実装依存・解釈）**: 名前は先頭 8 文字だけを使う（9 文字目以降は無視、原文に誤りの規定なし）。値は下位 32 ビットを保持。表は 16 件。`DELEXIT` は指定した行程を持ち主にし（指定が無い変更では持ち主を変えない）、持ち主の終了で削る — 「作成または最後に変更した行程」の読み方に幅があるため**要確認**。
+**G1 の選択（実装依存・解釈）**: 名前は先頭 8 文字だけを使う（9 文字目以降は無視、原文に誤りの規定なし）。値は下位 32 ビットを保持。表は 16 件。`DELEXIT` は指定した行程を持ち主にし（指定が無い変更では持ち主を変えない）、持ち主の終了で削る。原文の `DELEXIT` の説明は後半が文字化けしているが、残った語から「他の行程が `DELEXIT` を指定済みでも、この指定で持ち主が移る」と読み、子行程が変えた名が子の終了で消えることを `名試` で確かめた。`DELEXIT` を付けない変更で持ち主を変えないのは、この OS の選択（原文の「最後にデータを変更したプロセス」は `DELEXIT` を付けた変更と読む）。表の 16 件は `ER_NOSPC` を起こす大きさで、実装依存。
 
 **方針メモ**: 小さい固定表で足りる。実装は最も軽く、1.1 の後に単独で試験しやすい（良い先行候補）。引数検査（`-EFAULT`）の既存経路をそのまま使える。
 
@@ -294,7 +294,8 @@ BTRON3 の `get_tim`・`get_tod`・`set_tim`・`set_tod` の STIME と `DATE_TIM
 | 状態 | 節 |
 |---|---|
 | 実装済（節単位） | 1.6（41 関数。`F_SYSTEM` の写像と `syn_fls` の永続化まで）、1.1（16 関数。`ext_prc` の資源解放・`prc_sts` の名前・`get_inf` の stime・副タスクのメッセージ待ちと排他セマフォの返却まで） |
-| 実装済・未検証 | 1.4（API 3 本。試験は QEMU 上 21 項目）、1.5（API 3 本 + `malloc` 系 18 関数。試験は QEMU 上 `貯試` 45 項目）、1.7（API 20 本。試験は QEMU 上 `件試` 73 項目。実機の入力は核内の模型で代用）、1.8（API 9 本。試験は QEMU 上 `設試` 97 項目。実機は核内の模型 4 ユニットで代用） |
+| 適合確認済 | 1.4（API 3 本。`名試` 22 項目。[台帳](btron3-ledger.md)） |
+| 実装済・未検証 | 1.5（API 3 本 + `malloc` 系 18 関数。試験は QEMU 上 `貯試` 45 項目）、1.7（API 20 本。試験は QEMU 上 `件試` 73 項目。実機の入力は核内の模型で代用）、1.8（API 9 本。試験は QEMU 上 `設試` 97 項目。実機は核内の模型 4 ユニットで代用） |
 | 実装済・検証済（一部） | 1.2（`信試` 46 項目・`信手試` 25 項目。`def_msg`/`ret_msg`・`MH_*` を含む）、1.10 の `get_ver`/`get_cnf`（`系試` 38 項目）、`def_exc`/`ret_exc`（`例試` 16 項目。同期例外の upcall のみ） |
 | 実装済・未検証（API 単位） | 1.9 の `set_tim`/`set_tod`、1.1 の `get_usr`/`chg_usr`/`get_tid`/`ter_prc` |
 | 実装済・未検証（節単位） | 1.9（取得系・設定系の 4 本。時刻帯は常に 0） |
