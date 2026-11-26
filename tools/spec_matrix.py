@@ -49,7 +49,8 @@ def fetch(work):
         for n in names:
             html = os.path.join(work, d, n + ".html")
             subprocess.run(["curl", "-sL", f"{BASE}/{d}/{n}.html", "-o", html], check=True)
-            raw = subprocess.run(["iconv", "-c", "-f", "ISO-2022-JP", "-t", "UTF-8", html], capture_output=True, check=True).stdout.decode("utf-8", "replace")
+            # iconv は「K\\」(JIS の 0x5C を含む字) の後を ASCII として出し、続く <…> がタグとして消えることがあった。Python の復号を使う。
+            raw = open(html, "rb").read().decode("iso2022_jp", "replace")
             open(os.path.join(work, d, n + ".txt"), "w").write(re.sub(r"<[^>]*>", "", raw))
 
 
