@@ -17,11 +17,11 @@
 | 項目 | 数 |
 |---|---:|
 | `user/btron/er.mkn` が定義する `ER_*` | 42 |
-| 互換層の試験と `時元試` が参照する `ER_*` | 37 |
-| どの試験も参照していない `ER_*` | 5 |
-| BTRON3 互換層の QEMU 試験 | 17 種・743 項目 |
+| 互換層の試験と `時元試` が参照する `ER_*` | 38 |
+| どの試験も参照していない `ER_*` | 4 |
+| BTRON3 互換層の QEMU 試験 | 17 種・747 項目 |
 
-未参照の 5 名は `ER_ERDEV`・`ER_IO`・`ER_NODSK`・`ER_NOMDA`・`ER_XFS`。理由と次の一手は §4 にまとめる。
+未参照の 4 名は `ER_ERDEV`・`ER_IO`・`ER_NODSK`・`ER_NOMDA`（`ER_XFS` は #186 で `録試` に加えた）。理由と次の一手は §4 にまとめる。
 
 `ER_NODEV` は互換層の 17 種には現れないが、RTC 無効の起動で `時元試`（`user/time_test.mkn`）が `get_tim` の戻り値として直接確認している。このため「未参照」には数えない。
 
@@ -72,8 +72,8 @@
 | API | 記載 | 試験 | 直接確認 | 不足 |
 |---|---|---|---|---|
 | `cre_nam` | `ER_EXS` `ER_NOEXS` `ER_NOSPC` `ER_PAR` `ER_ADR` | 名 | 全て | なし |
-| `del_nam` | `ER_NOEXS` | 名 | `ER_NOEXS` | なし |
-| `get_nam` | `ER_NOEXS` `ER_ADR` | 名 | 両方 | なし（戻り動作の原文欠落は別途要確認） |
+| `del_nam` | `ER_ADR` `ER_NOEXS` `ER_PAR` | 名 | 全て | なし |
+| `get_nam` | `ER_ADR` `ER_NOEXS` `ER_PAR` | 名 | 全て（`ER_ADR` は `name`・`data` の両方） | なし |
 
 ### 1.5 メモリ管理
 
@@ -93,7 +93,7 @@
 | `del_fil` | `ER_BUSY` `ER_LOCK` `ER_PERM` `ER_REC` `ER_NOEXS` `ER_ACCES` | 録 | `ER_BUSY` `ER_LOCK` `ER_PERM` `ER_REC` `ER_NOEXS` `ER_ACCES` | なし |
 | `opn_fil` / `cls_fil` | `ER_NOEXS` `ER_PAR` `ER_ADR` `ER_NOFS` `ER_BUSY` `ER_RONLY` `ER_ACCES` `ER_PWD` `ER_FD` `ER_LIMIT` | 録 | `ER_NOEXS` `ER_PAR` `ER_ADR` `ER_NOFS` `ER_BUSY` `ER_RONLY` `ER_ACCES` `ER_PWD` `ER_FD` `ER_LIMIT` | なし |
 | レコード操作（`see_rec`〜`trc_rec`） | `ER_PAR` `ER_ADR` `ER_FD` `ER_ENDR` `ER_REC` `ER_LOCK` `ER_BUSY` `ER_SZOVR` | 録 | 全て | なし |
-| `loc_rec` / `xch_fil` | `ER_PAR` `ER_FD` `ER_LOCK` `ER_BUSY` `ER_XFS` | 録 | `ER_PAR` `ER_FD` `ER_LOCK` `ER_BUSY` | `ER_XFS`（別 FS） |
+| `loc_rec` / `xch_fil` | `ER_PAR` `ER_FD` `ER_LOCK` `ER_BUSY` `ER_XFS` | 録 | 全て（`ER_XFS` は RAM と書込可で接続した SYS の間） | なし |
 | `fil_sts` / `ofl_sts` | `ER_ADR` `ER_FD` | 録 | 両方 | なし |
 | ファイルシステム（`att_fls`〜`chg_fsm`） | `ER_EXS` `ER_BUSY` `ER_NOFS` `ER_NOEXS` `ER_ACCES` `ER_TRON` `ER_RONLY` `ER_FNAME` `ER_PAR` `ER_NODEV` `ER_NOMDA` | 録 | `ER_EXS` `ER_BUSY` `ER_NOFS` `ER_NOEXS` `ER_ACCES` `ER_TRON` `ER_RONLY` `ER_FNAME` `ER_PAR` | `ER_NODEV` `ER_NOMDA` |
 | `map_rec` / `ump_rec` | `ER_FD` `ER_NOSPT` `ER_PAR` `ER_ADR` `ER_ENDR` `ER_REC` `ER_LOCK` `ER_BUSY` `ER_NOEXS` | 録 | 全て | なし |
@@ -178,7 +178,7 @@
 | `ER_SELF` | 信・強 | 自分宛の禁止操作・自分自身の強制終了 |
 | `ER_SZOVR` | 信・録・時元 | メッセージ本体・ファイル本文・時刻文字列の大きさ超過 |
 | `ER_TRON` | 録 | TRON 形式でないファイルシステム |
-| `ER_XFS` | — | 別のファイルシステムをまたぐ操作（`xch_fil`） |
+| `ER_XFS` | 録 | 別のファイルシステムをまたぐ操作（`xch_fil`） |
 
 ## 4. 未検証の `ER_*`
 
@@ -188,11 +188,10 @@
 | `ER_IO` | 1.8 のデバイス読み書き（virtio-blk）の入出力エラー／時間切れ | `kernel/proc/dev.mkn` に経路はあるが、試験がない | virtio の異常応答・タイムアウトを注入する試験を追加する |
 | `ER_NODSK` | 1.6 のディスク容量不足 | 録層は容量超過を `ER_SZOVR`、頁不足を `ER_NOMEM` にしている | 原文の条件と errno 対応を決め、`ER_NODSK` を返す経路を作るか「非対応」と明記する |
 | `ER_NOMDA` | 1.6・1.8 の媒体無し | 取外し可能媒体の模型が無い | 媒体の着脱を模型に足すか、対象外と明記する |
-| `ER_XFS` | 1.6 の `xch_fil` で別 FS の記述子を渡す | 実装経路はあるが、書込可能な FS が 1 つしかない | 2 つ目の書込可能 FS（RAM の別ユニットなど）を用意して 1 件試す |
 
 ## 5. 名前はあるが直接確認がない条件
 
-未参照の 5 名とは別に、`ER_*` 自体は他の試験で参照されていても、特定の API・条件では直接確認がないものがある。2026-10-23 に `gen_fil` の `ER_ACCES`、`del_fil` の `ER_LOCK`、`opn_fil` の `ER_LIMIT`、`xch_fil` の `ER_LOCK`、`cre_prc` の `ER_BUSY` を `録試` に追加した。
+未参照の 4 名とは別に、`ER_*` 自体は他の試験で参照されていても、特定の API・条件では直接確認がないものがある。2026-10-23 に `gen_fil` の `ER_ACCES`、`del_fil` の `ER_LOCK`、`opn_fil` の `ER_LIMIT`、`xch_fil` の `ER_LOCK`、`cre_prc` の `ER_BUSY` を `録試` に追加した。
 
 | API・条件 | 不足している `ER_*` | 補う試験の案 |
 |---|---|---|
@@ -201,7 +200,6 @@
 | `slp_tsk` / `dly_tsk` の待ち中断 | `ER_MINTR` | ハンドラから `MH_BREAK` を送る子を 1 役足す |
 | `get_mbk` / `malloc` の上限 | `ER_LIMIT` | 塊表 32 項満杯、共有域 8 頁づまりを順に作る |
 | FS 操作の装置・媒体 | `ER_NODEV` `ER_NOMDA` | §4 の模型・構成待ち |
-| `xch_fil` の別 FS | `ER_XFS` | 2 つ目の書込可能 FS を接続して試す |
 | `sus_dev` の禁止カウンタ上限 | `ER_LIMIT` | `D_DISSUS` を 32767 回行い、次を試す |
 
 ## 6. 維持方法

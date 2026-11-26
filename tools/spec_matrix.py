@@ -49,7 +49,8 @@ def fetch(work):
         for n in names:
             html = os.path.join(work, d, n + ".html")
             subprocess.run(["curl", "-sL", f"{BASE}/{d}/{n}.html", "-o", html], check=True)
-            raw = subprocess.run(["iconv", "-c", "-f", "ISO-2022-JP", "-t", "UTF-8", html], capture_output=True, check=True).stdout.decode("utf-8", "replace")
+            # iconv は「K\\」(JIS の 0x5C を含む字) の後を ASCII として出し、続く <…> がタグとして消えることがあった。Python の復号を使う。
+            raw = open(html, "rb").read().decode("iso2022_jp", "replace")
             open(os.path.join(work, d, n + ".txt"), "w").write(re.sub(r"<[^>]*>", "", raw))
 
 
@@ -174,9 +175,61 @@ def notes():
     return d
 
 
+LEDGER = os.path.join(ROOT, "docs/compat/btron3-ledger.tsv")
+# 台帳の列: 関数 節 基準1〜8 確認した版 試験 根拠
+CRITERIA = ["要求", "正常", "異常", "境界", "相互作用", "独立性", "再現性", "記録"]
+
+
+def ledger():
+    """btron3-ledger.tsv を読む。# の行は註。戻りは 関数 → 欄の辞書。"""
+    d = {}
+    if os.path.exists(LEDGER):
+        for line in open(LEDGER, encoding="utf-8"):
+            line = line.rstrip("\n")
+            if not line or line.startswith("#"):
+                continue
+            c = line.split("\t")
+            if len(c) < 13:
+                sys.exit(f"btron3-ledger.tsv: 欄が足りない: {line}")
+            d[c[0].strip()] = {"節": c[1], "基準": c[2:10], "版": c[10], "試験": c[11], "根拠": c[12]}
+    return d
+
+
+def confirmed(row):
+    """基準 1〜8 がすべて ○（規定が無い基準は —）なら適合確認済。1 つでも × なら違う。"""
+    return all(x.strip() in ("○", "—") for x in row["基準"]) and any(x.strip() == "○" for x in row["基準"])
+
+
+def note_for(name, nt, lg):
+    n = nt.get(name, "")
+    if name in lg and confirmed(lg[name]):
+        mark = "**適合確認済**（[台帳](btron3-ledger.md)）"
+        return mark + ("。" + n if n else "")
+    return n
+
+
+def ledger_md():
+    lg = ledger()
+    L = ["# BTRON3 適合確認の台帳（生成物）", "",
+         "> 親Issue: [#42](https://github.com/kitanou/chokanbun/issues/42) Phase 5。`python3 tools/spec_matrix.py ledger -` で [btron3-ledger.tsv](btron3-ledger.tsv) から生成する。",
+         "> 合否基準は [btron3-test-plan.md](btron3-test-plan.md) §3、独立性（基準 6）の判定規則は同 §3.1。基準 1〜8 がすべて ○ の関数だけを「適合確認済」とし、[btron3-matrix.md](btron3-matrix.md) の注記に出す。", "",
+         "記号: ○ 満たす、× 満たさない、— 対象が無い（規定が無い）。", "",
+         "| 関数 | 節 | " + " | ".join(f"{i + 1} {c}" for i, c in enumerate(CRITERIA)) + " | 状態 | 確認した版 | 試験 | 根拠 |",
+         "|" + "---|" * (len(CRITERIA) + 6)]
+    n = 0
+    for name, r in lg.items():
+        ok = confirmed(r)
+        n += ok
+        st = "適合確認済" if ok else "実装済・未検証"
+        L.append(f"| `{name}` | {r['節']} | " + " | ".join(x.strip() for x in r["基準"]) + f" | {st} | {r['版']} | {r['試験']} | {r['根拠']} |")
+    L += ["", f"**適合確認済: {n} 関数**（台帳にある {len(lg)} 関数のうち）。", ""]
+    return "\n".join(L)
+
+
 def renote(path):
     """生成済みの btron3-matrix.md の「注記」の列だけを notes から入れ直す (原文を取り直さずに注記を更新する)。"""
     nt = notes()
+    lg = ledger()
     out = []
     for line in open(path, encoding="utf-8").read().split("\n"):
         if line.startswith("| 関数 | 原型 |"):
@@ -186,7 +239,7 @@ def renote(path):
         elif line.startswith("| `"):
             cells = line.split("|")[1:-1]
             name = cells[0].strip().strip("`")
-            cells = cells[:7] + [" " + nt.get(name, "") + " "]
+            cells = cells[:7] + [" " + note_for(name, nt, lg) + " "]
             line = "|" + "|".join(cells) + "|"
         out.append(line)
     return "\n".join(out)
@@ -223,7 +276,8 @@ def matrix(work):
     L.append("- 試験: `user/btron_*.mkn`（互換層の試験プログラム）がその名前を呼んでいるか。")
     L.append("- 本体に現れないエラー: 原文のエラーコードのうち、**その関数の本体に名前が直接現れないもの**。他の関数が返す場合や、そもそも未対応の場合がある（要確認）。第1章は核が返すので対象外。")
     L.append("- 3.8 は日本語名の関数で実装している。定義の直前の註に BTRON 名が書いてあるものを実装済みと数える（誤差があり得る）。対応は [design-object-model.md](design-object-model.md) と [btron3-conformance.md](btron3-conformance.md) の 3.8 の行を参照。")
-    L.append("- 状態は機械的な判定で、「適合確認済み」は人が根拠を確認して付ける。ここでは 0 件。")
+    lg = ledger()
+    L.append(f"- 状態は機械的な判定で、「適合確認済」は [btron3-ledger.md](btron3-ledger.md) で基準 1〜8 をすべて満たした関数だけに注記で付ける（{sum(1 for r in lg.values() if confirmed(r))} 関数）。")
     L.append("- 注記: [btron3-matrix-notes.tsv](btron3-matrix-notes.tsv) から入れる。「実装依存」は原文が実装に任せる画面デザイン（[btron3-phase3-gap.md](btron3-phase3-gap.md) の A）で、操作の意味は仕様どおり。注記だけ直すときは `python3 tools/spec_matrix.py renote docs/compat/btron3-matrix.md`。")
     L.append("")
     nt = notes()
@@ -234,11 +288,11 @@ def matrix(work):
     for title, key, funcs in rows:
         n = len(funcs)
         ni = sum(1 for f in funcs if f[0] in impl)
-        nt = sum(1 for f in funcs if f[0] in impl and tested(f[0], impl, tst))
+        ntst = sum(1 for f in funcs if f[0] in impl and tested(f[0], impl, tst))
         tot["all"] += n
         tot["impl"] += ni
-        tot["test"] += nt
-        summary.append((title, n, ni, nt))
+        tot["test"] += ntst
+        summary.append((title, n, ni, ntst))
         body.append(f"## {title}（{n} 関数）")
         body.append("")
         body.append("| 関数 | 原型 | 実装 | 引数 | 試験 | 原文のエラー | 本体に現れないエラー | 注記 |")
@@ -266,7 +320,7 @@ def matrix(work):
             ar = arg_check(name, proto, impl, key)
             if ar == "×":
                 nbad_args.append((key, name))
-            body.append(f"| `{name}` | {'`' + pr + '`' if pr else '—'} | {im} | {ar} | {te} | {errs} | {cell} | {nt.get(name, '')} |")
+            body.append(f"| `{name}` | {'`' + pr + '`' if pr else '—'} | {im} | {ar} | {te} | {errs} | {cell} | {note_for(name, nt, lg)} |")
         body.append("")
     L.append("- 引数: 原型の引数の数と、実装の受ける引数の数が合うか（○ 合う、× 合わない、— 比べられない）。型・意味までは見ない。")
     L.append("")
@@ -274,8 +328,8 @@ def matrix(work):
     L.append("")
     L.append("| 節 | 関数 | 実装 | 実装＋試験 |")
     L.append("|---|---|---|---|")
-    for title, n, ni, nt in summary:
-        L.append(f"| {title} | {n} | {ni} | {nt} |")
+    for title, n, ni, ntst in summary:
+        L.append(f"| {title} | {n} | {ni} | {ntst} |")
     L.append(f"| **合計** | **{tot['all']}** | **{tot['impl']}** | **{tot['test']}** |")
     L.append("")
     L.extend(body)
@@ -520,7 +574,9 @@ if __name__ == "__main__":
         print(tad_md(work))
     elif cmd == "consts":
         print(consts_md(work))
+    elif cmd == "ledger":
+        print(ledger_md())
     elif cmd == "shared":
         print(shared_md(work))
     else:
-        sys.exit("使い方: spec_matrix.py fetch|matrix <作業ディレクトリ>")
+        sys.exit("使い方: spec_matrix.py fetch|matrix|renote|tadvec|tadcat|consts|shared|ledger <作業ディレクトリ>")
