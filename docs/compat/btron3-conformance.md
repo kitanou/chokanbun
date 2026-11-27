@@ -78,7 +78,7 @@
 | 1.7 | イベント管理（イベント、キーボード、ポインティングデバイス） | kernel/event.html | `kernel/proc/evt.mkn`、`user/btron/evt.mkn`（漢令 192〜211） | 実装済・未検証（[詳細](btron3-os.md)） |
 | 1.8 | デバイス管理 | kernel/device.html | `kernel/proc/dev.mkn`、`user/btron/dev.mkn`（漢令 212〜220） | 実装済・未検証（[詳細](btron3-os.md)） |
 | 1.9 | 時計管理 | kernel/clk.html | `user/btron/clk.mkn`（漢令 176〜178、PL031 RTC） | 実装済・未検証（`get_tim`/`get_tod`/`set_tim`/`set_tod` の 4 本。時刻帯の設定手段が無く常に 0、[詳細](btron3-os.md)） |
-| 1.10 | システム管理 | kernel/system.html | `kernel/proc/sys.mkn`、`kernel/proc/exc.mkn`、`user/btron/sys.mkn`、`user/btron/exc.mkn`（漢令 179〜182。`get_ver`/`get_cnf`/`def_exc`/`ret_exc`） | 実装済・検証済（`系試` 38 項目・`例試` 16 項目。例外は同期例外の upcall のみ、[詳細](btron3-os.md)） |
+| 1.10 | システム管理 | kernel/system.html | `kernel/proc/sys.mkn`、`kernel/proc/exc.mkn`、`user/btron/sys.mkn`、`user/btron/exc.mkn`（漢令 179〜182。`get_ver`/`get_cnf`/`def_exc`/`ret_exc`） | `ret_exc`・`get_ver`・`get_cnf` は**適合確認済**（[台帳](btron3-ledger.md)）、`def_exc` は実装済・検証済（`系試` 39 項目・`例試` 18 項目。例外は同期例外の upcall のみ、[詳細](btron3-os.md)） |
 
 ### 第2章 ディスプレイプリミティブ
 
@@ -127,10 +127,10 @@ API 一覧: [btron3-api-inventory.md](btron3-api-inventory.md)。関数別の実
 
 | **合計** | **495** | **495** | **482** |
 
-共有データ編は 68 節（[btron3-shared-data-sections.md](btron3-shared-data-sections.md)）: 実装済・未検証 4、部分適合 45、未実装 19（Phase 1 の記録は [btron3-phase1.md](btron3-phase1.md)）。**適合確認済みは第2編 1.4 の 3 関数だけ**（[台帳](btron3-ledger.md)。関数ごとの機械判定は「名前の有無」であり、仕様どおりかは台帳で確かめる）。
+共有データ編は 68 節（[btron3-shared-data-sections.md](btron3-shared-data-sections.md)）: 実装済・未検証 4、部分適合 45、未実装 19（Phase 1 の記録は [btron3-phase1.md](btron3-phase1.md)）。**適合確認済みは第2編 1.4 と 1.10 の 6 関数だけ**（[台帳](btron3-ledger.md)。関数ごとの機械判定は「名前の有無」であり、仕様どおりかは台帳で確かめる）。
 
 - 節単位の状態は最も低い API に引きずられるため、実質の進捗は第1章の API 単位表（[btron3-os.md](btron3-os.md)）で見る。
-- **適合確認済は 3 関数**（1.4 の `cre_nam`・`del_nam`・`get_nam`。[台帳](btron3-ledger.md)）。合否基準と既存試験の対応は [btron3-test-plan.md](btron3-test-plan.md)（互換層の QEMU 試験 17 種・747 項目（1.1 副タスクの `副試` 21 項目、1.5 メモリの `貯試` 45 項目、1.7 イベントの `件試` 73 項目、1.8 デバイスの `設試` 97 項目、1.10 システムの `系試` 38 項目と `例試` 16 項目、1.2 メッセージハンドラの `信手試` 25 項目、1.3 同期の `ER_MINTR` 回帰の `同試` 29 項目と `緩試` 35 項目を含む）を規範項目に紐付け済み）。
+- **適合確認済は 6 関数**（1.4 の `cre_nam`・`del_nam`・`get_nam`、1.10 の `ret_exc`・`get_ver`・`get_cnf`。[台帳](btron3-ledger.md)）。合否基準と既存試験の対応は [btron3-test-plan.md](btron3-test-plan.md)（互換層の QEMU 試験 17 種・750 項目（1.1 副タスクの `副試` 21 項目、1.5 メモリの `貯試` 45 項目、1.7 イベントの `件試` 73 項目、1.8 デバイスの `設試` 97 項目、1.10 システムの `系試` 39 項目と `例試` 18 項目、1.2 メッセージハンドラの `信手試` 25 項目、1.3 同期の `ER_MINTR` 回帰の `同試` 29 項目と `緩試` 35 項目を含む）を規範項目に紐付け済み）。
 - 1.6 は篇藏 F0〜F3 と録層 B5（作成・削除・開閉・状態・レコード操作・ロック・属性・アクセス制御・パスワード・SYS の像ファイルと `cre_prc` の LINK 版。`gen_fil`・`fnd_lnk` ほか M3 のリンク系、接続系の `syn_fls`/`chg_fls`/`chg_fsm` を含む）まで実装済み。B6（写像・永続化）が次。
 
 ## 次の作業（Phase 0 の残り）
