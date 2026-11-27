@@ -9,7 +9,7 @@
 - 試験: `user/btron_*.mkn`（互換層の試験プログラム）がその名前を呼んでいるか。
 - 本体に現れないエラー: 原文のエラーコードのうち、**その関数の本体に名前が直接現れないもの**。他の関数が返す場合や、そもそも未対応の場合がある（要確認）。第1章は核が返すので対象外。
 - 3.8 は日本語名の関数で実装している。定義の直前の註に BTRON 名が書いてあるものを実装済みと数える（誤差があり得る）。対応は [design-object-model.md](design-object-model.md) と [btron3-conformance.md](btron3-conformance.md) の 3.8 の行を参照。
-- 状態は機械的な判定で、「適合確認済」は [btron3-ledger.md](btron3-ledger.md) で基準 1〜8 をすべて満たした関数だけに注記で付ける（3 関数）。
+- 状態は機械的な判定で、「適合確認済」は [btron3-ledger.md](btron3-ledger.md) で基準 1〜8 をすべて満たした関数だけに注記で付ける（6 関数）。
 - 注記: [btron3-matrix-notes.tsv](btron3-matrix-notes.tsv) から入れる。「実装依存」は原文が実装に任せる画面デザイン（[btron3-phase3-gap.md](btron3-phase3-gap.md) の A）で、操作の意味は仕様どおり。注記だけ直すときは `python3 tools/spec_matrix.py renote docs/compat/btron3-matrix.md`。
 
 - 引数: 原型の引数の数と、実装の受ける引数の数が合うか（○ 合う、× 合わない、— 比べられない）。型・意味までは見ない。
@@ -234,9 +234,9 @@
 | 関数 | 原型 | 実装 | 引数 | 試験 | 原文のエラー | 本体に現れないエラー | 注記 |
 |---|---|---|---|---|---|---|---|
 | `def_exc` | `ERR def_exc(W exckind, FP exchdr)` | `exc.mkn` | ○ | あり | `ER_ADR` `ER_CTX` `ER_PAR` | —（核が返す） |  |
-| `ret_exc` | `VOID ret_exc(W ret)` | `exc.mkn` | ○ | あり | — | —（核が返す） |  |
-| `get_ver` | `ERR get_ver(T_VER* version)` | `sys.mkn` | ○ | あり | `ER_ADR` | —（核が返す） |  |
-| `get_cnf` | `WERR get_cnf(TC* name, VP value, W len)` | `sys.mkn` | ○ | あり | `ER_ADR` `ER_NOEXS` `ER_PAR` | —（核が返す） |  |
+| `ret_exc` | `VOID ret_exc(W ret)` | `exc.mkn` | ○ | あり | — | —（核が返す） | **適合確認済**（[台帳](btron3-ledger.md)） |
+| `get_ver` | `ERR get_ver(T_VER* version)` | `sys.mkn` | ○ | あり | `ER_ADR` | —（核が返す） | **適合確認済**（[台帳](btron3-ledger.md)） |
+| `get_cnf` | `WERR get_cnf(TC* name, VP value, W len)` | `sys.mkn` | ○ | あり | `ER_ADR` `ER_NOEXS` `ER_PAR` | —（核が返す） | **適合確認済**（[台帳](btron3-ledger.md)） |
 
 ## 2.3 基本関数（37 関数）
 

@@ -284,9 +284,9 @@ BTRON3 の `get_tim`・`get_tod`・`set_tim`・`set_tod` の STIME と `DATE_TIM
 
 | API | 既存実装 | 状態 |
 |---|---|---|
-| `def_exc` `ret_exc` | 漢令 181 `例外定義`・182 `例外復帰` → `user/btron/exc.mkn`、核 `kernel/proc/exc.mkn`。要因 0〜7、行程ごとのハンドラ表、EL0 の保存フレーム差し替え、`ret_exc(0)` の例外位置復帰、`ret_exc(≠0)` のハンドラ続行。BRK は退避側 ELR を +4。例外文脈が有効な間は入れ子にしない | 実装済・検証済（`例試` 16 項目） |
-| `get_ver` | 漢令 版取 179 → `user/btron/sys.mkn`。`T_VER`（20 B = `UH`×10）を書く。値は実装依存のため選択して記録（§[btron3-spec-verification.md](btron3-spec-verification.md) §6.8） | 実装済・検証済（`系試` 38 項目） |
-| `get_cnf` | 漢令 構取 180 → `user/btron/sys.mkn`。項目名は NUL 終端。数値（`W`）または文字列（戻り値 = 文字数、末尾に NUL） | 実装済・検証済（`系試` 38 項目） |
+| `def_exc` `ret_exc` | 漢令 181 `例外定義`・182 `例外復帰` → `user/btron/exc.mkn`、核 `kernel/proc/exc.mkn`。要因 0〜7、行程ごとのハンドラ表、EL0 の保存フレーム差し替え、`ret_exc(0)` の例外位置復帰、`ret_exc(≠0)` のハンドラ続行。BRK は退避側 ELR を +4。例外文脈が有効な間は入れ子にしない。`exchdr`=NULL で解除。`ret_exc(0)` で再開できない要因（`EXC_ALIGN`・`EXC_UNDEF`・`EXC_OTHER`）は異常終了 | `ret_exc` は適合確認済（[台帳](btron3-ledger.md)）。`def_exc` は実装済・検証済（`例試` 18 項目。原文のエラー表の `ER_CTX` の条件が定まらず、基準 3 を満たさない） |
+| `get_ver` | 漢令 版取 179 → `user/btron/sys.mkn`。`T_VER`（20 B = `UH`×10）を書く。値は実装依存のため選択して記録（§[btron3-spec-verification.md](btron3-spec-verification.md) §6.8） | 適合確認済（[台帳](btron3-ledger.md)） |
+| `get_cnf` | 漢令 構取 180 → `user/btron/sys.mkn`。項目名は TC（16 ビット）の TNULL 終端。数値（`W`）または TC の文字列（戻り値 = 文字数、末尾に TNULL、領域が足りなければ `len` バイト分） | 適合確認済（[台帳](btron3-ledger.md)。2026-11-27 に TC を 1 バイトとしていた誤りを直した） |
 
 **実装の選択（原文が「インプリメント依存」とする部分）**: `T_VER` の値（`maker`=0・`id`=1・`spver`=0x0320・`prver`=1・`prno`=0・`cpu`=1・`var`=0）と構成情報の項目名（`NPRC`=行程表の数 8・`PGSZ`=頁の大きさ 4096・`NDEV`=模型デバイスの数 4・`SYSNAM`="ChokanbunOS"・`SYSVER`="0.1"）を選んだ。`def_exc`/`ret_exc` の例外要因は 0 `EXC_BRK`・1 `EXC_DATA_ABORT`・2 `EXC_INSTR_ABORT`・3 `EXC_ALIGN`・4 `EXC_UNDEF`・5 `EXC_FP`・6 予約・7 `EXC_OTHER` の 8 種を選んだ。ハンドラは EL0 で `x0`=要因、`x1`=ESR、`x2`=例外の起きた命令アドレス、`x3`=FAR を受け、`x30` は復帰スタブに向く。
 

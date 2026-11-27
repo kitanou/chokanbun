@@ -19,7 +19,7 @@
 | `user/btron/er.mkn` が定義する `ER_*` | 42 |
 | 互換層の試験と `時元試` が参照する `ER_*` | 38 |
 | どの試験も参照していない `ER_*` | 4 |
-| BTRON3 互換層の QEMU 試験 | 17 種・747 項目 |
+| BTRON3 互換層の QEMU 試験 | 17 種・750 項目 |
 
 未参照の 4 名は `ER_ERDEV`・`ER_IO`・`ER_NODSK`・`ER_NOMDA`（`ER_XFS` は #186 で `録試` に加えた）。理由と次の一手は §4 にまとめる。
 
@@ -127,7 +127,7 @@
 
 | API | 記載 | 試験 | 直接確認 | 不足 |
 |---|---|---|---|---|
-| `def_exc` / `ret_exc` | `ER_PAR` `ER_ADR` `ER_CTX` | 例 | 全て | なし |
+| `def_exc` / `ret_exc` | `ER_PAR` `ER_ADR` `ER_CTX` | 例 | `def_exc` の `ER_PAR`・`ER_ADR`、`ret_exc` をハンドラの外で呼んだときの `ER_CTX` | `def_exc` の `ER_CTX`（使用不可の文脈が原文に無く、実装も返さない） |
 | `get_ver` | `ER_ADR` | 系 | `ER_ADR` | なし |
 | `get_cnf` | `ER_NOEXS` `ER_ADR` `ER_PAR` | 系 | 全て | なし |
 
