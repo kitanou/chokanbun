@@ -1062,18 +1062,18 @@ if [ -f "$OUT/kernel.elf" ]; then
         fi
         SV_N="$(grep -ac '^系試 ' "$KLOG" 2>/dev/null)"
         SV_BAD="$(grep -a '^系試 ' "$KLOG" 2>/dev/null | grep -vc '0x0000000000000001$')"
-        if [ "${SV_N:-0}" -eq 38 ] && [ "${SV_BAD:-1}" -eq 0 ]; then
+        if [ "${SV_N:-0}" -eq 39 ] && [ "${SV_BAD:-1}" -eq 0 ]; then
             pass "kernel qemu: BTRON3 互換層 システム管理 (get_ver・get_cnf の ${SV_N} 項目)"
         else
-            fail "kernel qemu: BTRON3 互換層 システム管理 (項目=${SV_N:-0}/38、失敗=${SV_BAD:-?})"
+            fail "kernel qemu: BTRON3 互換層 システム管理 (項目=${SV_N:-0}/39、失敗=${SV_BAD:-?})"
             grep -a '^系試 ' "$KLOG" 2>/dev/null | grep -av '0x0000000000000001$' | sed 's/^/      /' | head -40
         fi
         EX_N="$(grep -ac '^例試 ' "$KLOG" 2>/dev/null)"
         EX_BAD="$(grep -a '^例試 ' "$KLOG" 2>/dev/null | grep -vc '0x0000000000000001$')"
-        if [ "${EX_N:-0}" -eq 16 ] && [ "${EX_BAD:-1}" -eq 0 ]; then
+        if [ "${EX_N:-0}" -eq 18 ] && [ "${EX_BAD:-1}" -eq 0 ]; then
             pass "kernel qemu: BTRON3 互換層 例外ハンドラ (def_exc・ret_exc・EL0 上り呼びの ${EX_N} 項目)"
         else
-            fail "kernel qemu: BTRON3 互換層 例外ハンドラ (項目=${EX_N:-0}/16、失敗=${EX_BAD:-?})"
+            fail "kernel qemu: BTRON3 互換層 例外ハンドラ (項目=${EX_N:-0}/18、失敗=${EX_BAD:-?})"
             grep -a '^例試 ' "$KLOG" 2>/dev/null | grep -av '0x0000000000000001$' | sed 's/^/      /' | head -40
         fi
         DP_N="$(grep -ac '^描試 ' "$KLOG" 2>/dev/null)"
