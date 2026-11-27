@@ -6,7 +6,7 @@
 
 ## 1. 位置づけ
 
-- 適合性マトリクスの状態「適合確認済」へ進めるための条件は、本書の §3 で定める。§3 を満たしたかは関数ごとに [btron3-ledger.md](btron3-ledger.md)（台帳）に記録する。**現時点で満たすのは 6 関数**（1.4 の `cre_nam`・`del_nam`・`get_nam`、1.10 の `ret_exc`・`get_ver`・`get_cnf`。2026-11-27）。1.10 の `def_exc` は `ER_CTX` の条件が原文に無く基準 3 を満たさない。
+- 適合性マトリクスの状態「適合確認済」へ進めるための条件は、本書の §3 で定める。§3 を満たしたかは関数ごとに [btron3-ledger.md](btron3-ledger.md)（台帳）に記録する。**現時点で満たすのは 10 関数**（1.4 の 3 関数、1.9 の 4 関数、1.10 の `ret_exc`・`get_ver`・`get_cnf`。2026-11-27）。1.10 の `def_exc` は `ER_CTX` の条件が原文に無く基準 3 を満たさない。
 - 既存の試験は、実装者が原文を**読み取った解釈**を検証している。解釈そのものの正しさ（原文の文字化け・欠落箇所）は試験では保証されない。このため、試験が通ることは「実装済・未検証」から進めても「適合確認済」とする根拠にはならない。
 - 仕様書本文は転載しない。試験の題と期待値は独自の記述とする。
 
@@ -65,9 +65,9 @@
 |---|---|---|---|---|---|---|
 | 識試 | `user/btron_gtid.mkn` | 13 | OS 1.1、共有データ §1、ER 規約 | `get_tid`、`ER_*` の符号と `錯換`、`H`（符号・範囲・隣欄保持）、`Bool`、`SIZE`/`PNT`/`RECT` の配置と共用体 | 正・境 | `ER_*` の数値は実装依存（G0）。型配置は欄名が仮 |
 | 名試 | `user/btron_gname.mkn` | 25 | OS 1.4 グローバル名 | `cre_nam`（`N_CREATE`/`N_MODIFY`/`N_FORCE`）、`del_nam`、`get_nam` | 正・異・境・相 | 8 文字、16 件、`ER_EXS`/`ER_NOEXS`/`ER_PAR`/`ER_ADR`/`ER_NOSPC`、`DELEXIT` |
-| 時試 | `user/btron_clk.mkn` | 11 | OS 1.9 時計管理 | `get_tim`、`get_tod`（暦・閏年・通日） | 正・異・境 | 暦の期待値は手計算とホスト日付との比較。ずれの符号は要確認 |
+| 時試 | `user/btron_clk.mkn` | 12 | OS 1.9 時計管理 | `get_tim`、`get_tod`（暦・閏年・通日） | 正・異・境 | 暦の期待値は手計算とホスト日付との比較。ずれの符号は要確認 |
 | 信試 | `user/btron_msg.mkn` | 46 | OS 1.2 メッセージ、1.1 の終了通知 | `snd_msg`、`rcv_msg`、`clr_msg`、`cre_prc`（BTRON3 流）、`ext_prc`、`MS_EXIT` | 正・異・境・相 | 型 1〜31、本体 1〜32 B、キュー 8、`ER_SZOVR`/`ER_NOSPC`/`ER_NOPRC`、枠の即解放 |
-| 利試 | `user/btron_usr.mkn` | 19 | OS 1.1 利用者情報、1.9 設定系 | `get_usr`、`chg_usr`、`set_tim`、`set_tod` | 正・異・相 | 権限（level 0 のみ設定可）、子が親の写しを継ぐ。level の向きは解釈 |
+| 利試 | `user/btron_usr.mkn` | 28 | OS 1.1 利用者情報、1.9 設定系 | `get_usr`、`chg_usr`、`set_tim`、`set_tod` | 正・異・相 | 権限（level 0 のみ設定可）、子が親の写しを継ぐ。level の向きは解釈 |
 | 強試 | `user/btron_term.mkn` | 24 | OS 1.1 強制終了・状態 | `ter_prc`（`TERM_NRM`/`TERM_ALL`）、`prc_sts`、`MS_TERM` | 正・異・相 | `ER_SELF`/`ER_NOPRC`/`ER_LEVEL`/`ER_PAR`、子孫の終了順、枠の回収 |
 | 同試 | `user/btron_sync.mkn` | 29 | OS 1.3 セマフォ・イベントフラグ | `cre_sem`、`del_sem`、`sig_sem`、`wai_sem`、`cre_flg`、`del_flg`、`set_flg`、`clr_flg`、`wai_flg` | 正・異・境・相 | FIFO、時間切れ、`ER_DLT`、`DELEXIT`、排他の自動返却、`MH_BREAK` によるセマフォ・フラグ待ちの `ER_MINTR` と再使用、カウント上限 65535、セマフォ・フラグ各 16 個の上限（`ER_LIMIT`）と再利用、`TWF_ORW` の OR 待ち。待ち順は解釈 |
 | 緩試 | `user/btron_comm.mkn` | 36 | OS 1.3 メッセージバッファ・ランデブ | `cre_mbf`、`del_mbf`、`snd_mbf`、`rcv_mbf`、`cre_por`、`del_por`、`cal_por`、`acp_por`、`fwd_por`、`rpl_rdv` | 正・異・境・相 | 環の折り返し、満杯・空、転送、削除、`bufsz`=0 の同期バッファ（待ち合わせ・時間切れ）、MB 受信・満杯送信・ランデブ呼出・受付の `MH_BREAK` 中断と再使用 |
@@ -84,7 +84,7 @@
 | 言語 | `tests/lang/ok`・`err` | ok 8・err 37 | （BTRON3 とは無関係） | 言語仕様の黄金・診断試験 | — | 互換層を書く言語の健全性 |
 | 起動時 | `tests/run_tests.sh` | — | 核の基本動作 | argv 受け渡し、終了コード、EL0 行程、メモリ保護など | — | BTRON3 の項目には紐付けない |
 
-**集計**: BTRON3 互換層の QEMU 試験は 17 種・計 750 項目（識試 13、名試 25、時試 11、信試 46、利試 19、強試 24、同試 29、緩試 36、録試 125、貯試 45、件試 73、設試 97、系試 39、例試 18、信手試 25、副試 22、実試 98）。ほかに篇藏 28 項目。V4b-1 の試験用アプリ `user/obj_app.mkn`（像名 `objapp`）は `実試` から起動する。`信手試` は子行程を 5 役（送信・`MH_BREAK` 用・`MH_NONE` 用・`MH_TERM` 用・`ret_msg(1)` 用）で起動する。`副試` は子行程を役 `E`・`W`・`C` の 3 役で起動し、主と副タスクの関係と群 B・C の配分比を確かめる。`同試` と `緩試` は、100 ms 後に型 30 のメッセージを送る子役で `MH_BREAK` を起こし、中断と中断後の再使用を確かめる。
+**集計**: BTRON3 互換層の QEMU 試験は 17 種・計 760 項目（識試 13、名試 25、時試 12、信試 46、利試 28、強試 24、同試 29、緩試 36、録試 125、貯試 45、件試 73、設試 97、系試 39、例試 18、信手試 25、副試 22、実試 98）。ほかに篇藏 28 項目。V4b-1 の試験用アプリ `user/obj_app.mkn`（像名 `objapp`）は `実試` から起動する。`信手試` は子行程を 5 役（送信・`MH_BREAK` 用・`MH_NONE` 用・`MH_TERM` 用・`ret_msg(1)` 用）で起動する。`副試` は子行程を役 `E`・`W`・`C` の 3 役で起動し、主と副タスクの関係と群 B・C の配分比を確かめる。`同試` と `緩試` は、100 ms 後に型 30 のメッセージを送る子役で `MH_BREAK` を起こし、中断と中断後の再使用を確かめる。
 
 ## 5. API 単位の試験の有無（第2編 第1章）
 
@@ -109,8 +109,8 @@
 | `cre_flg` `del_flg` `set_flg` `clr_flg` `wai_flg` | 同試 | OR 待ち（`TWF_ORW`）と 16 個上限（`ER_LIMIT`）、全削除後の再利用を確認済み。同じフラグへの複数待ちは未試験 |
 | `cre_mbf` `del_mbf` `snd_mbf` `rcv_mbf` | 緩試 | `rcv_mbf` の戻り値は原文欠落（要確認） |
 | `cre_por` `del_por` `cal_por` `acp_por` `fwd_por` `rpl_rdv` | 緩試 | 受付側が返答せず終了する場合は仕様未確認で試験なし |
-| `get_tim`、`get_tod` | 時試 | `local` の解釈（要確認）、時刻帯 ≠ 0 の取得は利試 |
-| `set_tim`、`set_tod` | 利試 | 年の範囲 1985〜2100 の境界、夏時間補正 |
+| `get_tim`、`get_tod` | 時試・利試 | **適合確認済**（[台帳](btron3-ledger.md)）。`local` と夏時間は原文の式どおりで利試が確かめる |
+| `set_tim`、`set_tod` | 利試 | **適合確認済**（[台帳](btron3-ledger.md)）。年の上限 2100 は実装の選択 |
 | `get_lnk`、`chg_wrk` | 録試 | 良好（B1 の範囲） |
 | `cre_fil` | 録試 | `ER_IO`・`ER_NODSK` は発生し得ず未検証。親への W が無い `ER_ACCES` は子行程で確認。`F_FILEID`・`A_MODE` は未対応（`ER_PAR` を確認） |
 | `cre_lnk` | 録試 | 良好（浮動・固定、各エラー、満杯）。リンクの更新時刻は未検証 |

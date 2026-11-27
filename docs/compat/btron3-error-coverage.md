@@ -19,7 +19,7 @@
 | `user/btron/er.mkn` が定義する `ER_*` | 42 |
 | 互換層の試験と `時元試` が参照する `ER_*` | 38 |
 | どの試験も参照していない `ER_*` | 4 |
-| BTRON3 互換層の QEMU 試験 | 17 種・750 項目 |
+| BTRON3 互換層の QEMU 試験 | 17 種・760 項目 |
 
 未参照の 4 名は `ER_ERDEV`・`ER_IO`・`ER_NODSK`・`ER_NOMDA`（`ER_XFS` は #186 で `録試` に加えた）。理由と次の一手は §4 にまとめる。
 
@@ -120,7 +120,7 @@
 
 | API | 記載 | 試験 | 直接確認 | 不足 |
 |---|---|---|---|---|
-| `get_tim` / `get_tod` | `ER_ADR` `ER_NODEV` | 時・時元 | `ER_ADR`、`get_tim` の `ER_NODEV`（RTC 無効） | `get_tod` の `ER_NODEV`（`get_tim` は確認済み） |
+| `get_tim` / `get_tod` | `ER_ADR`（原文）、`ER_NODEV`（追加） | 時・時元 | `ER_ADR`、`get_tim` の `ER_NODEV`（RTC 無効） | なし（`ER_NODEV` は原文のエラー表に無い追加で、時計の装置が無い環境のための実装依存） |
 | `set_tim` / `set_tod` | `ER_ACCES` `ER_ADR` `ER_PAR` | 利 | 全て | なし |
 
 ### 1.10 システム管理
