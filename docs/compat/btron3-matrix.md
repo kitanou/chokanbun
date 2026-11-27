@@ -9,7 +9,7 @@
 - 試験: `user/btron_*.mkn`（互換層の試験プログラム）がその名前を呼んでいるか。
 - 本体に現れないエラー: 原文のエラーコードのうち、**その関数の本体に名前が直接現れないもの**。他の関数が返す場合や、そもそも未対応の場合がある（要確認）。第1章は核が返すので対象外。
 - 3.8 は日本語名の関数で実装している。定義の直前の註に BTRON 名が書いてあるものを実装済みと数える（誤差があり得る）。対応は [design-object-model.md](design-object-model.md) と [btron3-conformance.md](btron3-conformance.md) の 3.8 の行を参照。
-- 状態は機械的な判定で、「適合確認済」は [btron3-ledger.md](btron3-ledger.md) で基準 1〜8 をすべて満たした関数だけに注記で付ける（18 関数）。
+- 状態は機械的な判定で、「適合確認済」は [btron3-ledger.md](btron3-ledger.md) で基準 1〜8 をすべて満たした関数だけに注記で付ける（37 関数）。
 - 注記: [btron3-matrix-notes.tsv](btron3-matrix-notes.tsv) から入れる。「実装依存」は原文が実装に任せる画面デザイン（[btron3-phase3-gap.md](btron3-phase3-gap.md) の A）で、操作の意味は仕様どおり。注記だけ直すときは `python3 tools/spec_matrix.py renote docs/compat/btron3-matrix.md`。
 
 - 引数: 原型の引数の数と、実装の受ける引数の数が合うか（○ 合う、× 合わない、— 比べられない）。型・意味までは見ない。
@@ -83,25 +83,25 @@
 
 | 関数 | 原型 | 実装 | 引数 | 試験 | 原文のエラー | 本体に現れないエラー | 注記 |
 |---|---|---|---|---|---|---|---|
-| `cre_sem` | `WERR cre_sem(W cnt, UW opt)` | `sync.mkn` | ○ | あり | `ER_NOSPC` `ER_LIMIT` `ER_PAR` | —（核が返す） |  |
-| `del_sem` | `ERR del_sem(ID id)` | `sync.mkn` | ○ | あり | `ER_ID` `ER_NOEXS` | —（核が返す） |  |
-| `sig_sem` | `ERR sig_sem(ID id)` | `sync.mkn` | ○ | あり | `ER_ID` `ER_LIMIT` `ER_NOEXS` `ER_OBJ` | —（核が返す） |  |
-| `wai_sem` | `ERR wai_sem(ID id, TMOUT tmo)` | `sync.mkn` | ○ | あり | `ER_DLT` `ER_ID` `ER_MINTR` `ER_NOEXS` `ER_NONE` `ER_PAR` `ER_OBJ` | —（核が返す） |  |
-| `cre_flg` | `WERR cre_flg(W ptn, UW opt)` | `sync.mkn` | ○ | あり | `ER_NOSPC` `ER_LIMIT` `ER_PAR` | —（核が返す） |  |
-| `del_flg` | `ERR del_flg(ID id)` | `sync.mkn` | ○ | あり | `ER_ID` `ER_NOEXS` | —（核が返す） |  |
-| `set_flg` | `ERR set_flg(ID id, W ptn)` | `sync.mkn` | ○ | あり | `ER_ID` `ER_NOEXS` `ER_PAR` | —（核が返す） |  |
-| `clr_flg` | `ERR clr_flg(ID id, W ptn)` | `sync.mkn` | ○ | あり | `ER_ID` `ER_NOEXS` | —（核が返す） |  |
-| `wai_flg` | `WERR wai_flg(ID id, W ptn, UW mode, TMOUT tmo)` | `sync.mkn` | ○ | あり | `ER_DLT` `ER_ID` `ER_MINTR` `ER_NOEXS` `ER_NONE` `ER_PAR` | —（核が返す） |  |
-| `cre_mbf` | `WERR cre_mbf(W bufsz, W max, UW opt)` | `sync.mkn` | ○ | あり | `ER_NOSPC` `ER_LIMIT` `ER_PAR` | —（核が返す） |  |
-| `del_mbf` | `ERR del_mbf(ID id)` | `sync.mkn` | ○ | あり | `ER_ID` `ER_NOEXS` | —（核が返す） |  |
-| `snd_mbf` | `ERR snd_mbf(ID id, VP msg, W sz, TMOUT tmo)` | `sync.mkn` | ○ | あり | `ER_DLT` `ER_ID` `ER_MINTR` `ER_NOEXS` `ER_NONE` `ER_PAR` | —（核が返す） |  |
-| `rcv_mbf` | `WERR rcv_mbf(ID id, VP msg, TMOUT tmo)` | `sync.mkn` | ○ | あり | `ER_DLT` `ER_ID` `ER_MINTR` `ER_NOEXS` `ER_NONE` `ER_PAR` | —（核が返す） |  |
-| `cre_por` | `WERR cre_por(W maxcmsz, W maxrmsz, UW opt)` | `sync.mkn` | ○ | あり | `ER_NOSPC` `ER_LIMIT` `ER_PAR` | —（核が返す） |  |
-| `del_por` | `ERR del_por(ID id)` | `sync.mkn` | ○ | あり | `ER_ID` `ER_NOEXS` | —（核が返す） |  |
-| `cal_por` | `WERR cal_por(ID id, UW calptn, VP msg, W cmsz, TMOUT tmo)` | `sync.mkn` | ○ | あり | `ER_DLT` `ER_ID` `ER_MINTR` `ER_NOEXS` `ER_NONE` `ER_PAR` | —（核が返す） |  |
-| `acp_por` | `WERR acp_por(ID id, UW acpptn, W *rdv, VP msg, TMOUT tmo)` | `sync.mkn` | ○ | あり | `ER_DLT` `ER_ID` `ER_MINTR` `ER_NOEXS` `ER_NONE` `ER_PAR` | —（核が返す） |  |
-| `fwd_por` | `ERR fwd_por(ID id, UW calptn, W rdv, VP msg, W cmsz)` | `sync.mkn` | ○ | あり | `ER_ID` `ER_NOEXS` `ER_OBJ` `ER_PAR` | —（核が返す） |  |
-| `rpl_rdv` | `ERR rpl_rdv(W rdv, VP msg, W rmsz)` | `sync.mkn` | ○ | あり | `ER_OBJ` `ER_PAR` | —（核が返す） |  |
+| `cre_sem` | `WERR cre_sem(W cnt, UW opt)` | `sync.mkn` | ○ | あり | `ER_NOSPC` `ER_LIMIT` `ER_PAR` | —（核が返す） | **適合確認済**（[台帳](btron3-ledger.md)） |
+| `del_sem` | `ERR del_sem(ID id)` | `sync.mkn` | ○ | あり | `ER_ID` `ER_NOEXS` | —（核が返す） | **適合確認済**（[台帳](btron3-ledger.md)） |
+| `sig_sem` | `ERR sig_sem(ID id)` | `sync.mkn` | ○ | あり | `ER_ID` `ER_LIMIT` `ER_NOEXS` `ER_OBJ` | —（核が返す） | **適合確認済**（[台帳](btron3-ledger.md)） |
+| `wai_sem` | `ERR wai_sem(ID id, TMOUT tmo)` | `sync.mkn` | ○ | あり | `ER_DLT` `ER_ID` `ER_MINTR` `ER_NOEXS` `ER_NONE` `ER_PAR` `ER_OBJ` | —（核が返す） | **適合確認済**（[台帳](btron3-ledger.md)） |
+| `cre_flg` | `WERR cre_flg(W ptn, UW opt)` | `sync.mkn` | ○ | あり | `ER_NOSPC` `ER_LIMIT` `ER_PAR` | —（核が返す） | **適合確認済**（[台帳](btron3-ledger.md)） |
+| `del_flg` | `ERR del_flg(ID id)` | `sync.mkn` | ○ | あり | `ER_ID` `ER_NOEXS` | —（核が返す） | **適合確認済**（[台帳](btron3-ledger.md)） |
+| `set_flg` | `ERR set_flg(ID id, W ptn)` | `sync.mkn` | ○ | あり | `ER_ID` `ER_NOEXS` `ER_PAR` | —（核が返す） | **適合確認済**（[台帳](btron3-ledger.md)） |
+| `clr_flg` | `ERR clr_flg(ID id, W ptn)` | `sync.mkn` | ○ | あり | `ER_ID` `ER_NOEXS` | —（核が返す） | **適合確認済**（[台帳](btron3-ledger.md)） |
+| `wai_flg` | `WERR wai_flg(ID id, W ptn, UW mode, TMOUT tmo)` | `sync.mkn` | ○ | あり | `ER_DLT` `ER_ID` `ER_MINTR` `ER_NOEXS` `ER_NONE` `ER_PAR` | —（核が返す） | **適合確認済**（[台帳](btron3-ledger.md)） |
+| `cre_mbf` | `WERR cre_mbf(W bufsz, W max, UW opt)` | `sync.mkn` | ○ | あり | `ER_NOSPC` `ER_LIMIT` `ER_PAR` | —（核が返す） | **適合確認済**（[台帳](btron3-ledger.md)） |
+| `del_mbf` | `ERR del_mbf(ID id)` | `sync.mkn` | ○ | あり | `ER_ID` `ER_NOEXS` | —（核が返す） | **適合確認済**（[台帳](btron3-ledger.md)） |
+| `snd_mbf` | `ERR snd_mbf(ID id, VP msg, W sz, TMOUT tmo)` | `sync.mkn` | ○ | あり | `ER_DLT` `ER_ID` `ER_MINTR` `ER_NOEXS` `ER_NONE` `ER_PAR` | —（核が返す） | **適合確認済**（[台帳](btron3-ledger.md)） |
+| `rcv_mbf` | `WERR rcv_mbf(ID id, VP msg, TMOUT tmo)` | `sync.mkn` | ○ | あり | `ER_DLT` `ER_ID` `ER_MINTR` `ER_NOEXS` `ER_NONE` `ER_PAR` | —（核が返す） | **適合確認済**（[台帳](btron3-ledger.md)） |
+| `cre_por` | `WERR cre_por(W maxcmsz, W maxrmsz, UW opt)` | `sync.mkn` | ○ | あり | `ER_NOSPC` `ER_LIMIT` `ER_PAR` | —（核が返す） | **適合確認済**（[台帳](btron3-ledger.md)） |
+| `del_por` | `ERR del_por(ID id)` | `sync.mkn` | ○ | あり | `ER_ID` `ER_NOEXS` | —（核が返す） | **適合確認済**（[台帳](btron3-ledger.md)） |
+| `cal_por` | `WERR cal_por(ID id, UW calptn, VP msg, W cmsz, TMOUT tmo)` | `sync.mkn` | ○ | あり | `ER_DLT` `ER_ID` `ER_MINTR` `ER_NOEXS` `ER_NONE` `ER_PAR` | —（核が返す） | **適合確認済**（[台帳](btron3-ledger.md)） |
+| `acp_por` | `WERR acp_por(ID id, UW acpptn, W *rdv, VP msg, TMOUT tmo)` | `sync.mkn` | ○ | あり | `ER_DLT` `ER_ID` `ER_MINTR` `ER_NOEXS` `ER_NONE` `ER_PAR` | —（核が返す） | **適合確認済**（[台帳](btron3-ledger.md)） |
+| `fwd_por` | `ERR fwd_por(ID id, UW calptn, W rdv, VP msg, W cmsz)` | `sync.mkn` | ○ | あり | `ER_ID` `ER_NOEXS` `ER_OBJ` `ER_PAR` | —（核が返す） | **適合確認済**（[台帳](btron3-ledger.md)） |
+| `rpl_rdv` | `ERR rpl_rdv(W rdv, VP msg, W rmsz)` | `sync.mkn` | ○ | あり | `ER_OBJ` `ER_PAR` | —（核が返す） | **適合確認済**（[台帳](btron3-ledger.md)） |
 
 ## 1.4 グローバル名（3 関数）
 
