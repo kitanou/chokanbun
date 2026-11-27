@@ -1086,10 +1086,10 @@ if [ -f "$OUT/kernel.elf" ]; then
         fi
         MH_N="$(grep -ac '^信手試 ' "$KLOG" 2>/dev/null)"
         MH_BAD="$(grep -a '^信手試 ' "$KLOG" 2>/dev/null | grep -vc '0x0000000000000001$')"
-        if [ "${MH_N:-0}" -eq 25 ] && [ "${MH_BAD:-1}" -eq 0 ]; then
+        if [ "${MH_N:-0}" -eq 27 ] && [ "${MH_BAD:-1}" -eq 0 ]; then
             pass "kernel qemu: BTRON3 互換層 メッセージハンドラ (def_msg・ret_msg・入れ子抑制・MH_NONE/BREAK/TERM の ${MH_N} 項目)"
         else
-            fail "kernel qemu: BTRON3 互換層 メッセージハンドラ (項目=${MH_N:-0}/25、失敗=${MH_BAD:-?})"
+            fail "kernel qemu: BTRON3 互換層 メッセージハンドラ (項目=${MH_N:-0}/27、失敗=${MH_BAD:-?})"
             grep -a '^信手試 ' "$KLOG" 2>/dev/null | grep -av '0x0000000000000001$' | sed 's/^/      /' | head -40
         fi
         # --- 1.1 副タスク (cre_tsk・ext_tsk・ter_tsk・slp/wup/can_wup・chg_pri・配分比) ------
@@ -1175,10 +1175,10 @@ if [ -f "$OUT/kernel.elf" ]; then
         # --- #42 G3a: メッセージ (snd_msg / rcv_msg / clr_msg) ---------------------
         MS_N="$(grep -ac '^信試 ' "$KLOG" 2>/dev/null)"
         MS_BAD="$(grep -a '^信試 ' "$KLOG" 2>/dev/null | grep -vc '0x0000000000000001$')"
-        if [ "${MS_N:-0}" -eq 57 ] && [ "${MS_BAD:-1}" -eq 0 ]; then
+        if [ "${MS_N:-0}" -eq 58 ] && [ "${MS_BAD:-1}" -eq 0 ]; then
             pass "kernel qemu: BTRON3 互換層 メッセージ (FIFO・型選択・NOCLR・clr_msg・ER_*・行程間の待ち合わせ・子の終了通知 MS_EXIT の ${MS_N} 項目)"
         else
-            fail "kernel qemu: BTRON3 互換層 メッセージ (項目=${MS_N:-0}/57、失敗=${MS_BAD:-?})"
+            fail "kernel qemu: BTRON3 互換層 メッセージ (項目=${MS_N:-0}/58、失敗=${MS_BAD:-?})"
             grep -a '^信試 ' "$KLOG" 2>/dev/null | sed 's/^/      /'
         fi
         # --- #42 G2: 時計の取得系 (get_tim / get_tod) と構造体の複写出 ---------------
