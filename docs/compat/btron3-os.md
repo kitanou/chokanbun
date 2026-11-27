@@ -86,12 +86,12 @@
 
 | API | 要点 | 既存実装 | 状態 |
 |---|---|---|---|
-| `snd_msg` | 送信（`WAIT`/`NOWAIT`、宛先 pid / 0 / -1） | `user/btron/msg.mkn` → 漢令 信送 80（`kernel/proc/msg.mkn`）。8 件のキュー、満杯で WAIT は眠る。`CONFM` は積んだあと相手が取り出すまで眠り（槽 +56 に送信側の識を持ち、取り出し・`clr_msg`・相手の終了で起こす）、自分宛は `ER_SELF`、相手が受けずに終わると `ER_NOPRC`。ハンドラが定義されていれば、`CONFM` の送信側を眠らせる前にハンドラへ渡す | 実装済・検証済（`信試`。待ちの中断は `信手試` で `ER_MINTR` を確認） |
-| `rcv_msg` | 受信（型マスク、`NOWAIT`/`NOCLR`/`CHECK`/`WAIEVT`） | 漢令 信受 81。最古の該当を返す。成功時の戻り値は送信元の識（自分宛は 0）。`CHECK`（2）は合う型が無くても別の型があれば先頭 8 バイトを返す。`WAIEVT`（4）は `WAIT` と同じに待ち、`brk_msg` で `ER_NOME` を返す（型マスク 0 可、`NOWAIT` と併用は `ER_PAR`） | 実装済・検証済（`信試`・`信手試`） |
-| `clr_msg` | 消去 | 漢令 信消 82 | 実装済・検証済（`信試`） |
-| `req_tmg` / `can_tmg` | タイムアウトメッセージ | 漢令 83・84（`kernel/proc/msg.mkn` の時限表 16 件。刻 25 ms へ切り上げ、`覚醒` が `MS_TMOUT` を積む） | 実装済・検証済（`信試`） |
-| `def_msg` / `ret_msg` | ハンドラ定義・復帰 | 漢令 183・184（`kernel/proc/msgh.mkn`）。型ごとにハンドラを定義し、到着・タイマー・`ret_msg` 後の保留分を EL0 へ配送する。`MH_NONE`/`MH_BREAK`/`MH_TERM`、入れ子禁止、`ER_MINTR`、`ER_CTX` を含む | 実装済・検証済（`信手試` 25 項目） |
-| `brk_msg` | `WAIEVT` の待ちを解く | 漢令 85。待っている行程の `rcv_msg` に `ER_NOME`、待ちが無ければ要求を 1 つ記録 | 実装済・検証済（`信試`） |
+| `snd_msg` | 送信（`WAIT`/`NOWAIT`、宛先 pid / 0 / -1） | `user/btron/msg.mkn` → 漢令 信送 80（`kernel/proc/msg.mkn`）。8 件のキュー、満杯で WAIT は眠る。`CONFM` は積んだあと相手が取り出すまで眠り（槽 +56 に送信側の識を持ち、取り出し・`clr_msg`・相手の終了で起こす）、自分宛は `ER_SELF`、相手が受けずに終わると `ER_NOPRC`。ハンドラが定義されていれば、`CONFM` の送信側を眠らせる前にハンドラへ渡す | 適合確認済（[台帳](btron3-ledger.md)） |
+| `rcv_msg` | 受信（型マスク、`NOWAIT`/`NOCLR`/`CHECK`/`WAIEVT`） | 漢令 信受 81。最古の該当を返す。成功時の戻り値は送信元の識（自分宛は 0）。`CHECK`（2）は合う型が無くても別の型があれば先頭 8 バイトを返す。`WAIEVT`（4）は `WAIT` と同じに待ち、`brk_msg` で `ER_NOME` を返す（型マスク 0 可、`NOWAIT` と併用は `ER_PAR`） | 適合確認済（[台帳](btron3-ledger.md)） |
+| `clr_msg` | 消去 | 漢令 信消 82 | 適合確認済（[台帳](btron3-ledger.md)） |
+| `req_tmg` / `can_tmg` | タイムアウトメッセージ | 漢令 83・84（`kernel/proc/msg.mkn` の時限表 16 件。刻 25 ms へ切り上げ、`覚醒` が `MS_TMOUT` を積む） | 適合確認済（[台帳](btron3-ledger.md)） |
+| `def_msg` / `ret_msg` | ハンドラ定義・復帰 | 漢令 183・184（`kernel/proc/msgh.mkn`）。型ごとにハンドラを定義し、到着・タイマー・`ret_msg` 後の保留分を EL0 へ配送する。`MH_NONE`/`MH_BREAK`/`MH_TERM`、入れ子禁止、`ER_MINTR`、`ER_CTX` を含む | 適合確認済（[台帳](btron3-ledger.md)） |
+| `brk_msg` | `WAIEVT` の待ちを解く | 漢令 85。待っている行程の `rcv_msg` に `ER_NOME`、待ちが無ければ要求を 1 つ記録 | 適合確認済（[台帳](btron3-ledger.md)） |
 
 **方針メモ**: ハンドラは EL0 へ非同期に割り込む機構が要り、POSIX シグナルより先に必要になる。`def_exc` の保存フレーム差し替えを共有して `def_msg`/`ret_msg` を実装した。終了通知（型 1–3）が `cre_prc`/`ext_prc` の適合の前提なので、**1.1 の適合は 1.2 に依存する**。
 **G3a の選択（実装依存・解釈）と要確認**:
@@ -105,6 +105,8 @@
 - BTRON3 流の子は `待行程` で回収できない（`-ECHILD`）。同じ子に両方の流儀を使わせない。
 
 **ハンドラの実装（M7e）**: `def_msg` は型マスクのビット `type-1` にハンドラを定義する（`hdr=0` で解除、1=`MH_NONE`、2=`MH_BREAK`、3=`MH_TERM`、それ以外は EL0 の番地）。ハンドラは `VOID msg_hdr(W pid, MESSAGE *r_msg)` で、`x0`=送信元（自分宛は 0）、`x1`=40 B の `MESSAGE`、`x30`=復帰スタブ。メッセージは対象行程の利用者スタック `SP_EL0-64` に置く。`ret_msg(0)` は割り込み位置へ戻り、待ちを含む漢令なら `x0=ER_MINTR`、`ret_msg(≠0)` は `ret_msg` から 0 を返してハンドラを続ける。ハンドラは入れ子にせず、実行中に届いた要求は `ret_msg` の後に古い順で起動する。他の行程宛は、メッセージのコピーと頁張りの間だけ対象の `TTBR0_EL1` に切り替える。表は 8 行程 × 32 型で、行程の再利用時に消える（子は親のハンドラを継がない）。`MH_BREAK` は待ち状態の漢令を `ER_MINTR` にし、ランデブの途中記録も `呼取消` で消す。1.3 の同期待ちからの中断と中断後の再使用は、`同試` 29 項目・`緩試` 35 項目で回帰試験済み。
+
+**台帳で直したこと（2026-11-27）**: (1) システムメッセージ（`MS_ABORT`・`MS_EXIT`・`MS_TERM`・`MS_TMOUT`）は原文どおりキューのオーバーフローで捨てない。キューが満杯のときは行程ごとの 2 槽の溢れに置き、取り出しで空きができるたびにキューの末尾へ移す（送信順を保つ。溢れも満杯のときだけ捨てる）。(2) システムエラーによる異常終了は親へ `MS_ABORT`（以前は `MS_TERM`）。code はシステムエラーのコードとして 128 + EC を選んだ。(3) `rcv_msg` の `CHECK`|`WAIT` は、メッセージが何も無いときの待ちなので、どの型が届いても起きる。(4) 起動メッセージ（`cre_prc` の型 ≠ 0）が入り切らないときは `CLR` でも消さない。互換層に `MS_SYS1`〜`MS_TYPE6`・`MS_MIN`/`MS_MAX`・`MM_*`・`MSGSIZE`（`msgsize`）を足した。
 
 ## 1.3 同期通信管理（kernel/taskcomm.html）
 
@@ -299,7 +301,7 @@ BTRON3 の `get_tim`・`get_tod`・`set_tim`・`set_tod` の STIME と `DATE_TIM
 | 実装済（節単位） | 1.6（41 関数。`F_SYSTEM` の写像と `syn_fls` の永続化まで）、1.1（16 関数。`ext_prc` の資源解放・`prc_sts` の名前・`get_inf` の stime・副タスクのメッセージ待ちと排他セマフォの返却まで） |
 | 適合確認済 | 1.4（API 3 本。`名試` 25 項目。[台帳](btron3-ledger.md)） |
 | 実装済・未検証 | 1.5（API 3 本 + `malloc` 系 18 関数。試験は QEMU 上 `貯試` 45 項目）、1.7（API 20 本。試験は QEMU 上 `件試` 73 項目。実機の入力は核内の模型で代用）、1.8（API 9 本。試験は QEMU 上 `設試` 97 項目。実機は核内の模型 4 ユニットで代用） |
-| 実装済・検証済（一部） | 1.2（`信試` 46 項目・`信手試` 25 項目。`def_msg`/`ret_msg`・`MH_*` を含む）、1.10 の `get_ver`/`get_cnf`（`系試` 38 項目）、`def_exc`/`ret_exc`（`例試` 16 項目。同期例外の upcall のみ） |
+| 実装済・検証済（一部） | 1.2（`信試` 60 項目・`信手試` 27 項目。`def_msg`/`ret_msg`・`MH_*` を含む）、1.10 の `get_ver`/`get_cnf`（`系試` 38 項目）、`def_exc`/`ret_exc`（`例試` 16 項目。同期例外の upcall のみ） |
 | 実装済・未検証（API 単位） | 1.1 の `get_usr`/`chg_usr`/`get_tid`/`ter_prc` |
 | 適合確認済 | 1.9（4 本。[台帳](btron3-ledger.md)） |
 | 適合確認済（API 単位） | 1.10 の `ret_exc`・`get_ver`・`get_cnf`（[台帳](btron3-ledger.md)） |

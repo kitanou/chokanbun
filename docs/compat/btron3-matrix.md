@@ -9,7 +9,7 @@
 - 試験: `user/btron_*.mkn`（互換層の試験プログラム）がその名前を呼んでいるか。
 - 本体に現れないエラー: 原文のエラーコードのうち、**その関数の本体に名前が直接現れないもの**。他の関数が返す場合や、そもそも未対応の場合がある（要確認）。第1章は核が返すので対象外。
 - 3.8 は日本語名の関数で実装している。定義の直前の註に BTRON 名が書いてあるものを実装済みと数える（誤差があり得る）。対応は [design-object-model.md](design-object-model.md) と [btron3-conformance.md](btron3-conformance.md) の 3.8 の行を参照。
-- 状態は機械的な判定で、「適合確認済」は [btron3-ledger.md](btron3-ledger.md) で基準 1〜8 をすべて満たした関数だけに注記で付ける（10 関数）。
+- 状態は機械的な判定で、「適合確認済」は [btron3-ledger.md](btron3-ledger.md) で基準 1〜8 をすべて満たした関数だけに注記で付ける（18 関数）。
 - 注記: [btron3-matrix-notes.tsv](btron3-matrix-notes.tsv) から入れる。「実装依存」は原文が実装に任せる画面デザイン（[btron3-phase3-gap.md](btron3-phase3-gap.md) の A）で、操作の意味は仕様どおり。注記だけ直すときは `python3 tools/spec_matrix.py renote docs/compat/btron3-matrix.md`。
 
 - 引数: 原型の引数の数と、実装の受ける引数の数が合うか（○ 合う、× 合わない、— 比べられない）。型・意味までは見ない。
@@ -70,14 +70,14 @@
 
 | 関数 | 原型 | 実装 | 引数 | 試験 | 原文のエラー | 本体に現れないエラー | 注記 |
 |---|---|---|---|---|---|---|---|
-| `snd_msg` | `ERR snd_msg(W pid, MESSAGE* msg, W opt)` | `msg.mkn` | ○ | あり | `ER_ADR` `ER_MINTR` `ER_NOPRC` `ER_NOSPC` `ER_PAR` `ER_SELF` `ER_SZOVR` | —（核が返す） |  |
-| `rcv_msg` | `WERR rcv_msg(W t_mask, MESSAGE* msg, W msgsz, W opt)` | `msg.mkn` | ○ | あり | `ER_ADR` `ER_MINTR` `ER_NONE` `ER_PAR` | —（核が返す） |  |
-| `clr_msg` | `ERR clr_msg(W t_mask, W last_mask)` | `msg.mkn` | ○ | あり | `ER_PAR` | —（核が返す） |  |
-| `req_tmg` | `ERR req_tmg(W time, W code)` | `msg.mkn` | ○ | あり | `ER_NOSPC` `ER_PAR` | —（核が返す） |  |
-| `can_tmg` | `ERR can_tmg()` | `msg.mkn` | ○ | あり | — | —（核が返す） |  |
-| `def_msg` | `ERR def_msg(W t_mask, FP msghdr)` | `msg.mkn` | ○ | あり | `ER_ADR` `ER_PAR` | —（核が返す） |  |
-| `ret_msg` | `ERR ret_msg(W ret)` | `msg.mkn` | ○ | あり | — | —（核が返す） |  |
-| `brk_msg` | `ERR brk_msg()` | `msg.mkn` | ○ | あり | — | —（核が返す） |  |
+| `snd_msg` | `ERR snd_msg(W pid, MESSAGE* msg, W opt)` | `msg.mkn` | ○ | あり | `ER_ADR` `ER_MINTR` `ER_NOPRC` `ER_NOSPC` `ER_PAR` `ER_SELF` `ER_SZOVR` | —（核が返す） | **適合確認済**（[台帳](btron3-ledger.md)） |
+| `rcv_msg` | `WERR rcv_msg(W t_mask, MESSAGE* msg, W msgsz, W opt)` | `msg.mkn` | ○ | あり | `ER_ADR` `ER_MINTR` `ER_NONE` `ER_PAR` | —（核が返す） | **適合確認済**（[台帳](btron3-ledger.md)） |
+| `clr_msg` | `ERR clr_msg(W t_mask, W last_mask)` | `msg.mkn` | ○ | あり | `ER_PAR` | —（核が返す） | **適合確認済**（[台帳](btron3-ledger.md)） |
+| `req_tmg` | `ERR req_tmg(W time, W code)` | `msg.mkn` | ○ | あり | `ER_NOSPC` `ER_PAR` | —（核が返す） | **適合確認済**（[台帳](btron3-ledger.md)） |
+| `can_tmg` | `ERR can_tmg()` | `msg.mkn` | ○ | あり | — | —（核が返す） | **適合確認済**（[台帳](btron3-ledger.md)） |
+| `def_msg` | `ERR def_msg(W t_mask, FP msghdr)` | `msg.mkn` | ○ | あり | `ER_ADR` `ER_PAR` | —（核が返す） | **適合確認済**（[台帳](btron3-ledger.md)） |
+| `ret_msg` | `ERR ret_msg(W ret)` | `msg.mkn` | ○ | あり | — | —（核が返す） | **適合確認済**（[台帳](btron3-ledger.md)） |
+| `brk_msg` | `ERR brk_msg()` | `msg.mkn` | ○ | あり | — | —（核が返す） | **適合確認済**（[台帳](btron3-ledger.md)） |
 
 ## 1.3 タスク間通信（19 関数）
 
