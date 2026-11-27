@@ -1154,10 +1154,10 @@ if [ -f "$OUT/kernel.elf" ]; then
         # --- #42 G4: 利用者情報 (get_usr / chg_usr) と set_tim / set_tod の権限 --------
         US_N="$(grep -ac '^利試 ' "$KLOG" 2>/dev/null)"
         US_BAD="$(grep -a '^利試 ' "$KLOG" 2>/dev/null | grep -vc '0x0000000000000001$')"
-        if [ "${US_N:-0}" -eq 19 ] && [ "${US_BAD:-1}" -eq 0 ]; then
+        if [ "${US_N:-0}" -eq 28 ] && [ "${US_BAD:-1}" -eq 0 ]; then
             pass "kernel qemu: BTRON3 互換層 利用者情報・時刻設定の権限 (${US_N} 項目)"
         else
-            fail "kernel qemu: BTRON3 互換層 利用者情報・時刻設定の権限 (項目=${US_N:-0}/19、失敗=${US_BAD:-?})"
+            fail "kernel qemu: BTRON3 互換層 利用者情報・時刻設定の権限 (項目=${US_N:-0}/28、失敗=${US_BAD:-?})"
             grep -a '^利試 ' "$KLOG" 2>/dev/null | sed 's/^/      /'
         fi
         # 暦差の検証: 時試が出す現在の日付が、ホストの UTC の日付 (前後 1 日まで許す) に一致する
@@ -1184,10 +1184,10 @@ if [ -f "$OUT/kernel.elf" ]; then
         # --- #42 G2: 時計の取得系 (get_tim / get_tod) と構造体の複写出 ---------------
         CK_N="$(grep -ac '^時試 ' "$KLOG" 2>/dev/null)"
         CK_BAD="$(grep -a '^時試 ' "$KLOG" 2>/dev/null | grep -vc '0x0000000000000001$')"
-        if [ "${CK_N:-0}" -eq 11 ] && [ "${CK_BAD:-1}" -eq 0 ]; then
+        if [ "${CK_N:-0}" -eq 12 ] && [ "${CK_BAD:-1}" -eq 0 ]; then
             pass "kernel qemu: BTRON3 互換層 時計 (get_tim・get_tod・暦・閏年・ER_ADR の ${CK_N} 項目)"
         else
-            fail "kernel qemu: BTRON3 互換層 時計 (項目=${CK_N:-0}/11、失敗=${CK_BAD:-?})"
+            fail "kernel qemu: BTRON3 互換層 時計 (項目=${CK_N:-0}/12、失敗=${CK_BAD:-?})"
             grep -a '^時試 ' "$KLOG" 2>/dev/null | sed 's/^/      /'
         fi
         # --- #47 T1: 黄帝紀元の純粋な変換・書式化・解析 ---------------------------
